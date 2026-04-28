@@ -112,3 +112,5 @@ staticfiles/
 Thumbs.db
 Desktop.ini
 
+settings.py
+
