@@ -12,7 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { show_search,search_bar_action } from "@/Redux/Action";
 import ReCAPTCHA from "react-google-recaptcha";
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const SignIn = () => {
     const [email, setEmail] = useState("");
@@ -99,6 +99,12 @@ const SignIn = () => {
                 { email, password },
                 { withCredentials: true }
             );
+            // store access token and set axios default header so subsequent requests use Authorization
+            const token = response.data?.access || response.data?.data?.access;
+            if (token) {
+                localStorage.setItem('access', token);
+                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            }
             const userRole = response.data.user.role; // Get the user's role
             if (userRole === "user") {
                 await dispatch(Role_Action("Candidate"));

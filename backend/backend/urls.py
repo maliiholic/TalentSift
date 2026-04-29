@@ -15,9 +15,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.conf import settings
+from django.conf.urls.static import static
 from django.urls import path, include
+from getUserData.views import get_user_data, get_user_role
 from signin.views import decode_jwt, reset_password, send_otp_signin, sign_in, verify_otp_signin
 from signup.views import send_otp, signup, verify_otp
+from profil.views import update_profile,get_profile
+from signout.views import logout_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -29,4 +34,12 @@ urlpatterns = [
     path('verify_otp_signin/', verify_otp_signin, name='verify-otp'),
     path('reset_password/', reset_password, name='reset-password'),
     path('decode-jwt/', decode_jwt, name='decode_jwt'),
+    path('profile/', get_profile, name='get_profile'),
+    path('update_profile/', update_profile, name='update_profile'),
+    path('get_picture/', get_user_data, name='get_user_data'),
+    path('get_user_role/', get_user_role, name='get_role'),
+    path('logout/', logout_view, name='logout'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

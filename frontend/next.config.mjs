@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    images: {
+      domains: [
+          'media.istockphoto.com',
+          'lh3.googleusercontent.com',
+          '127.0.0.1',
+          'localhost',
+      ], // Add the hostname here
+  },
   /* config options here */
   webpack(config, { isServer }) {
       // Ensure videos are handled correctly with Webpack's built-in asset modules

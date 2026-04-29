@@ -7,8 +7,22 @@ import 'react-toastify/dist/ReactToastify.css';
 export const Auth = (role) => {
   return async (dispatch) => {
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-      const response = await axios.get(`${API_BASE}/get_user_role?role=${role}`, { withCredentials: true });
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access') : null;
+
+      if (role === 'Guest' && !token) {
+        dispatch({
+          type: 'Role',
+          payload: 'Guest',
+        });
+        return;
+      }
+
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const response = await axios.get(`${API_BASE}/get_user_role?role=${role}`, {
+        withCredentials: true,
+        headers,
+      });
      
         dispatch({
           type: "Role",

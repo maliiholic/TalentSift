@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import axios from 'axios';
 import { usePathname, useRouter } from 'next/navigation';
 import { Auth } from '@/Redux/Action';
 import Loader from './loader';
@@ -22,6 +21,11 @@ const Protect = ({ children }) => {
         hasCheckedAuth.current = true;
         setLoading(true);
 
+        if (role === 'Guest' && typeof window !== 'undefined' && !localStorage.getItem('access')) {
+            setLoading(false);
+            return;
+        }
+
         dispatch(Auth(role)).then(() => {
             setLoading(false);
         });
@@ -35,30 +39,27 @@ const Protect = ({ children }) => {
             pathname === '/Admin/deleteusers' ||
             pathname === '/Admin/deletesubscription' ||
             pathname === '/Admin/dashboard' ||
-            pathname === '/error' ||
             pathname === '/Admin/deletejob' ||
             pathname === '/Admin/report';
-        redirectPath = '/error';
+        redirectPath = '/Users/Home';
     } else if (role === 'Candidate') {
         allow =
             pathname === '/Users/Home' ||
             pathname === '/Users/Jobs' ||
             pathname === '/Users/Notifications' ||
             pathname === '/Users/Profile' ||
-            pathname === '/error' ||
             pathname.startsWith('/Users/Jobs/') ||
             pathname.startsWith('/Users/Practice');
-        redirectPath = '/error';
+        redirectPath = '/Users/Home';
     } else if (role === 'Recruiter') {
         allow =
             pathname === '/Users/Home' ||
             pathname === '/Users/Posts' ||
             pathname === '/Users/Notifications' ||
             pathname === '/Users/Profile' ||
-            pathname === '/error' ||
             pathname === '/Users/Posts/CreateJob' ||
             pathname.startsWith('/Users/Posts/');
-        redirectPath = '/error';
+        redirectPath = '/Users/Home';
     } else if (role === 'Guest') {
         allow =
             pathname === '/Users/Home' ||

@@ -5,9 +5,15 @@ import { faUser, faRightLeft, faSignOutAlt } from "@fortawesome/free-solid-svg-i
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 // globals.css imported in root layout
 import { Role_Action } from "@/Redux/Action";
+
+// ensure axios Authorization header is set from localStorage token (if available)
+const storedToken = typeof window !== 'undefined' ? localStorage.getItem('access') : null;
+if (storedToken) {
+  axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+}
 
 const DEFAULT_IMAGE = "https://media.istockphoto.com/id/1300845620/vector/user-icon-flat-isolated-on-white-background-user-symbol-vector-illustration.jpg?s=612x612&w=0&k=20&c=yBeyba0hUkh14_jgv1OKqIH0CCSWU_4ckRkAoy2p73o="; 
 
@@ -45,9 +51,11 @@ const ProfileLink = () => {
 
   const handleLogout = async () => {
     try {
-    await axios.post(`${API_BASE}/logout/`, {}, { withCredentials: true });
-
-    router.push('/Users/SignIn'); 
+      await axios.post(`${API_BASE}/logout/`, {}, { withCredentials: true });
+      localStorage.removeItem('access');
+      delete axios.defaults.headers.common['Authorization'];
+      await dispatch(Role_Action('Guest'));
+      router.replace('/Users/Home');
     } catch (error) {
       console.error("Error logging out:", error);
     }

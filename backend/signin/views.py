@@ -11,6 +11,9 @@ from django.core.cache import cache
 import jwt
 import datetime
 
+COOKIE_SECURE = not settings.DEBUG
+COOKIE_SAMESITE = 'None' if not settings.DEBUG else 'Lax'
+
 @api_view(['POST'])
 def send_otp_signin(request):
     """
@@ -121,8 +124,8 @@ def sign_in(request):
                 'access',
                 str(refresh.access_token),
                 httponly=True,
-                secure=True, 
-                samesite='None', 
+            secure=COOKIE_SECURE,
+            samesite=COOKIE_SAMESITE,
                 max_age=3600,
                 path='/',
             )
@@ -170,7 +173,9 @@ def decode_jwt(request):
                 'first_name': first_name,
                 'last_name': last_name,
                 'role': role,
-                'picture': picture
+                'picture': picture,
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
             }
         }, status=status.HTTP_200_OK)
         
@@ -178,8 +183,8 @@ def decode_jwt(request):
             'access',
             str(refresh.access_token),
             httponly=True,
-            secure=True,  
-            samesite='None', 
+            secure=COOKIE_SECURE,
+            samesite=COOKIE_SAMESITE,
             max_age=3600,
             path='/'
         )

@@ -128,7 +128,7 @@ const Signup = () => {
         if (!validateForm()) return;
         setLoading(true);
         try {
-            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
             await axios.post(`${API_BASE}/send_otp/`, { email });
             setIsOtpSent(true);
             setTimer(60); // Reset timer for resend OTP
@@ -143,7 +143,7 @@ const Signup = () => {
     const handleResendOtp = async () => {
         setLoading(true);
         try {
-            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
             await axios.post(`${API_BASE}/send_otp/`, { email });
             setTimer(60);  // Reset timer for resend OTP
             setErrors({});
@@ -163,7 +163,7 @@ const Signup = () => {
         }
         setLoading(true);
         try {
-            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
             await axios.post(`${API_BASE}/verify_otp/`, { email, otp });
             await handleSignup(); // Call signup function after successful OTP verification
             setErrors("")
@@ -187,7 +187,7 @@ const Signup = () => {
 
         setLoading(true);
         try {
-            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
             await axios.post(`${API_BASE}/signup/`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
