@@ -122,6 +122,7 @@ def _topic_key(topic_name):
 
 
 def _fallback_questions(topic_name, difficulty, question_type, total_questions):
+    """Generate fallback questions from hardcoded pool. DO NOT loop/repeat."""
     topic_pool = SAMPLE_QUESTIONS.get(_topic_key(topic_name), {})
     pool = topic_pool.get(difficulty) or topic_pool.get('intermediate') or next(iter(topic_pool.values()), [])
 
@@ -133,26 +134,29 @@ def _fallback_questions(topic_name, difficulty, question_type, total_questions):
     filtered = [question for question in pool if _matches_kind(question)]
 
     if not filtered:
+        # Generate minimal fallback questions if pool is empty
         filtered = [
             {
-                'text': f'Explain a core concept in {topic_name}.',
+                'text': f'Explain a key concept in {topic_name}.',
                 'type': 'text',
-                'rubric': 'Define the concept clearly, explain why it matters, and give one practical example.',
+                'rubric': 'Define the concept clearly and explain its importance with an example.',
             },
             {
-                'text': f'Which statement best describes an important idea in {topic_name}?',
+                'text': f'Which of the following is fundamental to {topic_name}?',
                 'type': 'mcq',
-                'options': ['Option A', 'Option B', 'Option C', 'Option D'],
-                'correct': 'Option A',
+                'options': ['Correct answer', 'Incorrect answer 1', 'Incorrect answer 2', 'Incorrect answer 3'],
+                'correct': 'Correct answer',
+            },
+            {
+                'text': f'How would you apply {topic_name} in a real project?',
+                'type': 'text',
+                'rubric': 'Describe a practical scenario and the relevant concepts to apply.',
             },
         ]
 
-    questions = []
-    while len(questions) < total_questions:
-        source = filtered[len(questions) % len(filtered)]
-        questions.append(source)
-
-    return questions[:total_questions]
+    # Return only available questions, don't loop/repeat
+    # If user wants more than available, return what we have
+    return filtered[:total_questions]
 
 
 # ============ PUBLIC ENDPOINTS ============
@@ -214,8 +218,41 @@ def start_session(request):
         question_type = data.get('question_type', 'mixed')
         total_questions = int(data.get('total_questions', 5))
 
-        # Get or create topic
-        topic = PracticeTopic.objects.get(name=topic_name)
+        # Validate total_questions
+        if total_questions not in [5, 10, 15]:
+            return Response({
+                'status': 'error',
+                'message': f'Invalid total_questions: {total_questions}. Must be 5, 10, or 15.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate difficulty
+        valid_difficulties = ['beginner', 'intermediate', 'advanced']
+        if difficulty not in valid_difficulties:
+            return Response({
+                'status': 'error',
+                'message': f'Invalid difficulty: {difficulty}. Must be one of: {", ".join(valid_difficulties)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate question_type
+        valid_types = ['mcq', 'text', 'mixed']
+        if question_type not in valid_types:
+            return Response({
+                'status': 'error',
+                'message': f'Invalid question_type: {question_type}. Must be one of: {", ".join(valid_types)}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get topic - try exact match first, then case-insensitive
+        try:
+            topic = PracticeTopic.objects.get(name=topic_name)
+        except PracticeTopic.DoesNotExist:
+            # Try case-insensitive match
+            topic = PracticeTopic.objects.get(name__iexact=topic_name)
+        except PracticeTopic.DoesNotExist:
+            available_topics = ', '.join([t.name for t in PracticeTopic.objects.filter(is_active=True)])
+            return Response({
+                'status': 'error',
+                'message': f'Topic "{topic_name}" not found. Available topics: {available_topics}'
+            }, status=status.HTTP_404_NOT_FOUND)
 
         # Create session
         session = PracticeSession.objects.create(

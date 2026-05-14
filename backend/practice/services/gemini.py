@@ -247,7 +247,7 @@ Candidate answer: {user_answer}
         answer_vec = _text_vector(user_answer)
         similarity = round(_cosine_sim(rubric_vec, answer_vec) * 10, 2)  # 0-10 scale
 
-        # reuse keyword coverage for readable feedback
+        # Keyword matching for context
         tokens = [w.lower() for w in json.dumps(rubric).replace('\n', ' ').split()]
         keywords = [t.strip(".,:;()[]\"'") for t in tokens if len(t.strip(".,:;()[]\"'")) > 3]
         keywords = list(dict.fromkeys(keywords))
@@ -255,19 +255,81 @@ Candidate answer: {user_answer}
         matches = [k for k in keywords if k in answer_text]
         match_count = len(matches)
         total = len(keywords) if keywords else 1
-
-        score = int(round(similarity)) if similarity is not None else 7
+        
+        # Keyword coverage ratio
+        keyword_coverage = match_count / total if total > 0 else 0
+        
+        # Answer length analysis
+        answer_words = len((user_answer or '').split())
+        
+        # STRICT SCORING LOGIC:
+        # - Base: similarity (0-10) is the primary signal
+        # - Completely wrong (similarity < 1.5) → score 0 (no credit)
+        # - Very wrong (1.5-3) → score 1-2
+        # - Partially correct (3-6) → score 3-5
+        # - Correct (>6) → score 6-10
+        
+        if similarity < 1.5:
+            # Completely wrong/unrelated = 0
+            score = 0
+        elif similarity < 3:
+            # Very low similarity, likely wrong
+            score = max(1, min(2, int(similarity)))
+        elif similarity < 6:
+            # Medium similarity = partially correct
+            # Reward substantive length, penalize very short
+            if answer_words >= 50:
+                score = 5  # decent answer with some correct elements
+            elif answer_words >= 30:
+                score = 4
+            else:
+                score = 3  # too brief even if has some overlap
+        else:
+            # High similarity = correct answer
+            # Reward with bonuses
+            score = int(similarity)
+            if answer_words >= 50:
+                score = min(10, score + 1)  # bonus for detail
+        
         score = max(0, min(10, score))
 
-        feedback_good = (
-            f'Covered {match_count} of {total} rubric points: ' + ', '.join(matches)
-            if matches else 'Some correct ideas, but missing key rubric points.'
-        )
-        missing = [k for k in keywords if k not in matches]
-        feedback_missing = (
-            'Mention: ' + ', '.join(missing[:6]) if missing else 'No major omissions detected.'
-        )
-        model_answer = 'Strong answer should include: ' + ' '.join(rubric.splitlines()[:3]) if rubric else 'A strong answer would be concise and cover the key concepts requested by the question.'
+        # Generate appropriate feedback based on score
+        if score >= 8:
+            feedback_good = 'Excellent response! Comprehensive, accurate, and well-articulated.'
+        elif score >= 6:
+            feedback_good = 'Good answer. You covered the main points correctly.'
+        elif score >= 4:
+            feedback_good = 'Acceptable response. Some correct elements, but incomplete.'
+        elif score >= 2:
+            feedback_good = 'Weak response. Only partial understanding shown.'
+        elif score >= 1:
+            feedback_good = 'Very weak response. This answer shows minimal understanding of the concept.'
+        else:
+            feedback_good = 'Incorrect answer. This does not address the question. Please review the topic carefully.'
+        
+        # Missing points feedback
+        if keywords:
+            missing = [k for k in keywords if k not in answer_text]
+            if missing and score < 7:
+                feedback_missing = f'Key concepts to address: {", ".join(missing[:5])}'
+            else:
+                feedback_missing = 'Your answer addressed the main rubric points.' if score >= 6 else 'Review the rubric to improve your understanding.'
+        else:
+            feedback_missing = 'Compare your answer against the rubric provided above.'
+        
+        model_answer = rubric if isinstance(rubric, str) else ' '.join(rubric.splitlines()[:4]) if rubric else 'A strong answer would comprehensively address the question with relevant details and examples.'
+        
+        # Format model_answer properly if it's a list
+        if isinstance(model_answer, list):
+            model_answer = ' '.join([str(item).strip() for item in model_answer])
+        elif isinstance(model_answer, str) and model_answer.startswith('['):
+            # Handle stringified list
+            try:
+                parsed = eval(model_answer)
+                if isinstance(parsed, list):
+                    model_answer = ' '.join([str(item).strip() for item in parsed])
+            except:
+                pass
 
         return {
             'score': score,
