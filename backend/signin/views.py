@@ -37,7 +37,7 @@ def send_otp_signin(request):
     cache.set(cache_key, otp, timeout=60)
 
     # Prepare the email content
-    subject = "Your SmartHire OTP"
+    subject = "Your TalentSift OTP"
     message = f"""
 Hello {user.email or 'User'},
 
@@ -48,7 +48,7 @@ Use this OTP to verify your account:
 This OTP will expire in 60 seconds. If you didn’t request this, please ignore this email.
 
 Best regards,  
-The SmartHire Team
+The TalentSift Team
     """
     try:
         # Send the OTP email
@@ -59,7 +59,10 @@ The SmartHire Team
             [email],
             fail_silently=False,
         )
-        return Response({'success': 'OTP sent to your email!'}, status=status.HTTP_200_OK)
+        response_data = {'success': 'OTP sent to your email!'}
+        if settings.DEBUG and settings.EMAIL_BACKEND.endswith('locmem.EmailBackend'):
+            response_data['debug_otp'] = str(otp)
+        return Response(response_data, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({'error': 'Failed to send OTP email', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -109,12 +112,13 @@ def sign_in(request):
         return Response({'error': 'Invalid email or password'}, status=status.HTTP_400_BAD_REQUEST)
 
     if user.check_password(password):
+        resolved_role = 'admin' if user.is_staff or user.is_superuser or user.role == 'admin' else 'user'
         refresh = RefreshToken.for_user(user)
 
         response = Response({
             'user': {
                 'email': user.email,
-                'role': user.role  
+                'role': resolved_role
             },
             'refresh': str(refresh),
             'access': str(refresh.access_token)

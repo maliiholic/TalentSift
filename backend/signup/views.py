@@ -40,11 +40,11 @@ def send_otp(request):
     user_first_name = request.data.get('first_name', 'User')
 
     # Construct the email message
-    subject = "Your SmartHire OTP"
+    subject = "Your TalentSift OTP"
     message = f"""
 Hello {email},
 
-Thank you for signing up with SmartHire. To complete your account setup, please use the One-Time Password (OTP) below to verify your account:
+Thank you for signing up with TalentSift. To complete your account setup, please use the One-Time Password (OTP) below to verify your account:
 
 Verification Code:
 {otp}
@@ -54,7 +54,7 @@ This code is valid for the next 60 seconds. If you did not request this, please 
 If you have any questions, feel free to reach out to our support team.
 
 Best regards,
-The SmartHire Team
+The TalentSift Team
     """
     try:
         # Send the email
@@ -65,7 +65,10 @@ The SmartHire Team
             [email],
             fail_silently=False,
         )
-        return Response({'message': 'OTP sent to your email.'}, status=status.HTTP_200_OK)
+        response_data = {'message': 'OTP sent to your email.'}
+        if settings.DEBUG and settings.EMAIL_BACKEND.endswith('locmem.EmailBackend'):
+            response_data['debug_otp'] = otp
+        return Response(response_data, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({'error': 'Failed to send OTP email', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

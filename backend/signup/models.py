@@ -27,6 +27,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=128)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    is_staff = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
     objects = UserManager()
 
     USERNAME_FIELD = 'email'
@@ -155,7 +157,8 @@ class Job(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.job_name} at {self.company_name}"
+        company_name = getattr(self.recruiter, "company_name", "Unknown Company")
+        return f"{self.job_name} at {company_name}"
 
 class Profit(models.Model):
     id = models.AutoField(primary_key=True)
