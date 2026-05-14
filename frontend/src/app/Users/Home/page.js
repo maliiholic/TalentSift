@@ -2,11 +2,15 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import Image from "next/image";
 import { faBriefcase, faRobot, faChartLine, faUserGraduate } from "@fortawesome/free-solid-svg-icons";
 import "@fortawesome/fontawesome-svg-core/styles.css";
-import smarthire from "../../Photos/smarthire1.mp4"; // Import video
 import { useDispatch, useSelector } from 'react-redux';
 import { show_search, search_bar_action } from "@/Redux/Action";
+
+// Use path directly instead of importing video as module
+const talentsiftVideo = "/talentsift1.mp4";
+
 export default function Home() {
   const router = useRouter();
   const role = useSelector((state) => state.Role_Reducer);
@@ -24,7 +28,7 @@ export default function Home() {
         {/* Video Background with Blur Effect */}
         <video
           className="absolute inset-0 w-full h-full object-cover filter blur-sm"
-          src={smarthire}
+          src={talentsiftVideo}
           autoPlay
           muted
           loop
@@ -38,7 +42,7 @@ export default function Home() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col items-center justify-center text-center space-y-6">
           <div className="bg-black bg-opacity-20 p-8 rounded-lg shadow-xl">
             <h1 className="text-5xl sm:text-7xl font-extrabold text-white leading-snug drop-shadow-xl">
-              Welcome to <span className="text-[#0073b1]">SmartHire</span>
+              Welcome to <span className="text-[#0073b1]">TalentSift</span>
             </h1>
             <p className="text-lg sm:text-2xl text-gray-200 max-w-2xl mx-auto mt-4">
               Join the AI-driven recruitment platform that simplifies hiring and empowers candidates with personalized AI practice interviews.
@@ -118,7 +122,7 @@ export default function Home() {
             <TestimonialCard
               name="John Doe"
               position="Recruiter at Pluginfy Technologies"
-              text="SmartHire has streamlined our hiring process and improved candidate quality."
+              text="TalentSift has streamlined our hiring process and improved candidate quality."
               avatar="https://randomuser.me/api/portraits/men/32.jpg"
             />
             <TestimonialCard
@@ -171,7 +175,7 @@ export default function Home() {
             Ready to Transform Your Career or Hiring Process?
           </h2>
           <p className="text-base sm:text-lg text-gray-700 mb-8">
-            Join SmartHire today and experience AI-driven recruitment that benefits both candidates and recruiters.
+            Join TalentSift today and experience AI-driven recruitment that benefits both candidates and recruiters.
           </p>
           {
             role === "Guest" &&
@@ -189,7 +193,7 @@ export default function Home() {
               onClick={() => router.push("/Users/Practice")}
               className="px-8 py-4 bg-[#0073b1] text-white font-semibold text-lg rounded-lg shadow-lg hover:bg-[#005582] hover:scale-105 transition duration-300 ease-in-out transform"
             >
-              Pratice Interview
+              Practice Interview
             </button>
           }
 
@@ -225,10 +229,12 @@ function TestimonialCard({ name, position, text, avatar }) {
     <div className="p-8 bg-white rounded-lg shadow-lg text-left border border-gray-200 hover:shadow-2xl hover:scale-105 transition-all ease-in-out duration-300">
       {/* Avatar */}
       <div className="flex items-center mb-4">
-        <img
+        <Image
           src={avatar}
-          alt={`${name}'s avatar`}
-          className="w-12 h-12 rounded-full mr-4"
+          alt={`${name}&apos;s avatar`}
+          width={48}
+          height={48}
+          className="w-12 h-12 rounded-full mr-4 object-cover"
         />
         <div>
           <h4 className="font-semibold">{name}</h4>
@@ -236,7 +242,7 @@ function TestimonialCard({ name, position, text, avatar }) {
         </div>
       </div>
       {/* Testimonial Text */}
-      <p className="text-gray-600">"{text}"</p>
+      <p className="text-gray-600">&ldquo;{text}&rdquo;</p>
     </div>
   );
 }

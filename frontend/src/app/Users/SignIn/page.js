@@ -1,8 +1,8 @@
 "use client";
-export const dynamic = 'force-dynamic';
 
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
+import Image from "next/image";
 import bgImage from "../../Photos/file.png";
 import { GoogleLogin } from "@react-oauth/google";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -12,6 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { show_search,search_bar_action } from "@/Redux/Action";
 import ReCAPTCHA from "react-google-recaptcha";
+import { setAuthToken } from "../../others/auth";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const SignIn = () => {
@@ -103,7 +104,7 @@ const SignIn = () => {
             const token = response.data?.access || response.data?.data?.access;
             if (token) {
                 localStorage.setItem('access', token);
-                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                setAuthToken(token);
             }
             const userRole = response.data.user.role; // Get the user's role
             if (userRole === "user") {
@@ -133,7 +134,10 @@ const SignIn = () => {
         setCaptchaValue(null);
         setLoading(true);
         try {
-            await axios.post(`${API_BASE}/send-otp_signin/`, { email });
+            const response = await axios.post(`${API_BASE}/send-otp_signin/`, { email });
+            if (response.data?.debug_otp) {
+                setOtp(response.data.debug_otp.split(""));
+            }
             setIsOtpSent(true);
             setTimer(60); // Start countdown
         } catch (error) {
@@ -147,7 +151,10 @@ const SignIn = () => {
         setLoading(true);
         setCaptchaValue(null);
         try {
-            await axios.post(`${API_BASE}/send-otp_signin/`, { email });
+            const response = await axios.post(`${API_BASE}/send-otp_signin/`, { email });
+            if (response.data?.debug_otp) {
+                setOtp(response.data.debug_otp.split(""));
+            }
             setTimer(60); // Restart countdown
         } catch (error) {
             setEmailError(error.response?.data?.error || "Error resending OTP.");
@@ -231,10 +238,13 @@ const SignIn = () => {
         <div className="flex flex-col items-center justify-center min-h-screen bg-[#F4F2EE] px-4 sm:px-6 lg:px-8 py-20">
             <div className="bg-[#FFFFFF] rounded-lg shadow-2xl p-8 sm:p-10 max-w-md w-full">
                 <div className="text-center mb-6">
-                    <img
-                        src={bgImage.src}
+                    <Image
+                        src={bgImage}
                         alt="Brand Logo"
+                        width={80}
+                        height={80}
                         className="w-16 sm:w-20 mx-auto mb-4"
+                        priority
                     />
                     <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
                         {showForgotPassword
@@ -325,7 +335,7 @@ const SignIn = () => {
                             </a>
                         </p>
                         <div className="px-4 py-2 text-sm text-center">
-                            <span className="text-gray-600">Don't have an account?</span>
+                            <span className="text-gray-600">Do not have an account?</span>
                             <button
                                 className="text-[#0073b1] font-bold hover:underline ml-1"
                                 onClick={handleSignupRedirect}

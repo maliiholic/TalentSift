@@ -31,7 +31,7 @@ const ErrorPage = () => {
                 </div>
                 <h1 className="text-4xl font-bold text-gray-800 mb-4">Oops! Something went wrong.</h1>
                 <p className="text-lg text-gray-600 mb-6">
-                    We couldn't find the page you're looking for. Please check the URL or return to the home page.
+                    We couldn&apos;t find the page you&apos;re looking for. Please check the URL or return to the home page.
                 </p>
                 <button 
                     onClick={handleGoHome} 

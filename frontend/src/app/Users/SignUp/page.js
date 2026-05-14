@@ -3,12 +3,13 @@ import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import toast, { Toaster } from 'react-hot-toast';
 import bgImage from "../../Photos/file.png";
+import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { show_search,search_bar_action } from "@/Redux/Action";
+import { Role_Action, show_search,search_bar_action } from "@/Redux/Action";
 const OtpInput = ({ otp, setOtp }) => {
 
     const inputRefs = useRef([]);
@@ -80,14 +81,35 @@ const Signup = () => {
     }, [dispatch]);
 
     useEffect(() => {
+        const clearExistingSession = async () => {
+            try {
+                await axios.post("http://localhost:8000/logout/", {}, { withCredentials: true });
+            } catch (error) {
+                // Ignore logout errors
+            } finally {
+                if (typeof window !== "undefined") {
+                    localStorage.removeItem("access");
+                }
+                dispatch(Role_Action("Guest"));
+            }
+        };
+
+        clearExistingSession();
+    }, [dispatch]);
+
+    useEffect(() => {
         let countdown;
         if (isOtpSent && timer > 0) {
             countdown = setInterval(() => {
-                setTimer((prev) => prev - 1);
+                setTimer((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(countdown);
+                        setErrors((current) => ({ ...current, otp: "OTP expired. Please request a new one." }));
+                        return 0;
+                    }
+                    return prev - 1;
+                });
             }, 1000);
-        } else if (timer === 0) {
-            clearInterval(countdown);
-            setErrors({ otp: "OTP expired. Please request a new one." });
         }
         return () => clearInterval(countdown);
     }, [isOtpSent, timer]);
@@ -129,7 +151,10 @@ const Signup = () => {
         setLoading(true);
         try {
             const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-            await axios.post(`${API_BASE}/send_otp/`, { email });
+            const response = await axios.post(`${API_BASE}/send_otp/`, { email });
+            if (response.data?.debug_otp) {
+                setOtp(response.data.debug_otp);
+            }
             setIsOtpSent(true);
             setTimer(60); // Reset timer for resend OTP
         } catch (error) {
@@ -144,7 +169,10 @@ const Signup = () => {
         setLoading(true);
         try {
             const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-            await axios.post(`${API_BASE}/send_otp/`, { email });
+            const response = await axios.post(`${API_BASE}/send_otp/`, { email });
+            if (response.data?.debug_otp) {
+                setOtp(response.data.debug_otp);
+            }
             setTimer(60);  // Reset timer for resend OTP
             setErrors({});
             toast.success("OTP has been resent.");
@@ -214,12 +242,12 @@ const Signup = () => {
         <div className="flex flex-col items-center justify-center min-h-screen bg-[#F4F2EE] px-4 sm:px-6 lg:px-8 py-10">
             <div className="bg-[#FFFFFF] rounded-lg mt-12 shadow-2xl p-8 sm:p-10 max-w-lg w-full">
                 <div className="text-center mb-8">
-                    <img src={bgImage.src} alt="Brand Logo" className="w-20 h-20 rounded-full mx-auto mb-4" />
+                    <Image src={bgImage} alt="Brand Logo" className="w-20 h-20 rounded-full mx-auto mb-4" priority />
                     <h1 className="text-2xl font-bold text-gray-800 mb-2">
-                        {isOtpSent ? "Verify Your OTP" : "Create Your SmartHire Account"}
+                        {isOtpSent ? "Verify Your OTP" : "Create Your TalentSift Account"}
                     </h1>
                     <p className="text-gray-500 text-sm">
-                        {isOtpSent ? "Enter the OTP sent to your email to complete your registration." : "Sign up to access all features and start your hiring journey with SmartHire!"}
+                        {isOtpSent ? "Enter the OTP sent to your email to complete your registration." : "Sign up to access all features and start your hiring journey with TalentSift!"}
                     </p>
                 </div>
 
@@ -287,7 +315,7 @@ const Signup = () => {
                         </div>
                         {previewSrc && (
                             <div className="mb-4">
-                                <img src={previewSrc} alt="Profile Preview" className="w-24 h-24 rounded-full mx-auto mt-4" />
+                                <Image src={previewSrc} alt="Profile Preview" width={96} height={96} className="w-24 h-24 rounded-full mx-auto mt-4 object-cover" />
                             </div>
                         )}
                         <button

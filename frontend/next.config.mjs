@@ -1,25 +1,32 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    turbopack: {
+      root: '.',
+    },
     images: {
-      domains: [
-          'media.istockphoto.com',
-          'lh3.googleusercontent.com',
-          '127.0.0.1',
-          'localhost',
-      ], // Add the hostname here
-  },
-  /* config options here */
-  webpack(config, { isServer }) {
-      // Ensure videos are handled correctly with Webpack's built-in asset modules
-      config.module.rules.push({
-          test: /\.mp4$/,
-          type: 'asset/resource',  // Use Webpack's native asset module
-          generator: {
-              filename: 'static/media/[name].[hash][ext][query]',  // Output path for video files
-          },
-      });
-
-      return config;
+      unoptimized: process.env.NODE_ENV === 'development',
+      remotePatterns: [
+        {
+          protocol: 'https',
+          hostname: 'media.istockphoto.com',
+        },
+        {
+          protocol: 'https',
+          hostname: 'lh3.googleusercontent.com',
+        },
+        {
+          protocol: 'https',
+          hostname: 'randomuser.me',
+        },
+        {
+          protocol: 'http',
+          hostname: '127.0.0.1',
+        },
+        {
+          protocol: 'http',
+          hostname: 'localhost',
+        },
+      ],
   },
 };
 

@@ -1,30 +1,25 @@
 "use client"; // For client-side rendering
 
-import { useEffect, useState } from "react";
-import axios from "axios";
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import Link from "next/link";
 
 const Home = () => {
-  const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    const fetchMessage = async () => {
-      try {
-      const response = await axios.get(`${API_BASE}/api/hello/`);
-        setMessage(response.data.message);
-      } catch (error) {
-        console.error("Error fetching message:", error);
-      }
-    };
-
-    fetchMessage();
-  }, []);
-
   return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-      <h1 style={{ fontSize: "48px", fontWeight: "bold" }}>
-        {message || "Loading..."}
-      </h1>
+    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "40px", background: "radial-gradient(circle at top, #fef3c7 0%, #f4f2ee 45%, #e7edf8 100%)" }}>
+      <div style={{ maxWidth: "760px", width: "100%", background: "rgba(255,255,255,0.72)", backdropFilter: "blur(18px)", border: "1px solid rgba(15, 23, 42, 0.08)", borderRadius: "28px", padding: "40px", boxShadow: "0 30px 80px rgba(15, 23, 42, 0.12)" }}>
+        <p style={{ textTransform: "uppercase", letterSpacing: "0.2em", fontSize: "12px", color: "#7c2d12", marginBottom: "12px", fontWeight: 700 }}>TalentSift Practice Lab</p>
+        <h1 style={{ fontSize: "clamp(40px, 7vw, 72px)", lineHeight: 1, margin: "0 0 16px", color: "#111827" }}>
+          Practice interviews with AI feedback.
+        </h1>
+        <p style={{ fontSize: "18px", lineHeight: 1.7, color: "#374151", maxWidth: "58ch", marginBottom: "28px" }}>
+          Generate role-specific questions, answer them, and get structured evaluation with scoring and rubric-based feedback.
+        </p>
+        <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+          <Link href="/Users/Practice" style={{ padding: "14px 22px", borderRadius: "999px", background: "#111827", color: "white", textDecoration: "none", fontWeight: 700 }}>
+            Open Practice Lab
+          </Link>
+          <span style={{ alignSelf: "center", color: "#6b7280" }}>Use your login token to start a session.</span>
+        </div>
+      </div>
     </div>
   );
 };

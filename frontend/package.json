@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "next dev --turbopack --hostname localhost --port 3000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -13,14 +13,19 @@
     "@fortawesome/react-fontawesome": "^3.3.1",
     "@react-oauth/google": "^0.13.5",
     "@reduxjs/toolkit": "^2.11.2",
+    "@stripe/stripe-js": "^9.4.0",
     "axios": "^1.15.2",
+    "chart.js": "^4.5.1",
     "js-cookie": "^3.0.5",
     "next": "16.2.4",
     "react": "19.2.4",
+    "react-chartjs-2": "^5.3.1",
+    "react-countup": "^6.5.3",
     "react-dom": "19.2.4",
     "react-google-recaptcha": "^3.1.0",
     "react-google-recaptcha-v3": "^1.11.0",
     "react-hot-toast": "^2.6.0",
+    "react-icons": "^5.6.0",
     "react-redux": "^9.2.0",
     "react-toastify": "^11.1.0",
     "redux-persist": "^6.0.0"

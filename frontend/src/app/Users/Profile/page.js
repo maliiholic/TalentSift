@@ -7,9 +7,7 @@ import { useDispatch } from "react-redux";
 import { show_search,search_bar_action } from "@/Redux/Action";
 const Profile = () => {
   const dispatch = useDispatch();
-  dispatch(show_search(false));
   const role = useSelector((state) => state.Role_Reducer);
-  dispatch(search_bar_action(""));
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -34,6 +32,11 @@ const Profile = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [profilePicturePreview, setProfilePicturePreview] = useState("");
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    dispatch(show_search(false));
+    dispatch(search_bar_action(""));
+  }, [dispatch]);
 
   useEffect(() => {
     const fetchProfileData = async () => {

@@ -5,6 +5,7 @@ import { faUser, faRightLeft, faSignOutAlt } from "@fortawesome/free-solid-svg-i
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
+import Image from "next/image";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 // globals.css imported in root layout
 import { Role_Action } from "@/Redux/Action";
@@ -61,6 +62,12 @@ const ProfileLink = () => {
     }
   };
 
+  const profileImageSrc = userData?.user_data?.profile_picture
+    ? (userData.user_data.profile_picture.startsWith("http")
+        ? userData.user_data.profile_picture
+        : `${API_BASE}${userData.user_data.profile_picture.startsWith("/") ? "" : "/"}${userData.user_data.profile_picture}`)
+    : DEFAULT_IMAGE;
+
   return (
     <div className="relative">
       <button
@@ -69,10 +76,11 @@ const ProfileLink = () => {
         aria-label="Profile Menu"
       >
         <div className="relative w-10 h-10 md:w-12 md:h-12 lg:w-12 lg:h-12">
-          <img
-            src={userData?.user_data?.profile_picture || DEFAULT_IMAGE} 
+          <Image
+            src={profileImageSrc}
             alt="Profile"
-            className="rounded-full border-2 border-gray-300 object-cover w-full h-full"
+            fill
+            className="rounded-full border-2 border-gray-300 object-cover"
           />
         </div>
       </button>
@@ -126,5 +134,3 @@ const ProfileLink = () => {
 };
 
 export { ProfileLink };
-
-

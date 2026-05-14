@@ -19,7 +19,7 @@ export const Auth = (role) => {
       }
 
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const response = await axios.get(`${API_BASE}/get_user_role?role=${role}`, {
+      const response = await axios.get(`${API_BASE}/get_user_role/?role=${role}`, {
         withCredentials: true,
         headers,
       });

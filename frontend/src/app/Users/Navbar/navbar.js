@@ -20,6 +20,7 @@ import { Role_Action } from "@/Redux/Action";
 import { ProfileLink } from "./profile";
 import { SearchBar } from "./search";
 import bgImage from "../../Photos/file.png";
+import Image from "next/image";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -48,11 +49,7 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14">
           <div className="flex items-center space-x-3">
-            <img
-              src={bgImage.src}
-              alt="Logo"
-              className="h-12 w-12 rounded-full"
-            />
+            <Image src={bgImage} alt="Logo" width={48} height={48} className="h-12 w-12 rounded-full object-cover" priority />
             <SearchBar />
           </div>
 
@@ -197,14 +194,14 @@ const Navbar = () => {
                 path="/Users/Notifications"
                 router={router}
               />
-              {userRole === "Candidate" && (
-                <NavbarLinkMobile
-                  icon={faUserGraduate}
-                  label="Practice"
-                  path="/Users/Practice"
-                  router={router}
-                />
-              )}
+                {userRole === "Candidate" && (
+                  <NavbarLinkMobile
+                    icon={faUserGraduate}
+                    label="Practice"
+                    path="/Users/Practice"
+                    router={router}
+                  />
+                )}
 
               <div className="flex flex-col space-y-2 mt-4">
                 <button
