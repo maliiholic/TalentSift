@@ -15,12 +15,9 @@
         const route = useRouter();
         useEffect(() => {
             const checkAuth = async () => {
-                if (role === 'Guest' && typeof window !== 'undefined' && !localStorage.getItem('access')) {
-                    Promise.resolve().then(() => setLoading(false));
-                    return;
-                }
-
                 try {
+                    // Always run the auth check and wait for it to finish before showing page
+                    // This avoids briefly rendering "Access Denied" while auth is being resolved
                     await dispatch(Auth(role));
                 } finally {
                     setLoading(false);
