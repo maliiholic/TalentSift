@@ -192,6 +192,15 @@ class JobApplication(models.Model):
     resume = models.FileField(upload_to='applications/resumes/', null=True, blank=True)
     cover_letter = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=APPLICATION_STATUS_CHOICES, default='pending')
+    # Screening fields added for AI interview screening
+    screening_score = models.FloatField(null=True, blank=True)  # 0-10 scale
+    SCREENING_STATUS_CHOICES = [
+        ('not_started', 'Not started'),
+        ('in_progress', 'In progress'),
+        ('passed', 'Passed'),
+        ('failed', 'Failed'),
+    ]
+    screening_status = models.CharField(max_length=20, choices=SCREENING_STATUS_CHOICES, default='not_started')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

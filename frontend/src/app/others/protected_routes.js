@@ -44,6 +44,7 @@
                 pathname === '/Users/Jobs' ||
                 pathname === '/Users/Notifications' ||
                 pathname === '/Users/Profile' ||
+                pathname.startsWith('/Users/Applications/') ||
                 pathname.startsWith('/Users/Jobs/') ||
                 pathname === '/Users/Practice';
             redirectPath = '/Users/Home';
