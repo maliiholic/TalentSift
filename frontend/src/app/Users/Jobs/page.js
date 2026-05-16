@@ -88,7 +88,7 @@ const CandidateJobs = () => {
         <div className="min-h-screen py-12 mt-12" style={{ backgroundColor: "#F4F2EE" }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {jobs.length > 0 && (
-                    <header className="text-center mb-12">
+                    <header className="text-center mb-10">
                         <h1 className="text-5xl font-extrabold tracking-wide text-gray-900 leading-tight">
                             <span className="bg-gradient-to-r from-[#0073b1] to-[#0073b1] text-transparent bg-clip-text">
                                 Discover Your Dream Job
@@ -118,15 +118,15 @@ const CandidateJobs = () => {
                             {jobs.map((job) => (
                                 <div
                                     key={job.job_id}
-                                    className="bg-white rounded-lg shadow-md p-6 transition-all duration-300 hover:bg-gray-100 hover:shadow-lg cursor-pointer"
+                                    className="bg-white rounded-lg shadow-sm p-4 transition-all duration-200 hover:bg-gray-50 hover:shadow-md cursor-pointer"
                                     onClick={() => handleJobClick(job.job_id)}
                                 >
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <div className="p-3 bg-[#0073b1] rounded-full">
-                                            <FaBuilding className="text-white w-6 h-6" />
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <div className="p-2 bg-[#0073b1] rounded-full">
+                                            <FaBuilding className="text-white w-5 h-5" />
                                         </div>
                                         <div className="flex-1">
-                                            <h3 className="text-lg font-semibold text-gray-900 truncate" title={job.job_name}>
+                                            <h3 className="text-base font-medium text-gray-900 truncate" title={job.job_name}>
                                                 {truncateText(job.job_name, 15)}
                                             </h3>
                                             <p className="text-sm text-gray-500 truncate" title={job.company_name}>
@@ -144,18 +144,18 @@ const CandidateJobs = () => {
                                             {truncateText(job.employment_type, 15)}
                                         </p>
                                     </div>
-                                    <div className="mt-4 text-sm text-gray-700 line-clamp-3" title={job.description}>
+                                    <div className="mt-3 text-sm text-gray-700 line-clamp-3" title={job.description}>
                                         {truncateText(job.description, 20)}
                                     </div>
-                                    <div className="mt-6 flex justify-between items-center">
+                                    <div className="mt-4 flex justify-between items-center">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleApply(job.job_id);
                                             }}
-                                            className="px-6 py-3 bg-[#0073b1] text-white text-sm font-semibold rounded-md shadow-md hover:bg-[#005f8d] transition-all duration-300"
+                                            className="px-3 py-2 bg-[#0073b1] text-white text-sm font-medium rounded-md hover:bg-[#005f8d] transition-all duration-200"
                                         >
-                                            Apply Now
+                                            Apply
                                         </button>
 
                                         <button
@@ -163,10 +163,10 @@ const CandidateJobs = () => {
                                                 e.stopPropagation();
                                                 handleSaveJob(job.job_id);
                                             }}
-                                            className="px-4 py-2 bg-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-300"
+                                            className="px-2 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300"
                                         >
                                             <FaHeart className="inline-block mr-1 text-red-500" />
-                                            Save Job
+                                            Save
                                         </button>
                                     </div>
                                 </div>

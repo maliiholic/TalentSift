@@ -30,7 +30,28 @@ from AI_job_title.views import enhance_job_title
 from Check_Ai_subs.views import has_ai_subscription,has_prac_subscription
 from report.views import create_report, check_report_status, load_reported_jobs, delete_job_and_reports, delete_report
 from checkout.views import create_checkout_session,verify_payment,create_checkout_session_prac,verify_payment_prac
-from applications.views import apply_job, check_application_status, get_notifications, mark_notification_read, list_applications, update_application_status
+from applications.views import (
+    apply_job,
+    check_application_status,
+    get_notifications,
+    mark_notification_read,
+    mark_all_notifications_read,
+    delete_notification,
+    list_applications,
+    update_application_status,
+    start_interview,
+    submit_interview_answer,
+    complete_interview,
+    interview_status,
+    screened_applications,
+)
+from applications.views import (
+    schedule_interview,
+    list_interviews_for_job,
+    list_interviews_for_candidate,
+    update_interview,
+    add_interview_feedback,
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -83,8 +104,21 @@ urlpatterns = [
     path('check_application_status/<int:job_id>/', check_application_status, name='check_application_status'),
     path('notifications/', get_notifications, name='notifications'),
     path('notifications/<int:notification_id>/read/', mark_notification_read, name='mark_notification_read'),
+    path('notifications/mark-all-read/', mark_all_notifications_read, name='mark_all_notifications_read'),
+    path('notifications/mark-all-read', mark_all_notifications_read, name='mark_all_notifications_read_noslash'),
+    path('notifications/<int:notification_id>/', delete_notification, name='delete_notification'),
     path('job/<int:job_id>/applications/', list_applications, name='list_applications'),
     path('application/<int:application_id>/status/', update_application_status, name='update_application_status'),
+    path('application/<int:application_id>/start-interview/', start_interview, name='start_interview'),
+    path('interview/submit-answer/', submit_interview_answer, name='submit_interview_answer'),
+    path('interview/complete/<int:session_id>/', complete_interview, name='complete_interview'),
+    path('application/<int:application_id>/interview-status/', interview_status, name='interview_status'),
+    path('application/<int:application_id>/schedule-interview/', schedule_interview, name='schedule_interview'),
+    path('job/<int:job_id>/interviews/', list_interviews_for_job, name='list_interviews_for_job'),
+    path('candidate/interviews/', list_interviews_for_candidate, name='list_interviews_for_candidate'),
+    path('interview/<int:interview_id>/', update_interview, name='update_interview'),
+    path('interview/<int:interview_id>/feedback/', add_interview_feedback, name='add_interview_feedback'),
+    path('job/<int:job_id>/screened/', screened_applications, name='screened_applications'),
     path('api/practice/', include('practice.urls')),
 ]
 

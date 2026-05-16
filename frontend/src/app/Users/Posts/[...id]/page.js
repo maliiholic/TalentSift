@@ -360,12 +360,12 @@ const UpdateJob = () => {
 
 
     return (
-        <div className="flex flex-col items-center min-h-screen bg-gray-50 py-10 px-4 lg:px-8" style={{ backgroundColor: "#F4F2EE", paddingTop: "4rem" }}>
-            <div className="w-full max-w-2xl bg-white shadow-lg rounded-xl p-8 sm:p-12 lg:p-16">
-                <div className="flex items-center justify-between mb-8">
-                    <h1 className="text-3xl font-bold text-[#0073b1]">Update Post</h1>
+        <div className="flex flex-col items-center min-h-screen bg-gray-50 py-8 px-4 lg:px-8" style={{ backgroundColor: "#F4F2EE", paddingTop: "4rem" }}>
+            <div className="w-full max-w-2xl bg-white shadow-sm rounded-xl p-6 sm:p-8 lg:p-10">
+                <div className="flex items-center justify-between mb-6">
+                    <h1 className="text-2xl font-semibold text-[#0073b1]">Update Post</h1>
                     <div>
-                        <button onClick={() => router.push(`/Users/Posts/applications/${jobId}`)} className="px-4 py-2 bg-blue-600 text-white rounded">View Applications</button>
+                        <button onClick={() => router.push(`/Users/Posts/applications/${jobId}`)} className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm">View Applications</button>
                     </div>
                 </div>
                 <form className="space-y-6">
