@@ -5,6 +5,37 @@ import axios from "axios";
 import Image from "next/image";
 import { useDispatch } from "react-redux";
 import { show_search,search_bar_action } from "@/Redux/Action";
+import Loader from "@/app/others/loader";
+import { API_BASE_URL } from "@/utils/api";
+import toast from "react-hot-toast";
+
+const COUNTRIES = [
+  "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
+  "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi",
+  "Cambodia", "Cameroon", "Canada", "Cape Verde", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czechia",
+  "Denmark", "Djibouti", "Dominica", "Dominican Republic",
+  "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia",
+  "Fiji", "Finland", "France",
+  "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana",
+  "Haiti", "Honduras", "Hungary",
+  "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Ivory Coast",
+  "Jamaica", "Japan", "Jordan",
+  "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan",
+  "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg",
+  "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar",
+  "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway",
+  "Oman",
+  "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal",
+  "Qatar",
+  "Romania", "Russia", "Rwanda",
+  "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria",
+  "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu",
+  "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan",
+  "Vanuatu", "Vatican City", "Venezuela", "Vietnam",
+  "Yemen",
+  "Zambia", "Zimbabwe"
+];
+
 const Profile = () => {
   const dispatch = useDispatch();
   const role = useSelector((state) => state.Role_Reducer);
@@ -44,7 +75,7 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
-        const response = await axios.get(`http://localhost:8000/profile/`, { withCredentials: true });
+        const response = await axios.get(`${API_BASE_URL}/profile/`, { withCredentials: true });
         const data = response.data;
 
         setFormData({
@@ -76,7 +107,7 @@ const Profile = () => {
 
         setLoading(false);
       } catch (error) {
-        setError("Error loading profile data.");
+        setError(error.response?.data?.error || "Error loading profile data.");
         setLoading(false);
       }
     };
@@ -93,7 +124,7 @@ const Profile = () => {
         else if (!/^[A-Za-z]+$/.test(value)) fieldErrors[name] = "Only alphabetic characters allowed.";
         break;
       case "contactNo":
-        if (value && !/^\d{11}$/.test(value)) fieldErrors[name] = "Phone number must be 11 digits.";
+        if (value && !/^\d{10,}$/.test(value)) fieldErrors[name] = "Phone number must be at least 10 digits.";
         break;
       case "linkedIn":
       case "github":
@@ -104,7 +135,7 @@ const Profile = () => {
         if (value && !/^[A-Za-z\s]+$/.test(value)) fieldErrors[name] = "Only alphabetic characters allowed.";
         break;
       case "country":
-        if (value && !/^[A-Za-z\s]+$/.test(value)) fieldErrors[name] = "Only alphabetic characters allowed.";
+        if (!value) fieldErrors[name] = "Please select a country.";
         break;
       default:
         break;
@@ -182,23 +213,26 @@ const Profile = () => {
     }
 
     try {
-      await axios.put(`http://localhost:8000/update_profile/`, formDataToSubmit, {
+      await axios.put(`${API_BASE_URL}/update_profile/`, formDataToSubmit, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });
       setSuccessMessage("Profile updated successfully!");
+      toast.success("Profile updated successfully!");
     } catch (error) {
-      setError("Error updating profile.");
+      const errorMsg = error.response?.data?.error || "Error updating profile.";
+      setError(errorMsg);
+      toast.error(errorMsg);
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
+  if (loading) return <Loader />;
+  if (error) return <div className="min-h-screen flex items-center justify-center text-red-600">{error}</div>;
 
   return (
-    <div className="min-h-screen flex justify-center items-center mt-10" style={{ backgroundColor: "#F4F2EE" }}>
-      <div className="bg-white p-8 rounded-lg shadow-sm max-w-4xl w-full mx-5 md:mx-10 lg:mx-20 border border-gray-200">
-        <div className="text-center mb-8">
+    <div className="min-h-screen flex justify-center items-center mt-12 px-4" style={{ backgroundColor: "#F4F2EE" }}>
+      <div className="bg-white p-6 rounded-xl shadow-sm max-w-3xl w-full border border-gray-100">
+        <div className="text-center mb-6">
           {profilePicturePreview && (
             <label htmlFor="profilePictureUpload" className="block">
               <Image
@@ -206,7 +240,7 @@ const Profile = () => {
                 alt="Profile"
                 width={96}
                 height={96}
-                className="rounded-full border-2 border-gray-300 object-cover mx-auto"
+                className="rounded-full object-cover mx-auto cursor-pointer hover:opacity-90 transition"
                 unoptimized
               />
               <input
@@ -219,32 +253,45 @@ const Profile = () => {
               />
             </label>
           )}
-          <h2 className="mt-4 text-3xl font-semibold text-gray-800">Manage Your Profile</h2>
-          <p className="text-gray-500">Keep your profile up-to-date for better opportunities!</p>
+          <h2 className="mt-3 text-2xl font-bold text-[#0073b1]">Manage Your Profile</h2>
+          <p className="text-gray-600 text-sm mt-1">Keep your profile up-to-date for better opportunities!</p>
         </div>
 
-        {successMessage && <p className="text-green-500 text-center mb-4">{successMessage}</p>}
+        {successMessage && <p className="text-green-600 text-center mb-4 text-sm">{successMessage}</p>}
+        {error && <p className="text-red-600 text-center mb-4 text-sm">{error}</p>}
 
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
               { name: "firstName", label: "First Name", placeholder: "", type: "text" },
               { name: "lastName", label: "Last Name", placeholder: "", type: "text" },
               { name: "email", label: "Email", placeholder: "", type: "email", readOnly: true },
-              { name: "contactNo", label: "Contact No", placeholder: "", type: "text" },
-              { name: "location", label: "Location", placeholder: "Enter your city", type: "text" },
-              { name: "country", label: "Country", placeholder: "Enter your country", type: "text" },
-              { name: "linkedIn", label: "LinkedIn Profile", placeholder: "Enter LinkedIn URL", type: "url" },
-              { name: "github", label: "GitHub Profile", placeholder: "Enter GitHub URL", type: "url", show: role === "Candidate" },
-              { name: "skills", label: "Skills", placeholder: "Enter your skills", type: "text", show: role === "Candidate" },
-              { name: "education", label: "Education", placeholder: "", type: "textarea", show: role === "Candidate" },
-              { name: "companyName", label: "Company Name", placeholder: "", type: "text", show: role === "Recruiter" },
-              { name: "website", label: "Company Website", placeholder: "", type: "url", show: role === "Recruiter" },
-            ].map(({ name, label, placeholder, type, readOnly, show = true }) => (
+              { name: "contactNo", label: "Contact No", placeholder: "03001234567", type: "tel" },
+              { name: "location", label: "Location (City)", placeholder: "Enter your city", type: "text" },
+              { name: "country", label: "Country", type: "select", options: COUNTRIES },
+              { name: "linkedIn", label: "LinkedIn Profile", placeholder: "https://linkedin.com/in/yourprofile", type: "url" },
+              { name: "github", label: "GitHub Profile", placeholder: "https://github.com/yourprofile", type: "url", show: role === "Candidate" },
+              { name: "skills", label: "Skills (comma-separated)", placeholder: "React, Node.js, Python", type: "text", show: role === "Candidate" },
+              { name: "education", label: "Education", placeholder: "B.S. Computer Science - University Name", type: "textarea", show: role === "Candidate" },
+              { name: "companyName", label: "Company Name", placeholder: "Enter company name", type: "text", show: role === "Recruiter" },
+              { name: "website", label: "Company Website", placeholder: "https://company.com", type: "url", show: role === "Recruiter" },
+            ].map(({ name, label, placeholder, type, readOnly, show = true, options = [] }) => (
               show && (
                 <div key={name}>
-                  <label className="block text-gray-700 text-sm mb-1">{label}</label>
-                  {type !== "textarea" ? (
+                  <label className="block text-gray-700 text-sm font-medium mb-1">{label}</label>
+                  {type === "select" ? (
+                    <select
+                      name={name}
+                      value={formData[name] ?? ""}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#0073b1] transition bg-white cursor-pointer"
+                    >
+                      <option value="">Select {label}</option>
+                      {options.map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                  ) : type !== "textarea" ? (
                     <input
                       type={type}
                       name={name}
@@ -252,7 +299,7 @@ const Profile = () => {
                       onChange={handleChange}
                       placeholder={placeholder}
                       readOnly={readOnly}
-                      className={`w-full px-3 py-2 border border-gray-300 rounded-md ${readOnly ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                      className={`w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#0073b1] transition ${readOnly ? "bg-gray-50 cursor-not-allowed" : ""}`}
                     />
                   ) : (
                     <textarea
@@ -260,7 +307,8 @@ const Profile = () => {
                       value={formData[name] ?? ""}
                       onChange={handleChange}
                       rows="3"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#0073b1] transition"
+                      placeholder={placeholder}
                     />
                   )}
                   {errors[name] && <p className="text-red-500 text-xs mt-1">{errors[name]}</p>}
@@ -269,12 +317,12 @@ const Profile = () => {
             ))}
 
             <div className="md:col-span-2">
-              <label className="block text-gray-700 text-sm mb-1">Bio</label>
+              <label className="block text-gray-700 text-sm font-medium mb-1">Bio / Experience</label>
               <textarea
                 name="bio"
                 value={formData.bio ?? ""}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#0073b1] transition"
                 rows="4"
                 placeholder="Tell us something about yourself"
               />
@@ -282,37 +330,47 @@ const Profile = () => {
 
             {role === "Candidate" && (
               <div className="md:col-span-2">
-                <label className="block text-gray-700 text-sm mb-1">Resume / CV</label>
-                <div className="flex flex-col gap-3 rounded-md border border-dashed border-gray-300 p-4 bg-gray-50">
-                  {resumePreview && (
-                    <a
-                      href={resumePreview}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-sm text-blue-600 underline break-all"
-                    >
-                      Current resume: {resumeFileName || "View resume"}
-                    </a>
-                  )}
-                  <input
-                    type="file"
-                    name="resume"
-                    accept=".pdf,.doc,.docx"
-                    onChange={handleResumeChange}
-                    className="w-full text-sm text-gray-700"
-                  />
+                <label className="block text-gray-700 text-sm font-medium mb-1">Resume / CV</label>
+                <div className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4 bg-white hover:border-[#0073b1] transition">
+                  <div className="flex items-center justify-between">
+                    {resumePreview ? (
+                      <a
+                        href={resumePreview}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm text-[#0073b1] font-medium hover:underline break-all"
+                      >
+                        {resumeFileName || "View resume"}
+                      </a>
+                    ) : (
+                      <p className="text-sm text-gray-500">No resume uploaded yet</p>
+                    )}
+                  </div>
+                  <label htmlFor="resumeUpload" className="w-full">
+                    <input
+                      id="resumeUpload"
+                      type="file"
+                      name="resume"
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleResumeChange}
+                      className="hidden"
+                    />
+                    <div className="w-full px-3 py-2 border border-gray-200 rounded-lg text-center cursor-pointer hover:bg-blue-50 transition bg-white text-sm font-medium text-[#0073b1]">
+                      {resumePreview ? "Change Resume" : "Upload Resume"}
+                    </div>
+                  </label>
                   <p className="text-xs text-gray-500">
-                    Upload your CV here. This will be used as the default resume when you apply for jobs.
+                    PDF, DOC, or DOCX format (max 5MB)
                   </p>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="text-center mt-8">
+          <div className="text-center mt-6">
             <button
               type="submit"
-              className="bg-blue-600 text-white py-2 px-5 rounded-md hover:bg-blue-700 transition-all duration-300 shadow-sm"
+              className="bg-[#0073b1] text-white py-2 px-6 rounded-lg hover:opacity-90 transition-all duration-300 shadow-sm text-sm font-medium"
             >
               Save Profile
             </button>
