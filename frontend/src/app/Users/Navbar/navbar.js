@@ -63,6 +63,17 @@ const Navbar = () => {
     };
 
     fetchUnreadCount();
+    // listen for updates from notifications page
+    const handler = (e) => {
+      try {
+        const c = e?.detail?.unread_count ?? 0;
+        setNotificationCount(c);
+      } catch (err) {
+        // ignore
+      }
+    };
+    window.addEventListener('notificationsUpdated', handler);
+    return () => window.removeEventListener('notificationsUpdated', handler);
   }, [userRole]);
 
   return (

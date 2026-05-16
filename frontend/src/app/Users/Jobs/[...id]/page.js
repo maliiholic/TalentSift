@@ -6,11 +6,12 @@ import Loader from "@/app/others/loader";
 import { FaRobot, FaUserTie, FaExclamationCircle, FaBuilding, FaMapMarkerAlt, FaClipboardList, FaClock, FaArrowLeft, FaCheckCircle, FaFlag } from "react-icons/fa";
 import { MdOutlineWork } from "react-icons/md";
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { show_search } from "@/Redux/Action";
 import { API_BASE_URL } from "@/utils/api";
 
 const Job = () => {
+    const router = useRouter();
     const [job, setJob] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -27,6 +28,9 @@ const Job = () => {
     const [hasApplied, setHasApplied] = useState(false);
     const [applying, setApplying] = useState(false);
     const [applyMessage, setApplyMessage] = useState("");
+    const [applyError, setApplyError] = useState(false);
+    const [showInterviewPrompt, setShowInterviewPrompt] = useState(false);
+    const [latestApplicationId, setLatestApplicationId] = useState(null);
     const role = useSelector((state) => state.Role_Reducer);
 
     const dispatch = useDispatch();
@@ -124,6 +128,7 @@ const Job = () => {
 
     const handleApplyClick = () => {
         setApplyMessage("");
+        setApplyError(false);
         setResumeFile(null);
         setCoverLetter("");
         setShowApplyModal(true);
@@ -132,6 +137,7 @@ const Job = () => {
     const handleApplySubmit = async () => {
         if (!profileResume && !resumeFile) {
             setApplyMessage("Please upload your resume in your profile first.");
+            setApplyError(true);
             return;
         }
 
@@ -147,7 +153,7 @@ const Job = () => {
                 formData.append("resume", resumeFile);
             }
 
-            await axios.post(`${API_BASE_URL}/apply-job/${jobId}/`, formData, {
+            const response = await axios.post(`${API_BASE_URL}/apply-job/${jobId}/`, formData, {
                 withCredentials: true,
                 headers: { "Content-Type": "multipart/form-data" },
             });
@@ -155,8 +161,12 @@ const Job = () => {
             setHasApplied(true);
             setShowApplyModal(false);
             setApplyMessage("Application submitted successfully.");
+            setApplyError(false);
+            setLatestApplicationId(response.data?.application_id || null);
+            setShowInterviewPrompt(true);
         } catch (error) {
             setApplyMessage(error.response?.data?.error || error.response?.data?.message || "Failed to submit application.");
+            setApplyError(true);
         } finally {
             setApplying(false);
         }
@@ -382,7 +392,11 @@ const Job = () => {
                             onChange={(e) => setCoverLetter(e.target.value)}
                         />
 
-                        {applyMessage && <p className="text-sm mb-3 text-red-500">{applyMessage}</p>}
+                        {applyMessage && (
+                            <p className={`text-sm mb-3 ${applyError ? "text-red-500" : "text-green-600"}`}>
+                                {applyMessage}
+                            </p>
+                        )}
 
                         <div className="flex justify-between gap-3">
                             <button
@@ -397,6 +411,38 @@ const Job = () => {
                                 className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg disabled:opacity-60"
                             >
                                 {applying ? "Submitting..." : "Submit Application"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Post-apply AI interview prompt */}
+            {showInterviewPrompt && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-900 bg-opacity-50 px-4">
+                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
+                        <h2 className="text-xl font-bold mb-2 text-[#0073b1]">Application Submitted</h2>
+                        <p className="text-gray-700 mb-4">
+                            You can take the AI screening interview now, or do it later from Notifications.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowInterviewPrompt(false)}
+                                className="px-6 py-2 bg-gray-400 text-white font-semibold rounded-lg"
+                            >
+                                Later
+                            </button>
+                            <button
+                                onClick={() => {
+                                    const id = latestApplicationId;
+                                    setShowInterviewPrompt(false);
+                                    if (id) {
+                                        router.push(`/Users/Applications/${id}/interview`);
+                                    }
+                                }}
+                                className="px-6 py-2 bg-[#0073b1] text-white font-semibold rounded-lg"
+                            >
+                                Take AI Interview Now
                             </button>
                         </div>
                     </div>
