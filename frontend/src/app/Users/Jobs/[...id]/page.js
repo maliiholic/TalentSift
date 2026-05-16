@@ -5,7 +5,7 @@ import axios from "axios";
 import Loader from "@/app/others/loader";
 import { FaRobot, FaUserTie, FaExclamationCircle, FaBuilding, FaMapMarkerAlt, FaClipboardList, FaClock, FaArrowLeft, FaCheckCircle, FaFlag } from "react-icons/fa";
 import { MdOutlineWork } from "react-icons/md";
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from "next/navigation";
 import { show_search } from "@/Redux/Action";
 import { API_BASE_URL } from "@/utils/api";
@@ -19,6 +19,15 @@ const Job = () => {
     const [feedback, setFeedback] = useState(""); // Feedback input
     const [feedbackError, setFeedbackError] = useState(null); // Feedback validation error
     const [report, setreport] = useState("No");
+    const [showApplyModal, setShowApplyModal] = useState(false);
+    const [coverLetter, setCoverLetter] = useState("");
+    const [resumeFile, setResumeFile] = useState(null);
+    const [profileResume, setProfileResume] = useState("");
+    const [profileResumeName, setProfileResumeName] = useState("");
+    const [hasApplied, setHasApplied] = useState(false);
+    const [applying, setApplying] = useState(false);
+    const [applyMessage, setApplyMessage] = useState("");
+    const role = useSelector((state) => state.Role_Reducer);
 
     const dispatch = useDispatch();
     const routeParams = useParams();
@@ -63,6 +72,36 @@ const Job = () => {
         fetchJobDetails();
     }, [jobId]);
 
+    useEffect(() => {
+        const fetchCandidateData = async () => {
+            if (role !== "Candidate") {
+                return;
+            }
+
+            try {
+                const profileResponse = await axios.get(`${API_BASE_URL}/profile/`, { withCredentials: true });
+                const candidateResume = profileResponse.data?.candidate?.resume || "";
+                setProfileResume(candidateResume);
+                if (candidateResume) {
+                    setProfileResumeName(candidateResume.split("/").pop() || "Resume");
+                }
+            } catch (error) {
+                console.warn("Failed to load candidate profile:", error);
+            }
+
+            try {
+                const statusResponse = await axios.get(`${API_BASE_URL}/check_application_status/${jobId}/`, {
+                    withCredentials: true,
+                });
+                setHasApplied(statusResponse.data?.message === "Yes");
+            } catch (error) {
+                console.warn("Failed to check application status:", error);
+            }
+        };
+
+        fetchCandidateData();
+    }, [jobId, role]);
+
     const reportJob = async (jobId) => {
         if (!feedback.trim()) {
             setFeedbackError("Feedback is required.");
@@ -80,6 +119,46 @@ const Job = () => {
             setreport("Yes")
         } catch (err) {
             console.error("Error reporting job:", err);
+        }
+    };
+
+    const handleApplyClick = () => {
+        setApplyMessage("");
+        setResumeFile(null);
+        setCoverLetter("");
+        setShowApplyModal(true);
+    };
+
+    const handleApplySubmit = async () => {
+        if (!profileResume && !resumeFile) {
+            setApplyMessage("Please upload your resume in your profile first.");
+            return;
+        }
+
+        setApplying(true);
+        setApplyMessage("");
+
+        try {
+            const formData = new FormData();
+            if (coverLetter.trim()) {
+                formData.append("cover_letter", coverLetter.trim());
+            }
+            if (resumeFile) {
+                formData.append("resume", resumeFile);
+            }
+
+            await axios.post(`${API_BASE_URL}/apply-job/${jobId}/`, formData, {
+                withCredentials: true,
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+
+            setHasApplied(true);
+            setShowApplyModal(false);
+            setApplyMessage("Application submitted successfully.");
+        } catch (error) {
+            setApplyMessage(error.response?.data?.error || error.response?.data?.message || "Failed to submit application.");
+        } finally {
+            setApplying(false);
         }
     };
 
@@ -209,12 +288,17 @@ const Job = () => {
                     </button>
 
                     <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center sm:justify-start">
-                        <button
-                            onClick={() => alert("Apply Now functionality to be implemented")}
-                            className="w-full sm:w-auto px-6 py-3 bg-green-500 text-white font-semibold rounded-lg shadow-md transition-colors duration-300 hover:bg-green-600"
-                        >
-                            Apply <FaCheckCircle className="ml-2 inline-block" />
-                        </button>
+                        {role === "Candidate" && (
+                            <button
+                                onClick={handleApplyClick}
+                                disabled={hasApplied}
+                                className={`w-full sm:w-auto px-6 py-3 text-white font-semibold rounded-lg shadow-md transition-colors duration-300 ${
+                                    hasApplied ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
+                                }`}
+                            >
+                                {hasApplied ? "Applied" : "Apply"} <FaCheckCircle className="ml-2 inline-block" />
+                            </button>
+                        )}
                         <button
                             onClick={() => handleReportClick(job.id)}
                             disabled={report === "Yes"} // Disable the button if report status is "Yes"
@@ -258,6 +342,61 @@ const Job = () => {
                                 className="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg"
                             >
                                 Submit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Apply Modal */}
+            {showApplyModal && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-900 bg-opacity-50 px-4">
+                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
+                        <h2 className="text-xl font-bold mb-4">Apply for {job.job_name}</h2>
+
+                        <div className="mb-4 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+                            <p className="font-medium">Resume from Profile</p>
+                            {profileResume ? (
+                                <a href={profileResume} target="_blank" rel="noreferrer" className="text-blue-600 underline break-all">
+                                    {profileResumeName || "View resume"}
+                                </a>
+                            ) : (
+                                <p className="text-red-500">No resume found in profile. Please upload one in your profile first.</p>
+                            )}
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Optional: upload a different CV for this job</label>
+                            <input
+                                type="file"
+                                accept=".pdf,.doc,.docx"
+                                onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
+                                className="w-full text-sm"
+                            />
+                        </div>
+
+                        <textarea
+                            className="w-full border border-gray-300 rounded-lg p-2 mb-4 min-h-[120px]"
+                            placeholder="Optional cover letter..."
+                            value={coverLetter}
+                            onChange={(e) => setCoverLetter(e.target.value)}
+                        />
+
+                        {applyMessage && <p className="text-sm mb-3 text-red-500">{applyMessage}</p>}
+
+                        <div className="flex justify-between gap-3">
+                            <button
+                                onClick={() => setShowApplyModal(false)}
+                                className="px-6 py-2 bg-gray-400 text-white font-semibold rounded-lg"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleApplySubmit}
+                                disabled={applying}
+                                className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg disabled:opacity-60"
+                            >
+                                {applying ? "Submitting..." : "Submit Application"}
                             </button>
                         </div>
                     </div>

@@ -138,6 +138,8 @@ def update_profile(request):
             candidate.skills = request.data.get('skills', candidate.skills)
             candidate.education = request.data.get('education', candidate.education)
             candidate.github_link = request.data.get('github_link', candidate.github_link)
+            if 'resume' in request.FILES:
+                candidate.resume = request.FILES['resume']
             candidate.save()
 
         elif role == 'Recruiter' or user.role == 'Recruiter':
@@ -158,6 +160,7 @@ def update_profile(request):
             'skills': candidate.skills if role == 'Candidate' else None,
             'education': candidate.education if role == 'Candidate' else None,
             'github_link': candidate.github_link if role == 'Candidate' else None,
+            'resume': request.build_absolute_uri(candidate.resume.url) if role == 'Candidate' and candidate.resume else None,
             'bio': profile.bio if role == 'Candidate' else None,
             'company_name': recruiter.company_name if role == 'Recruiter' else None,
             'company_website': recruiter.company_website if role == 'Recruiter' else None,

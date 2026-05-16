@@ -362,7 +362,12 @@ const UpdateJob = () => {
     return (
         <div className="flex flex-col items-center min-h-screen bg-gray-50 py-10 px-4 lg:px-8" style={{ backgroundColor: "#F4F2EE", paddingTop: "4rem" }}>
             <div className="w-full max-w-2xl bg-white shadow-lg rounded-xl p-8 sm:p-12 lg:p-16">
-                <h1 className="text-3xl font-bold text-center text-[#0073b1] mb-8">Update Post</h1>
+                <div className="flex items-center justify-between mb-8">
+                    <h1 className="text-3xl font-bold text-[#0073b1]">Update Post</h1>
+                    <div>
+                        <button onClick={() => router.push(`/Users/Posts/applications/${jobId}`)} className="px-4 py-2 bg-blue-600 text-white rounded">View Applications</button>
+                    </div>
+                </div>
                 <form className="space-y-6">
                     {page === 1 && (
                         <>

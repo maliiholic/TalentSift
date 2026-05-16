@@ -30,6 +30,7 @@ from AI_job_title.views import enhance_job_title
 from Check_Ai_subs.views import has_ai_subscription,has_prac_subscription
 from report.views import create_report, check_report_status, load_reported_jobs, delete_job_and_reports, delete_report
 from checkout.views import create_checkout_session,verify_payment,create_checkout_session_prac,verify_payment_prac
+from applications.views import apply_job, check_application_status, get_notifications, mark_notification_read, list_applications, update_application_status
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -78,6 +79,12 @@ urlpatterns = [
     path('delete_job_report/<int:job_id>/', delete_job_and_reports, name='delete_job_and_reports'),
     path('delete_report/<int:report_id>/', delete_report, name='delete_report'),
     path('check_report_status/<int:job_id>/', check_report_status, name='check_report_status'),
+    path('apply-job/<int:job_id>/', apply_job, name='apply_job'),
+    path('check_application_status/<int:job_id>/', check_application_status, name='check_application_status'),
+    path('notifications/', get_notifications, name='notifications'),
+    path('notifications/<int:notification_id>/read/', mark_notification_read, name='mark_notification_read'),
+    path('job/<int:job_id>/applications/', list_applications, name='list_applications'),
+    path('application/<int:application_id>/status/', update_application_status, name='update_application_status'),
     path('api/practice/', include('practice.urls')),
 ]
 

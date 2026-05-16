@@ -24,6 +24,7 @@ const Profile = () => {
     companyName: "",
     website: "",
     profilePicture: null,
+    resume: null,
     role: role,
   });
 
@@ -31,6 +32,8 @@ const Profile = () => {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [profilePicturePreview, setProfilePicturePreview] = useState("");
+  const [resumePreview, setResumePreview] = useState("");
+  const [resumeFileName, setResumeFileName] = useState("");
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -59,10 +62,16 @@ const Profile = () => {
           companyName: data.recruiter ? data.recruiter.company_name : "",
           website: data.recruiter ? data.recruiter.company_website : "",
           profilePicture: data.profile.profile_picture || null,
+          resume: data.candidate ? data.candidate.resume || null : null,
         });
 
         if (data.profile.profile_picture) {
           setProfilePicturePreview(data.profile.profile_picture);
+        }
+
+        if (data.candidate?.resume) {
+          setResumePreview(data.candidate.resume);
+          setResumeFileName(data.candidate.resume.split("/").pop() || "Resume");
         }
 
         setLoading(false);
@@ -124,6 +133,18 @@ const Profile = () => {
     setProfilePicturePreview(URL.createObjectURL(file));
   };
 
+  const handleResumeChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setFormData({
+      ...formData,
+      resume: file,
+    });
+    setResumeFileName(file.name);
+    setResumePreview(URL.createObjectURL(file));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -150,6 +171,7 @@ const Profile = () => {
     if (formData.github) formDataToSubmit.append("github_link", formData.github);
     if (formData.bio) formDataToSubmit.append("bio", formData.bio);
     if (formData.profilePicture) formDataToSubmit.append("profile_picture", formData.profilePicture);
+    if (formData.resume) formDataToSubmit.append("resume", formData.resume);
 
     if (role === "Candidate") {
       formDataToSubmit.append("skills", formData.skills);
@@ -257,6 +279,34 @@ const Profile = () => {
                 placeholder="Tell us something about yourself"
               />
             </div>
+
+            {role === "Candidate" && (
+              <div className="md:col-span-2">
+                <label className="block text-gray-700 text-sm mb-1">Resume / CV</label>
+                <div className="flex flex-col gap-3 rounded-md border border-dashed border-gray-300 p-4 bg-gray-50">
+                  {resumePreview && (
+                    <a
+                      href={resumePreview}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm text-blue-600 underline break-all"
+                    >
+                      Current resume: {resumeFileName || "View resume"}
+                    </a>
+                  )}
+                  <input
+                    type="file"
+                    name="resume"
+                    accept=".pdf,.doc,.docx"
+                    onChange={handleResumeChange}
+                    className="w-full text-sm text-gray-700"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Upload your CV here. This will be used as the default resume when you apply for jobs.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="text-center mt-8">

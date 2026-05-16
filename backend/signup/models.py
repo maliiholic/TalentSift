@@ -179,3 +179,39 @@ class Report(models.Model):
         return f"Report for {self.job.job_name} - Feedback: {self.feedback[:30]}..."
 
 
+class JobApplication(models.Model):
+    APPLICATION_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('reviewed', 'Reviewed'),
+        ('shortlisted', 'Shortlisted'),
+        ('rejected', 'Rejected'),
+    ]
+
+    job = models.ForeignKey('Job', on_delete=models.CASCADE, related_name='applications')
+    candidate = models.ForeignKey('Candidate', on_delete=models.CASCADE, related_name='applications')
+    resume = models.FileField(upload_to='applications/resumes/', null=True, blank=True)
+    cover_letter = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=APPLICATION_STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('job', 'candidate')
+
+    def __str__(self):
+        return f"{self.candidate.profile.user.email} -> {self.job.job_name}"
+
+
+class UserNotification(models.Model):
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    application = models.ForeignKey(JobApplication, on_delete=models.CASCADE, related_name='notifications')
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Notification for {self.recipient.email}: {self.title}"
+
+

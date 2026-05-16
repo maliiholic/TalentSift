@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHome,
@@ -16,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 // globals.css imported in root layout
 import { Role_Action } from "@/Redux/Action";
+import { API_BASE_URL } from "@/utils/api";
 
 import { ProfileLink } from "./profile";
 import { SearchBar } from "./search";
@@ -24,6 +26,7 @@ import Image from "next/image";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
   const router = useRouter();
   const dispatch = useDispatch();
   const userRole = useSelector((state) => state.Role_Reducer);
@@ -43,6 +46,24 @@ const Navbar = () => {
     await dispatch(Role_Action("Candidate"));
     router.push("/Users/Home");
   };
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (userRole === "Guest") {
+        setNotificationCount(0);
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${API_BASE_URL}/notifications/`, { withCredentials: true });
+        setNotificationCount(response.data?.unread_count || 0);
+      } catch (error) {
+        setNotificationCount(0);
+      }
+    };
+
+    fetchUnreadCount();
+  }, [userRole]);
 
   return (
     <nav className="bg-[#FFFFFF] shadow-md fixed top-0 w-full z-50 border-b border-gray-200">
@@ -123,6 +144,7 @@ const Navbar = () => {
                   label="Notifications"
                   path="/Users/Notifications"
                   router={router}
+                  badgeCount={notificationCount}
                 />
                 {userRole === "Candidate" && (
                   <NavbarLink
@@ -193,6 +215,7 @@ const Navbar = () => {
                 label="Notifications"
                 path="/Users/Notifications"
                 router={router}
+                  badgeCount={notificationCount}
               />
                 {userRole === "Candidate" && (
                   <NavbarLinkMobile
@@ -246,22 +269,36 @@ const Navbar = () => {
   );
 };
 
-const NavbarLink = ({ icon, label, path, router }) => (
+const NavbarLink = ({ icon, label, path, router, badgeCount = 0 }) => (
   <button
     className="flex flex-col items-center text-gray-700 hover:text-black transition duration-300 p-1 rounded-lg hover:bg-gray-200"
     onClick={() => router.push(path)}
   >
-    <FontAwesomeIcon icon={icon} className="h-5 w-5" />
+    <span className="relative inline-flex items-center justify-center">
+      <FontAwesomeIcon icon={icon} className="h-5 w-5" />
+      {badgeCount > 0 && (
+        <span className="absolute -top-2 -right-2 min-w-[1.25rem] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">
+          {badgeCount > 9 ? '9+' : badgeCount}
+        </span>
+      )}
+    </span>
     <span className="text-xs font-medium">{label}</span>
   </button>
 );
 
-const NavbarLinkMobile = ({ icon, label, path, router }) => (
+const NavbarLinkMobile = ({ icon, label, path, router, badgeCount = 0 }) => (
   <button
     className="flex items-center space-x-2 w-full text-left text-gray-700 hover:text-black px-3 py-2 transition duration-200 rounded-lg hover:bg-gray-200"
     onClick={() => router.push(path)}
   >
-    <FontAwesomeIcon icon={icon} className="h-4 w-4" />
+    <span className="relative inline-flex items-center justify-center">
+      <FontAwesomeIcon icon={icon} className="h-4 w-4" />
+      {badgeCount > 0 && (
+        <span className="absolute -top-2 -right-2 min-w-[1rem] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center">
+          {badgeCount > 9 ? '9+' : badgeCount}
+        </span>
+      )}
+    </span>
     <span>{label}</span>
   </button>
 );
