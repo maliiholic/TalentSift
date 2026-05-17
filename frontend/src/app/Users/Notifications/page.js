@@ -60,11 +60,10 @@ const Notification = () => {
     const handleMarkRead = async (notificationId) => {
         try {
             await axios.patch(`${API_BASE_URL}/notifications/${notificationId}/read/`, {}, { withCredentials: true });
-            setNotifications((prev) => {
-                const updated = prev.map((item) => (item.id === notificationId ? { ...item, is_read: true } : item));
-                dispatchUnreadUpdate(updated);
-                return updated;
-            });
+            setNotifications((prev) => prev.map((item) => (item.id === notificationId ? { ...item, is_read: true } : item)));
+            dispatchUnreadUpdate(
+                notifications.map((item) => (item.id === notificationId ? { ...item, is_read: true } : item))
+            );
         } catch (err) {
             console.error("Failed to mark notification read:", err);
         }
@@ -73,11 +72,9 @@ const Notification = () => {
     const markAllRead = async () => {
         try {
             const res = await axios.post(`${API_BASE_URL}/notifications/mark-all-read/`, {}, { withCredentials: true });
-            setNotifications((prev) => {
-                const updated = prev.map((item) => ({ ...item, is_read: true }));
-                dispatchUnreadUpdate(updated);
-                return updated;
-            });
+            const updated = notifications.map((item) => ({ ...item, is_read: true }));
+            setNotifications(updated);
+            dispatchUnreadUpdate(updated);
             toast.success(res.data?.message || 'Marked all as read');
         } catch (err) {
             console.error('Failed to mark all read', err);
@@ -88,11 +85,9 @@ const Notification = () => {
     const handleDelete = async (notificationId) => {
         try {
             await axios.delete(`${API_BASE_URL}/notifications/${notificationId}/`, { withCredentials: true });
-            setNotifications((prev) => {
-                const updated = prev.filter((i) => i.id !== notificationId);
-                dispatchUnreadUpdate(updated);
-                return updated;
-            });
+            const updated = notifications.filter((i) => i.id !== notificationId);
+            setNotifications(updated);
+            dispatchUnreadUpdate(updated);
             toast.success('Notification deleted');
         } catch (err) {
             console.error('Failed to delete notification', err);

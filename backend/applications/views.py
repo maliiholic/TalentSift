@@ -225,11 +225,11 @@ def start_interview(request, application_id):
 def submit_interview_answer(request):
     data = request.data
     session_id = data.get('session_id')
+    raw_order = data.get('order', 0)
     try:
-        order = int(data.get('order', 0))
+        order = int(raw_order)
     except Exception:
-        logger.info(f"Bad order value in submit payload: {data.get('order')}")
-        return Response({'error': "Invalid 'order' value"}, status=status.HTTP_400_BAD_REQUEST)
+        order = 0
     user_answer = data.get('user_answer', '')
 
     try:
@@ -269,7 +269,18 @@ def submit_interview_answer(request):
             return Response({'finished': True, 'final_score': 0, 'passed': False, 'message': 'Interview time has expired. Session marked failed.'}, status=status.HTTP_200_OK)
 
     questions = session.questions or []
+    attempts = session.attempts or []
+
+    # If the client omitted order (for example after resuming a session), advance to the next unanswered question.
     if order < 1 or order > len(questions):
+        answered_orders = {a.get('order') for a in attempts if isinstance(a, dict)}
+        for idx in range(1, len(questions) + 1):
+            if idx not in answered_orders:
+                order = idx
+                break
+
+    if order < 1 or order > len(questions):
+        logger.info(f"Invalid question order in submit payload: {raw_order}; attempts={len(attempts)} questions={len(questions)}")
         return Response({'error': 'Invalid question order'}, status=status.HTTP_400_BAD_REQUEST)
 
     q = questions[order-1]
@@ -292,7 +303,6 @@ def submit_interview_answer(request):
             score = 7
             feedback = 'Evaluation unavailable, scored conservatively.'
 
-    attempts = session.attempts or []
     # replace existing attempt for same order
     found = False
     for a in attempts:
@@ -462,6 +472,35 @@ def interview_status(request, application_id):
         'questions': [{k: v for k, v in q.items() if k != 'correct'} for q in (session.questions or [])] if session.status == 'in_progress' else [],
         'session_id': session.id,
     }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@authentication_classes([CustomJWTAuthentication])
+@permission_classes([IsAuthenticated])
+def log_interview_event(request):
+    """Lightweight endpoint to record client-side interview events (visibilitychange, focus loss, copy attempts).
+    For now we log events to server logs for audit and future persistence.
+    """
+    data = request.data or {}
+    session_id = data.get('session_id')
+    event = data.get('event')
+    details = data.get('details') or {}
+
+    if not session_id or not event:
+        return Response({'error': 'session_id and event required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        session = InterviewSession.objects.get(id=session_id)
+    except InterviewSession.DoesNotExist:
+        return Response({'error': 'Session not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if session.candidate != request.user:
+        return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+    # Log event for now; persistent storage can be added later.
+    logger.info(f"InterviewEvent session={session.id} user={request.user.email} event={event} details={details}")
+
+    return Response({'message': 'Event recorded'}, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
