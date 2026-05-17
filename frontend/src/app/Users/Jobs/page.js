@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { FaBuilding, FaMapMarkerAlt, FaSuitcase, FaHeart, FaBriefcase } from "react-icons/fa";
+import { FaBuilding, FaMapMarkerAlt, FaSuitcase, FaBriefcase } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { show_search } from "@/Redux/Action";
@@ -80,10 +80,6 @@ const CandidateJobs = () => {
         console.log(`Applied to job ID: ${jobId}`);
     };
 
-    const handleSaveJob = (jobId) => {
-        console.log(`Saved job ID: ${jobId}`);
-    };
-
     return (
         <div className="min-h-screen py-12 mt-12" style={{ backgroundColor: "#F4F2EE" }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -158,16 +154,6 @@ const CandidateJobs = () => {
                                             Apply
                                         </button>
 
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleSaveJob(job.job_id);
-                                            }}
-                                            className="px-2 py-1 bg-gray-200 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-300"
-                                        >
-                                            <FaHeart className="inline-block mr-1 text-red-500" />
-                                            Save
-                                        </button>
                                     </div>
                                 </div>
                             ))}
