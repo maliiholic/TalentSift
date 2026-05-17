@@ -49,7 +49,7 @@ const quickActionsByRole = {
   Candidate: [
     { title: "Browse jobs", description: "Find fresh openings tailored to you.", path: "/Users/Jobs" },
     { title: "Practice interview", description: "Sharpen your answers with AI feedback.", path: "/Users/Practice" },
-    { title: "View applications", description: "Track where you are in the hiring process.", path: "/Users/Applications" },
+    { title: "Track applications", description: "See your submitted applications and interview updates.", path: "/Users/Notifications" },
   ],
   Recruiter: [
     { title: "Create job post", description: "Publish a role in just a few steps.", path: "/Users/Posts/CreateJob" },
