@@ -1,4 +1,5 @@
 from django.core.files.base import ContentFile
+from django.core.mail import EmailMultiAlternatives, send_mail
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -8,15 +9,17 @@ from getUserData.JWT import CustomJWTAuthentication
 from signup.models import Candidate, Job, JobApplication, Profile, UserNotification
 from django.conf import settings
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, timezone as dt_timezone
 
 # Import InterviewSession model and AI helpers
 from .models import InterviewSession
 from practice.services.gemini import generate_questions, evaluate_text_answer
 import logging
+from uuid import uuid4
+import base64
+import html
 
 logger = logging.getLogger(__name__)
-from django.core.mail import send_mail
 from django.utils.dateparse import parse_datetime
 from .models import Interview, InterviewFeedback
 from urllib.parse import urljoin
@@ -25,6 +28,44 @@ from urllib.parse import urljoin
 def _get_candidate(request_user):
     profile = Profile.objects.get(user=request_user)
     return Candidate.objects.get(profile=profile)
+
+
+def _build_calendar_invite(*, subject, description, location, start_dt, end_dt, organizer_email, organizer_name, recipient_name, recipient_email):
+    def _format_ics_dt(value):
+        if timezone.is_naive(value):
+            value = timezone.make_aware(value, timezone.get_current_timezone())
+        return value.astimezone(dt_timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+
+    uid = f"{uuid4()}@talentsift"
+    dtstamp = timezone.now().astimezone(dt_timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+    dtstart = _format_ics_dt(start_dt)
+    dtend = _format_ics_dt(end_dt)
+    safe_location = (location or '').replace('\n', ' ').strip() or 'TalentSift Interview'
+    safe_description = (description or '').replace('\n', '\\n').strip()
+
+    ics_content = (
+        "BEGIN:VCALENDAR\r\n"
+        "VERSION:2.0\r\n"
+        "PRODID:-//TalentSift//Interview Scheduler//EN\r\n"
+        "CALSCALE:GREGORIAN\r\n"
+        "METHOD:REQUEST\r\n"
+        "BEGIN:VEVENT\r\n"
+        f"UID:{uid}\r\n"
+        f"DTSTAMP:{dtstamp}\r\n"
+        f"DTSTART:{dtstart}\r\n"
+        f"DTEND:{dtend}\r\n"
+        f"SUMMARY:{subject}\r\n"
+        f"LOCATION:{safe_location}\r\n"
+        f"DESCRIPTION:{safe_description}\r\n"
+        f"ORGANIZER;CN={organizer_name}:MAILTO:{organizer_email}\r\n"
+        f"ATTENDEE;CN={recipient_name};ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:MAILTO:{recipient_email}\r\n"
+        "STATUS:CONFIRMED\r\n"
+        "TRANSP:OPAQUE\r\n"
+        "END:VEVENT\r\n"
+        "END:VCALENDAR\r\n"
+    )
+
+    return ics_content
 
 
 @api_view(['POST'])
@@ -546,20 +587,97 @@ def schedule_interview(request, application_id):
     # send email to candidate
     try:
         candidate_email = application.candidate.profile.user.email
-        subject = f"Interview scheduled for {application.job.job_name}"
-        frontend_base = getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:3000')
-        interview_url = urljoin(frontend_base + '/', f'Users/Applications/{application.id}/interview')
-        where_text = location.strip() if location.strip() else ('Virtual meeting' if interview_type == 'virtual' else interview_type.title())
-        message = (
-            f"Hi {application.candidate.profile.first_name or ''},\n\n"
-            f"An interview has been scheduled for your application to {application.job.job_name}.\n\n"
-            f"When: {start_dt.isoformat()} to {end_dt.isoformat()}\n"
-            f"Where: {where_text}\n\n"
-            f"View interview details: {interview_url}\n\n"
-            f"Best,\n{request.user.email}"
+        company_name = getattr(application.job.recruiter, 'company_name', '') or 'TalentSift Company'
+        subject = f"Your interview is scheduled: {application.job.job_name} at {company_name}"
+        start_display_dt = timezone.localtime(start_dt) if timezone.is_aware(start_dt) else start_dt
+        end_display_dt = timezone.localtime(end_dt) if timezone.is_aware(end_dt) else end_dt
+        start_display = start_display_dt.strftime('%A, %B %d, %Y at %I:%M %p %Z')
+        end_display = end_display_dt.strftime('%I:%M %p %Z')
+        where_text = location.strip() or 'Location/link will be shared in the interview schedule.'
+        recipient_name = 'there'
+        organizer_name = company_name
+        email_body = (
+            f"Hi {recipient_name},\n\n"
+            f"We are pleased to inform you that you have been shortlisted for the next stage.\n\n"
+            f"Your interview for {application.job.job_name} at {company_name} has been scheduled.\n\n"
+            f"When: {start_display} to {end_display}\n"
+            f"Company: {company_name}\n"
+            f"Location: {where_text}\n\n"
+            f"Please log in to your TalentSift account to review the full interview details and prepare in advance.\n\n"
+            f"A few tips before the interview:\n"
+            f"- Join a few minutes early\n"
+            f"- Make sure your connection and microphone are working\n"
+            f"- Have any relevant notes or documents ready\n\n"
+            f"Best regards,\n"
+            f"TalentSift Team\n"
+            f"Scheduled by: {company_name}"
         )
         from_email = getattr(settings, 'EMAIL_HOST_USER', None) or None
-        send_mail(subject, message, from_email, [candidate_email], fail_silently=True)
+        invite_description = (
+            f"Interview for {application.job.job_name} at {company_name}\n\n"
+            f"When: {start_display} to {end_display}\n"
+            f"Company: {company_name}\n"
+            f"Location: {where_text}\n\n"
+            f"Please log in to your TalentSift account for more details."
+        )
+        invite = _build_calendar_invite(
+            subject=subject,
+            description=invite_description,
+            location=where_text,
+            start_dt=start_dt,
+            end_dt=end_dt,
+            organizer_email=request.user.email,
+            organizer_name=organizer_name,
+            recipient_name=recipient_name,
+            recipient_email=candidate_email,
+        )
+        calendar_data_uri = "data:text/calendar;charset=utf-8;base64," + base64.b64encode(invite.encode('utf-8')).decode('ascii')
+        safe_subject = html.escape(subject)
+        safe_job = html.escape(application.job.job_name)
+        safe_company = html.escape(company_name)
+        safe_when = html.escape(f"{start_display} to {end_display}")
+        safe_where = html.escape(where_text)
+        safe_recipient = html.escape(recipient_name)
+        html_message = f"""
+        <div style="margin:0;padding:0;background:#f4f7fb;font-family:Arial,Helvetica,sans-serif;">
+            <div style="max-width:640px;margin:0 auto;padding:32px 16px;">
+                <div style="background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 8px 24px rgba(15,23,42,0.08);">
+                    <div style="background:linear-gradient(135deg,#0073b1,#0f172a);padding:24px 28px;color:#ffffff;">
+                        <div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;opacity:.85;">TalentSift Interview Update</div>
+                        <h1 style="margin:10px 0 0;font-size:26px;line-height:1.2;">Your interview is scheduled</h1>
+                    </div>
+                    <div style="padding:28px; color:#111827; font-size:15px; line-height:1.7;">
+                        <p style="margin:0 0 16px;">Hi {safe_recipient},</p>
+                        <p style="margin:0 0 16px;">We are pleased to inform you that you have been shortlisted for the next stage.</p>
+                        <p style="margin:0 0 16px;">Your interview for <strong>{safe_job}</strong> at <strong>{safe_company}</strong> has been scheduled.</p>
+                        <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px;margin:20px 0;">
+                            <p style="margin:0 0 8px;"><strong>When:</strong> {safe_when}</p>
+                            <p style="margin:0 0 8px;"><strong>Company:</strong> {safe_company}</p>
+                            <p style="margin:0;"><strong>Location:</strong> {safe_where}</p>
+                        </div>
+                        <p style="margin:0 0 18px;">We also attached a calendar invite so you can add it to your calendar with one click. If your email client doesn't show the button, use the attached <strong>.ics</strong> file.</p>
+                        <div style="text-align:center;margin:28px 0;">
+                            <a href="{calendar_data_uri}" download="interview-invite.ics" style="display:inline-block;background:#0073b1;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;">Add to Calendar</a>
+                        </div>
+                        <div style="background:#eff6ff;border-left:4px solid #0073b1;padding:14px 16px;border-radius:10px;">
+                            <div style="font-weight:700;margin-bottom:6px;">Before the interview</div>
+                            <ul style="margin:0;padding-left:20px;">
+                                <li>Join a few minutes early</li>
+                                <li>Test your camera and microphone</li>
+                                <li>Keep any relevant notes or documents ready</li>
+                            </ul>
+                        </div>
+                        <p style="margin:22px 0 0;">Best regards,<br/>TalentSift Team<br/>Scheduled by: {safe_company}</p>
+                    </div>
+                </div>
+                <p style="color:#6b7280;font-size:12px;line-height:1.6;text-align:center;margin:14px 0 0;">This email was sent automatically from TalentSift.</p>
+            </div>
+        </div>
+        """
+        email = EmailMultiAlternatives(subject, email_body, from_email, [candidate_email])
+        email.attach_alternative(html_message, 'text/html')
+        email.attach('interview-invite.ics', invite, 'text/calendar; method=REQUEST; charset=UTF-8')
+        email.send(fail_silently=True)
     except Exception as e:
         logger.exception(f"Failed to send interview email: {e}")
 
@@ -701,20 +819,30 @@ def screened_applications(request, job_id):
     if not hasattr(job, 'recruiter') or job.recruiter.profile.user != request.user:
         return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
-    apps = JobApplication.objects.select_related('candidate__profile__user').filter(job=job, screening_status='passed').order_by('-screening_score')
+    apps = JobApplication.objects.select_related('candidate__profile__user').prefetch_related('interviews').filter(job=job, screening_status='passed').order_by('-screening_score')
     data = []
     for app in apps:
         profile = app.candidate.profile
         resume_url = request.build_absolute_uri(app.resume.url) if app.resume else None
+        latest_interview = app.interviews.select_related('scheduled_by').order_by('-start').first()
+        scheduled_by_name = latest_interview.scheduled_by.email if latest_interview and latest_interview.scheduled_by else None
         data.append({
             'application_id': app.id,
             'candidate_name': f"{profile.first_name or ''} {profile.last_name or ''}".strip() or app.candidate.profile.user.email,
             'candidate_email': app.candidate.profile.user.email,
             'resume_url': resume_url,
             'cover_letter': app.cover_letter,
+            'status': app.status,
             'screening_score': app.screening_score,
             'screening_status': app.screening_status,
             'applied_at': app.created_at,
+            'interview_id': latest_interview.id if latest_interview else None,
+            'interview_status': latest_interview.status if latest_interview else None,
+            'interview_type': latest_interview.interview_type if latest_interview else None,
+            'interview_start': latest_interview.start if latest_interview else None,
+            'interview_end': latest_interview.end if latest_interview else None,
+            'interview_location': latest_interview.location if latest_interview else None,
+            'scheduled_by_name': scheduled_by_name,
         })
 
     return Response({'job_id': job.id, 'job_name': job.job_name, 'screened_applications': data}, status=status.HTTP_200_OK)
@@ -844,7 +972,8 @@ def list_applications(request, job_id):
             profile = app.candidate.profile
             candidate_user = profile.user
             resume_url = request.build_absolute_uri(app.resume.url) if app.resume else None
-            latest_interview = app.interviews.order_by('-start').first()
+            latest_interview = app.interviews.select_related('scheduled_by').order_by('-start').first()
+            scheduled_by_name = latest_interview.scheduled_by.email if latest_interview and latest_interview.scheduled_by else None
             data.append({
                 'application_id': app.id,
                 'candidate_id': candidate_user.id,
@@ -857,7 +986,11 @@ def list_applications(request, job_id):
                 'screening_score': app.screening_score,
                 'interview_status': latest_interview.status if latest_interview else None,
                 'interview_id': latest_interview.id if latest_interview else None,
+                'interview_type': latest_interview.interview_type if latest_interview else None,
                 'interview_start': latest_interview.start if latest_interview else None,
+                'interview_end': latest_interview.end if latest_interview else None,
+                'interview_location': latest_interview.location if latest_interview else None,
+                'scheduled_by_name': scheduled_by_name,
                 'created_at': app.created_at,
             })
         except Exception as e:

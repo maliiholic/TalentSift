@@ -56,7 +56,17 @@ def get_jobs_for_recruiter(request):
         )
 
     try:
-        recruiter = Recruiter.objects.get(profile__user=user)
+        recruiter = Recruiter.objects.filter(profile__user=user).first()
+
+        if not recruiter:
+            paginator = JobPagination()
+            return Response({
+                'count': 0,
+                'total_pages': 0,
+                'results': [],
+                'current_page': 1,
+            }, status=status.HTTP_200_OK)
+
         # Get search term from the query parameters, if available
         search_term = request.GET.get('search', '').strip()
         # Filter jobs based on the search term if provided
@@ -86,11 +96,6 @@ def get_jobs_for_recruiter(request):
 
         return paginator.get_paginated_response(job_data)
 
-    except Recruiter.DoesNotExist:
-        return Response(
-            {'error': 'Recruiter not found for this user.'},
-            status=status.HTTP_404_NOT_FOUND
-        )
     except Exception as e:
         return Response(
             {'error': 'An unexpected error occurred', 'details': str(e)},

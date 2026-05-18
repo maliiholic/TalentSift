@@ -28,9 +28,20 @@ const Posts = () => {
         const fetchJobs = async () => {
             setLoading(true);
             try {
+                // Prefer cookie-based auth, but fall back to Authorization header
+                const token = typeof window !== 'undefined'
+                    ? (localStorage.getItem('access') || sessionStorage.getItem('access'))
+                    : null;
+                const axiosOpts = {
+                    withCredentials: true,
+                };
+                if (token) {
+                    axiosOpts.headers = { Authorization: `Bearer ${token}` };
+                }
+
                 const response = await axios.get(
-                    `${API_BASE_URL}/getjobs/?page=${currentPage}&search=${searchTerm}`,
-                    { withCredentials: true }
+                    `${API_BASE_URL}/get-jobs/?page=${currentPage}&search=${searchTerm}`,
+                    axiosOpts
                 );
 
                 if (!isActive) {
