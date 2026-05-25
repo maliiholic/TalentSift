@@ -23,7 +23,7 @@ const storage =
 const persistConfig = {
   key: "root",   
   storage,        
-  blacklist: ['show_search', 'show_search_reducer','admin_search_bar_reducer','search_bar_reducer'],
+  blacklist: ['show_search', 'show_search_reducer','admin_search_bar_reducer','search_bar_reducer','chat_reducer'],
 };
 
 const persistedReducer = persistReducer(persistConfig, Root);
