@@ -6,7 +6,6 @@ import { show_search, search_bar_action } from '@/Redux/Action';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { API_BASE_URL } from '@/utils/api';
-import { loadStripe } from '@stripe/stripe-js';
 import { useRouter } from "next/navigation";
 import Loader from "../../others/loader";
 
@@ -113,20 +112,8 @@ const Practice = () => {
             if (response.status === 200) {
                 if (response.data.checkoutUrl) {
                     window.location.href = response.data.checkoutUrl;
-                } else {
-                    const stripe = await loadStripe('pk_test_51P0cjlP8GjJIjxDGEgyDXqRqhQThEMQl5KySJ1F7bhigoblE6MDvutJnx3n7LlTQx3HiA3zL9xYhnGwHTba03QpR00JWEq159G');
-                    if (!stripe) {
-                        toast.error("Stripe could not be initialized. Please try again.");
-                        return;
-                    }
-
-                    const { error } = await stripe.redirectToCheckout({
-                        sessionId: response.data.sessionId,
-                    });
-
-                    if (error) {
-                        toast.error(error.message || "Failed to open checkout. Please try again.");
-                    }
+                } else if (response.data.sessionId) {
+                    toast.error("Checkout URL was not returned. Please try again.");
                 }
             } else {
                 toast.error("Checkout failed. Please try again later.");
@@ -241,7 +228,6 @@ const Practice = () => {
     const completeSession = async () => {
         if (!session?.session_id) return;
 
-        setPhase("results");
         setStatus("Calculating your score...");
         try {
             const response = await axios.post(
@@ -250,8 +236,10 @@ const Practice = () => {
                 getAuthConfig()
             );
             setSession((current) => ({ ...current, ...response.data, status: "completed" }));
+            setPhase("results");
             setStatus(`Practice complete. Your score is ${response.data.final_score}.`);
         } catch (error) {
+            setPhase("active");
             setStatus(error?.response?.data?.message || "Failed to complete the session.");
         }
     };
@@ -555,7 +543,7 @@ const Practice = () => {
                                                         <h4 style={{ margin: "0 0 12px", color: attempt.is_correct ? "#059669" : "#dc2626", fontSize: "18px" }}>
                                                             {attempt.is_correct ? "Correct!" : "Incorrect"}
                                                         </h4>
-                                                        <p style={{ margin: 0, color: "#374151" }}>You selected: <strong>{attempt.user_answer}</strong></p>
+                                                        <p style={{ margin: 0, color: "#374151" }}>You selected: <strong>{attempt.user_answer || answer}</strong></p>
                                                         {!attempt.is_correct && <p style={{ margin: "8px 0 0", color: "#374151" }}>Correct answer: <strong>{attempt.correct_option}</strong></p>}
                                                     </>
                                                 ) : (

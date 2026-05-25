@@ -117,6 +117,11 @@ const Notification = () => {
         }
     };
 
+    const handleOpenApplications = (jobId) => {
+        if (!jobId) return;
+        router.push(`/Users/Posts/applications/${jobId}`);
+    };
+
     if (loading) {
         return <div className="min-h-screen flex items-center justify-center text-gray-600">Loading notifications...</div>;
     }
@@ -163,6 +168,17 @@ const Notification = () => {
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                                                 <span className="hidden sm:inline">View Resume</span>
                                             </a>
+                                        )}
+
+                                        {role === 'Recruiter' && notification.job_id && (
+                                            <div className="mt-3">
+                                                <button
+                                                    onClick={() => handleOpenApplications(notification.job_id)}
+                                                    className="px-3 py-2 border border-[#0073b1] text-[#0073b1] rounded text-sm hover:bg-[#0073b1] hover:text-white transition"
+                                                >
+                                                    Open applications
+                                                </button>
+                                            </div>
                                         )}
 
                                         {/* Candidate CTA: take interview now/later */}

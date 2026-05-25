@@ -888,9 +888,13 @@ def get_notifications(request):
         resume_url = request.build_absolute_uri(application.resume.url) if application.resume else None
         # build an action URL so frontend can navigate directly
         frontend_base = getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:3000')
-        # default to application interview page for candidates, job applications list for recruiters
+        # Recruiters go to the applications list; candidates only get a shortcut when the notification is interview-related.
         if notification.recipient == application.candidate.profile.user:
-            action_url = urljoin(frontend_base + '/', f'Users/Applications/{application.id}/interview')
+            notification_text = f'{notification.title} {notification.message}'.lower()
+            if any(keyword in notification_text for keyword in ('application submitted', 'ai screening', 'interview')):
+                action_url = urljoin(frontend_base + '/', f'Users/Applications/{application.id}/interview')
+            else:
+                action_url = None
         else:
             action_url = urljoin(frontend_base + '/', f'Users/Posts/applications/{application.job.id}')
 

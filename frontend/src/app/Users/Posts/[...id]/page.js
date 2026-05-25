@@ -509,78 +509,7 @@ const UpdateJob = () => {
                         </>
                     )}
                     {page === 3 && (
-                        <>
-                            <div className="bg-gray-100 p-6 rounded-lg mb-6">
-                                <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                                    Interview Type Pricing
-                                </h2>
-                                <div className="space-y-4">
-                                    {/* Manual Interview */}
-                                    <div className="border p-4 rounded-lg bg-white shadow-md">
-                                        <h3 className="font-semibold text-gray-700">
-                                            Manual Interview (Free)
-                                        </h3>
-                                        <p className="text-gray-500">
-                                            Basic interview setup for all users. Free of charge.
-                                        </p>
-                                        <label className="flex items-center space-x-2">
-                                            <input
-                                                type="radio"
-                                                name="interview_type"
-                                                value="manual"
-                                                checked={formData.interview_type === "manual"}
-                                                onChange={(e) =>
-                                                    setFormData({ ...formData, interview_type: e.target.value })
-                                                }
-                                            />
-                                            <span>Select Manual Interview</span>
-                                        </label>
-                                    </div>
-
-                                    {/* AI Interview (Only if subscription is true) */}
-                                    {subscription && (
-                                        <div className="border p-4 rounded-lg bg-white shadow-md">
-                                            <h3 className="font-semibold text-gray-700">
-                                                AI Interview (Paid)
-                                            </h3>
-                                            <p className="text-gray-500">
-                                                AI-powered interview setup. Pay once when job post is closed.
-                                            </p>
-                                            <label className="flex items-center space-x-2">
-                                                <input
-                                                    type="radio"
-                                                    name="interview_type"
-                                                    value="ai"
-                                                    checked={formData.interview_type === "ai"}
-                                                    onChange={(e) =>
-                                                        setFormData({ ...formData, interview_type: e.target.value })
-                                                    }
-                                                />
-                                                <span>Select AI Interview</span>
-                                            </label>
-                                        </div>
-                                    )}
-
-                                    {/* AI Interview Purchase (Visible only if no subscription) */}
-                                    {!subscription && (
-                                        <div className="border p-4 rounded-lg bg-white shadow-md">
-                                            <h3 className="font-semibold text-gray-700">
-                                                AI Interview (Paid)
-                                            </h3>
-                                            <p className="text-gray-500">
-                                                AI-powered interview setup. Pay once when job post is closed.
-                                            </p>
-                                            <button
-                                                className="px-6 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300 mt-4"
-                                                onClick={handlePayment}
-                                            >
-                                                Purchase AI Interview
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </>
+                        <></>
                     )}
                     {page === 3 && (
                         <div className="flex justify-between mt-6">

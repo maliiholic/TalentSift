@@ -73,11 +73,7 @@ const CandidateJobs = () => {
     };
 
     const handleJobClick = (jobId) => {
-        router.push(`Jobs/${jobId}`);
-    };
-
-    const handleApply = (jobId) => {
-        console.log(`Applied to job ID: ${jobId}`);
+        router.push(`/Users/Jobs/${jobId}`);
     };
 
     return (
@@ -142,18 +138,6 @@ const CandidateJobs = () => {
                                     </div>
                                     <div className="mt-3 text-sm text-gray-700 line-clamp-3" title={job.description}>
                                         {truncateText(job.description, 20)}
-                                    </div>
-                                    <div className="mt-4 flex justify-between items-center">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleApply(job.job_id);
-                                            }}
-                                            className="px-3 py-2 bg-[#0073b1] text-white text-sm font-medium rounded-md hover:bg-[#005f8d] transition-all duration-200"
-                                        >
-                                            Apply
-                                        </button>
-
                                     </div>
                                 </div>
                             ))}

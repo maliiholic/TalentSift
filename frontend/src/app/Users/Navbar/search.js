@@ -27,7 +27,7 @@ const SearchBar = () => {
         <FontAwesomeIcon icon={faSearch} className="h-5 w-5 text-gray-400" />
       </span>
       <input
-        className="pl-10 pr-4 py-2 border border-gray-600 rounded-lg text-sm text-white bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+        className="pl-10 pr-4 py-2 border border-gray-300 rounded-full text-sm text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#0073b1] focus:border-[#0073b1] transition duration-200"
         type="text"
         placeholder="Search"
         value={search} // Bind input value to the local state

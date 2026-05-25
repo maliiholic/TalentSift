@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { SiGooglegemini } from "react-icons/si";
 import toast from "react-hot-toast";
 import Loader from "@/app/others/loader";
-// import { loadStripe } from '@stripe/stripe-js';
 import { useDispatch } from "react-redux";
 import { show_search } from "@/Redux/Action";
 import { API_BASE_URL } from "@/utils/api";
@@ -29,7 +28,6 @@ const CreateJob = () => {
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const router = useRouter();
-    const [subscription, setsubscription] = useState(false);
 
     useEffect(() => {
         dispatch(show_search(false));
@@ -41,9 +39,7 @@ const CreateJob = () => {
         const fetchRecruiterData = async () => {
             try {
                 const response = await axios.get(`${API_BASE_URL}/get_recruiter_company`, { withCredentials: true });
-                const response1 = await axios.get(`${API_BASE_URL}/has-ai-subscription`, { withCredentials: true });
                 setRecruiterData(response.data);
-                setsubscription(response1.data.ai_subscription);
                 setLoading(false);
             } catch (error) {
                 setLoading(false);
@@ -52,62 +48,6 @@ const CreateJob = () => {
         };
         fetchRecruiterData();
     }, [dispatch]);
-
-    const handlePayment = async (event) => {
-        event.preventDefault(); // Prevent the page from refreshing
-        sessionStorage.setItem('formData', JSON.stringify(formData));
-
-        try {
-            const response = await axios.post(
-                `${API_BASE_URL}/create_checkout_session/`,
-                { interview_type: 'ai' },
-                {
-                    withCredentials: true,
-                    headers: { 'Content-Type': 'application/json' }
-                }
-            );
-
-            if (response.status === 200) {
-                const stripePromise = await loadStripe('pk_test_51P0cjlP8GjJIjxDGEgyDXqRqhQThEMQl5KySJ1F7bhigoblE6MDvutJnx3n7LlTQx3HiA3zL9xYhnGwHTba03QpR00JWEq159G');
-                const stripe = await stripePromise;
-
-                const { error } = await stripe.redirectToCheckout({
-                    sessionId: response.data.sessionId,
-                });
-
-                if (error) {
-                    toast.error("Failed to initiate payment. Please try again.");
-                }
-            } else {
-                toast.error("Checkout failed. Please try again later.");
-            }
-        } catch (error) {
-            toast.error("An error occurred while initiating payment. Please try again.");
-        }
-    };
-
-
-    useEffect(() => {
-        const sessionId = new URLSearchParams(window.location.search).get('session_id');
-        if (!sessionId) {
-            return;
-        }
-
-        axios.post(`${API_BASE_URL}/verify_payment/`, { session_id: sessionId }, { withCredentials: true })
-            .then(response => {
-                if (response.status === 200) {
-                    sessionStorage.removeItem('formData');
-                    setsubscription(true);
-                    setFormData(defaultFormData);
-                    setPage(1);
-                } else {
-                    console.error("Payment verification failed: ", response.data.error);
-                }
-            })
-            .catch(error => {
-                console.error("Payment verification failed:", error);
-            });
-    }, []);
 
 
 
@@ -183,19 +123,6 @@ const CreateJob = () => {
             // Employment type
             if (!formData.employment_type.trim()) {
                 errors.employment_type = "Please select an employment type.";
-            }
-        }
-
-        // Page 3: Interview type
-        if (page === 3) {
-            // Interview type
-            if (!formData.interview_type.trim()) {
-                errors.interview_type = "Please select an interview type.";
-            }
-
-            // If AI interview is selected, make sure the purchase is done
-            if (formData.interview_type === "ai" && !formData.purchase_done) {
-                errors.purchase_done = "You must purchase the AI interview to proceed.";
             }
         }
 
@@ -414,82 +341,7 @@ const CreateJob = () => {
                             </div>
                         </>
                     )}
-                    {page === 3 && (
-                        <>
-                            <div className="bg-gray-100 p-6 rounded-lg mb-6">
-                                <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                                    Interview Type Pricing
-                                </h2>
-                                <div className="space-y-4">
-                                    {/* Manual Interview */}
-                                    <div className="border p-4 rounded-lg bg-white shadow-md">
-                                        <h3 className="font-semibold text-gray-700">
-                                            Manual Interview (Free)
-                                        </h3>
-                                        <p className="text-gray-500">
-                                            Basic interview setup for all users. Free of charge.
-                                        </p>
-                                        <label className="flex items-center space-x-2">
-                                            <input
-                                                type="radio"
-                                                name="interview_type"
-                                                value="manual"
-                                                checked={formData.interview_type === "manual"}
-                                                onChange={(e) =>
-                                                    setFormData({ ...formData, interview_type: e.target.value })
-                                                }
-                                            />
-                                            <span>Select Manual Interview</span>
-                                        </label>
-                                    </div>
-
-                                    {/* AI Interview (Only if subscription is true) */}
-                                    {subscription && (
-                                        <div className="border p-4 rounded-lg bg-white shadow-md">
-                                            <h3 className="font-semibold text-gray-700">
-                                                AI Interview (Paid)
-                                            </h3>
-                                            <p className="text-gray-500">
-                                                AI-powered interview setup. Pay once when job post is closed.
-                                            </p>
-                                            <label className="flex items-center space-x-2">
-                                                <input
-                                                    type="radio"
-                                                    name="interview_type"
-                                                    value="ai"
-                                                    checked={formData.interview_type === "ai"}
-                                                    onChange={(e) =>
-                                                        setFormData({ ...formData, interview_type: e.target.value })
-                                                    }
-                                                />
-                                                <span>Select AI Interview</span>
-                                            </label>
-                                        </div>
-                                    )}
-
-                                    {/* AI Interview Purchase (Visible only if no subscription) */}
-                                    {!subscription && (
-                                        <div className="border p-4 rounded-lg bg-white shadow-md">
-                                            <h3 className="font-semibold text-gray-700">
-                                                AI Interview (Paid)
-                                            </h3>
-                                            <p className="text-gray-500">
-                                                AI-powered interview setup. Pay once when job post is closed.
-                                            </p>
-                                            <button
-                                                type="button"
-                                                className="px-6 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300 mt-4"
-                                                onClick={handlePayment}
-                                            >
-                                                Purchase AI Interview
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </>
-                    )}
-                    {page === 3 && (
+                    {page === 2 && (
                         <div className="flex justify-between mt-6">
                             <button
                                 type="button"
@@ -507,7 +359,7 @@ const CreateJob = () => {
                             </button>
                         </div>
                     )}
-                    {page !== 3 && (
+                    {page === 1 && (
                         <div className="flex justify-between mt-6">
                             <button
                                 type="button"
@@ -519,9 +371,9 @@ const CreateJob = () => {
                             </button>
                             <button
                                 type="button"
-                                className={`px-6 py-2 rounded-lg transition ${page === 3 ? 'bg-gray-200 text-gray-700 cursor-not-allowed' : 'bg-[#0073b1] text-white  cursor-pointer'}`}
+                                className="px-6 py-2 rounded-lg transition bg-[#0073b1] text-white cursor-pointer"
                                 onClick={handleNextPage}
-                                disabled={page === 3}
+                                disabled={page === 2}
                             >
                                 Next
                             </button>

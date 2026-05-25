@@ -47,6 +47,18 @@ const Navbar = () => {
     router.push("/Users/Home");
   };
 
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${API_BASE_URL}/logout/`, {}, { withCredentials: true });
+      localStorage.removeItem("access");
+      delete axios.defaults.headers.common["Authorization"];
+      await dispatch(Role_Action("Guest"));
+      router.replace("/Users/Home");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
   useEffect(() => {
     const fetchUnreadCount = async () => {
       if (userRole === "Guest") {
@@ -266,7 +278,7 @@ const Navbar = () => {
                 <hr className="my-1 border-gray-300" />
                 <button
                   className="flex items-center space-x-2 w-full text-gray-700 hover:bg-red-500 hover:text-white px-3 py-2 transition duration-200 rounded-lg"
-                  onClick={() => router.push("/logout")}
+                  onClick={handleLogout}
                 >
                   <FontAwesomeIcon icon={faSignOutAlt} className="h-4 w-4" />
                   <span>Logout</span>

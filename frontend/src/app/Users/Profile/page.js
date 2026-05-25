@@ -213,10 +213,18 @@ const Profile = () => {
     }
 
     try {
-      await axios.put(`${API_BASE_URL}/update_profile/`, formDataToSubmit, {
+      const response = await axios.put(`${API_BASE_URL}/update_profile/`, formDataToSubmit, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });
+      const updatedProfilePicture = response.data?.profile?.profile_picture || null;
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("profileUpdated", {
+            detail: { profile_picture: updatedProfilePicture },
+          })
+        );
+      }
       setSuccessMessage("Profile updated successfully!");
       toast.success("Profile updated successfully!");
     } catch (error) {

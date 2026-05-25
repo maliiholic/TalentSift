@@ -409,6 +409,7 @@ def submit_answer(request):
             return Response({
                 'status': 'success',
                 'is_correct': is_correct,
+                'user_answer': attempt.user_answer,
                 'correct_option': question.correct_option
             }, status=status.HTTP_200_OK)
 
