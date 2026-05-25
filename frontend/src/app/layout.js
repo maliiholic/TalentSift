@@ -5,6 +5,7 @@ import { PersistGate } from "redux-persist/integration/react";
 import { Store,persistor } from "../Store";
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import Protect from "./others/protected_routes";
+import ChatBot from "./others/ChatBot";
 import { useEffect } from 'react';
 import { setAuthToken } from "./others/auth";
 
@@ -25,6 +26,7 @@ export default function RootLayout({ children }) {
             <PersistGate loading={null} persistor={persistor}>
               <Protect>
                 {children}
+                <ChatBot />
               </Protect>
             </PersistGate>
           </Provider>

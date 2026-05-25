@@ -53,6 +53,7 @@ from applications.views import (
     update_interview,
     add_interview_feedback,
 )
+from chatbot.views import chat_message, chat_clear
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -122,6 +123,8 @@ urlpatterns = [
     path('interview/<int:interview_id>/feedback/', add_interview_feedback, name='add_interview_feedback'),
     path('job/<int:job_id>/screened/', screened_applications, name='screened_applications'),
     path('api/practice/', include('practice.urls')),
+    path('api/chat/', chat_message, name='chat_message'),
+    path('api/chat/clear/', chat_clear, name='chat_clear'),
 ]
 
 if settings.DEBUG:

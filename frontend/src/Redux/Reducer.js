@@ -30,4 +30,6 @@ const Role_Reducer = (state = "Guest", action) => {
     return state;
   };
 
-export {Role_Reducer,search_bar_reducer,show_search_reducer,admin_search_bar_reducer}
+import chat_reducer from './chatSlice';
+
+export {Role_Reducer,search_bar_reducer,show_search_reducer,admin_search_bar_reducer,chat_reducer}
