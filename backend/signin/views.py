@@ -6,7 +6,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 from signup.models import User, Profile
 import random
-from threading import Thread
 from django.conf import settings
 from django.core.cache import cache
 import jwt
@@ -21,16 +20,13 @@ logger = logging.getLogger(__name__)
 
 
 def send_otp_email(subject, message, from_email, recipient_list):
-    try:
-        send_mail(
-            subject,
-            message,
-            from_email,
-            recipient_list,
-            fail_silently=False,
-        )
-    except Exception:
-        logger.exception('Signin OTP email send failed for %s', recipient_list[0] if recipient_list else 'unknown')
+    send_mail(
+        subject,
+        message,
+        from_email,
+        recipient_list,
+        fail_silently=False,
+    )
 
 
 def verify_recaptcha_token(token, expected_action=None):
@@ -104,11 +100,7 @@ This OTP will expire in 60 seconds. If you didn’t request this, please ignore 
 Best regards,  
 The TalentSift Team
     """
-        Thread(
-            target=send_otp_email,
-            args=(subject, message, settings.DEFAULT_FROM_EMAIL, [email]),
-            daemon=True,
-        ).start()
+        send_otp_email(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
         response_data = {'success': 'OTP sent to your email!'}
         if settings.DEBUG and settings.EMAIL_BACKEND.endswith('locmem.EmailBackend'):
             response_data['debug_otp'] = str(otp)

@@ -185,11 +185,17 @@ if os.environ.get('CLOUDINARY_URL'):
     # cloudinary settings will be read from CLOUDINARY_URL
 
 
+def _env_truthy(name, default='False'):
+    return os.getenv(name, default).strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '').strip()
 # Keep the password exactly as provided by the environment, only trim accidental leading/trailing spaces.
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 if EMAIL_HOST_PASSWORD is not None:
     EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD.strip()
+if 'gmail.com' in os.getenv('EMAIL_HOST', 'smtp.gmail.com').lower():
+    EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD.replace(' ', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER).strip()
 
 if DEBUG and (not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD):
@@ -197,8 +203,8 @@ if DEBUG and (not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD):
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False' if DEBUG else 'True') == 'True'
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True' if DEBUG and not EMAIL_USE_SSL else 'False') == 'True'
+EMAIL_USE_SSL = _env_truthy('EMAIL_USE_SSL', 'False' if DEBUG else 'True')
+EMAIL_USE_TLS = _env_truthy('EMAIL_USE_TLS', 'False' if EMAIL_USE_SSL else 'True' if DEBUG else 'False')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '465' if EMAIL_USE_SSL else '587'))
 GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
 
