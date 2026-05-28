@@ -35,11 +35,13 @@ def create_checkout_session(request):
             'job_id': job_id  # Include job_id in metadata if available
         }
 
+        # Build success/cancel URLs using FRONTEND_BASE_URL from settings
+        frontend_base = getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:3000').rstrip('/')
         # Build success URL based on whether job_id is provided
         if job_id:
-            success_url = f'http://localhost:3000/Users/Posts/{job_id}/?session_id={{CHECKOUT_SESSION_ID}}'
+            success_url = f"{frontend_base}/Users/Posts/{job_id}/?session_id={{CHECKOUT_SESSION_ID}}"
         else:
-            success_url = 'http://localhost:3000/Users/Posts/CreateJob?session_id={CHECKOUT_SESSION_ID}'
+            success_url = f"{frontend_base}/Users/Posts/CreateJob?session_id={{CHECKOUT_SESSION_ID}}"
 
         # Create Stripe Checkout session
         checkout_session = stripe.checkout.Session.create(
@@ -56,7 +58,7 @@ def create_checkout_session(request):
             }],
             mode='payment',
             success_url=success_url,  # Use the dynamic success URL
-            cancel_url='http://localhost:3000/Users/Posts',
+            cancel_url=f"{frontend_base}/Users/Posts",
             metadata=metadata
         )
 
@@ -177,11 +179,12 @@ def create_checkout_session_prac(request):
             
         }
 
+        frontend_base = getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:3000').rstrip('/')
         # Build success URL based on whether job_id is provided
         if job_id:
-            success_url = f'http://localhost:3000/Users/Practice/?session_id={{CHECKOUT_SESSION_ID}}'
+            success_url = f"{frontend_base}/Users/Practice/?session_id={{CHECKOUT_SESSION_ID}}"
         else:
-            success_url = 'http://localhost:3000/Users/Practice/?session_id={CHECKOUT_SESSION_ID}'
+            success_url = f"{frontend_base}/Users/Practice/?session_id={{CHECKOUT_SESSION_ID}}"
 
         # Create Stripe Checkout session
         checkout_session = stripe.checkout.Session.create(
@@ -208,7 +211,7 @@ def create_checkout_session_prac(request):
     }],
     mode='payment',
     success_url=success_url,  # Use the dynamic success URL
-    cancel_url='http://localhost:3000/Users/Practice',
+    cancel_url=f"{frontend_base}/Users/Practice",
     metadata=metadata
 )
 

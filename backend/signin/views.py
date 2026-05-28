@@ -134,7 +134,7 @@ def sign_in(request):
                 path='/',
             )
 
-        response["Access-Control-Allow-Origin"] = "http://localhost:3000"
+        response["Access-Control-Allow-Origin"] = getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:3000')
         response["Access-Control-Allow-Credentials"] = "true"
         response["Access-Control-Allow-Headers"] = "content-type"
 
@@ -192,7 +192,7 @@ def decode_jwt(request):
             max_age=3600,
             path='/'
         )
-        response["Access-Control-Allow-Origin"] = "http://localhost:3000"
+        response["Access-Control-Allow-Origin"] = getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:3000')
         response["Access-Control-Allow-Credentials"] = "true"
         response["Access-Control-Allow-Headers"] = "content-type"
         
