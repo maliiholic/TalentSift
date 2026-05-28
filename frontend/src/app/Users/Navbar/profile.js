@@ -7,8 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import Image from "next/image";
 import { Role_Action } from "@/Redux/Action";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { API_BASE_URL } from "@/utils/api";
 
 const storedToken = typeof window !== "undefined" ? localStorage.getItem("access") : null;
 if (storedToken) {
@@ -30,7 +29,7 @@ const ProfileLink = () => {
 
   const fetchUserData = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/get_picture/`, { withCredentials: true });
+      const response = await axios.get(`${API_BASE_URL}/get_picture/`, { withCredentials: true });
       setUserData(response.data);
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -89,7 +88,7 @@ const ProfileLink = () => {
   const handleLogout = async () => {
     try {
       setDropdownOpen(false);
-      await axios.post(`${API_BASE}/logout/`, {}, { withCredentials: true });
+      await axios.post(`${API_BASE_URL}/logout/`, {}, { withCredentials: true });
       localStorage.removeItem("access");
       delete axios.defaults.headers.common["Authorization"];
       await dispatch(Role_Action("Guest"));
@@ -103,7 +102,7 @@ const ProfileLink = () => {
     ? (() => {
       const rawSrc = userData.user_data.profile_picture.startsWith("http")
         ? userData.user_data.profile_picture
-        : `${API_BASE}${userData.user_data.profile_picture.startsWith("/") ? "" : "/"}${userData.user_data.profile_picture}`;
+        : `${API_BASE_URL}${userData.user_data.profile_picture.startsWith("/") ? "" : "/"}${userData.user_data.profile_picture}`;
 
       return `${rawSrc}${rawSrc.includes("?") ? "&" : "?"}v=${profileRefreshKey}`;
     })()

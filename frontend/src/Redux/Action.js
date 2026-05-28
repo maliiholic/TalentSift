@@ -1,13 +1,13 @@
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { API_BASE_URL } from '@/utils/api';
 
 // as a sample some functions of actions take help from that 
 
 export const Auth = (role) => {
   return async (dispatch) => {
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
       let token = typeof window !== 'undefined' ? localStorage.getItem('access') : null;
 
       // Helper: quick JWT expiry check without extra dependency
@@ -43,7 +43,7 @@ export const Auth = (role) => {
 
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       // Avoid sending credentials cookie unless required by backend CORS config
-      const response = await axios.get(`${API_BASE}/get_user_role/?role=${role}`, {
+      const response = await axios.get(`${API_BASE_URL}/get_user_role/?role=${role}`, {
         withCredentials: false,
         headers,
       });

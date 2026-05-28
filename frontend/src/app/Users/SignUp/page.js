@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { Role_Action, show_search,search_bar_action } from "@/Redux/Action";
+import { API_BASE_URL } from "@/utils/api";
 const OtpInput = ({ otp, setOtp }) => {
 
     const inputRefs = useRef([]);
@@ -83,7 +84,7 @@ const Signup = () => {
     useEffect(() => {
         const clearExistingSession = async () => {
             try {
-                await axios.post("http://localhost:8000/logout/", {}, { withCredentials: true });
+                await axios.post(`${API_BASE_URL}/logout/`, {}, { withCredentials: true });
             } catch (error) {
                 // Ignore logout errors
             } finally {
@@ -150,8 +151,7 @@ const Signup = () => {
         if (!validateForm()) return;
         setLoading(true);
         try {
-            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-            const response = await axios.post(`${API_BASE}/send_otp/`, { email });
+            const response = await axios.post(`${API_BASE_URL}/send_otp/`, { email });
             if (response.data?.debug_otp) {
                 setOtp(response.data.debug_otp);
             }
@@ -168,8 +168,7 @@ const Signup = () => {
     const handleResendOtp = async () => {
         setLoading(true);
         try {
-            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-            const response = await axios.post(`${API_BASE}/send_otp/`, { email });
+            const response = await axios.post(`${API_BASE_URL}/send_otp/`, { email });
             if (response.data?.debug_otp) {
                 setOtp(response.data.debug_otp);
             }
@@ -191,8 +190,7 @@ const Signup = () => {
         }
         setLoading(true);
         try {
-            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-            await axios.post(`${API_BASE}/verify_otp/`, { email, otp });
+            await axios.post(`${API_BASE_URL}/verify_otp/`, { email, otp });
             await handleSignup(); // Call signup function after successful OTP verification
             setErrors("")
             setSuccessMessage("Signup successful!");
@@ -215,8 +213,7 @@ const Signup = () => {
 
         setLoading(true);
         try {
-            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-            await axios.post(`${API_BASE}/signup/`, formData, {
+            await axios.post(`${API_BASE_URL}/signup/`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
         } catch (error) {

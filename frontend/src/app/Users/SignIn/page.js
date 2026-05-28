@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { show_search,search_bar_action } from "@/Redux/Action";
 import ReCAPTCHA from "react-google-recaptcha";
 import { setAuthToken } from "../../others/auth";
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+import { API_BASE_URL } from "@/utils/api";
 
 const SignIn = () => {
     const [email, setEmail] = useState("");
@@ -58,7 +58,7 @@ const SignIn = () => {
             // }
             const { credential } = credentialResponse;
             const response = await axios.post(
-                `${API_BASE}/decode-jwt/`,
+                `${API_BASE_URL}/decode-jwt/`,
                 { token: credential },
                 { withCredentials: true }
             );
@@ -96,7 +96,7 @@ const SignIn = () => {
 
         try {
             const response = await axios.post(
-                `${API_BASE}/login/`,
+                `${API_BASE_URL}/login/`,
                 { email, password },
                 { withCredentials: true }
             );
@@ -134,7 +134,7 @@ const SignIn = () => {
         setCaptchaValue(null);
         setLoading(true);
         try {
-            const response = await axios.post(`${API_BASE}/send-otp_signin/`, { email });
+            const response = await axios.post(`${API_BASE_URL}/send-otp_signin/`, { email });
             if (response.data?.debug_otp) {
                 setOtp(response.data.debug_otp.split(""));
             }
@@ -151,7 +151,7 @@ const SignIn = () => {
         setLoading(true);
         setCaptchaValue(null);
         try {
-            const response = await axios.post(`${API_BASE}/send-otp_signin/`, { email });
+            const response = await axios.post(`${API_BASE_URL}/send-otp_signin/`, { email });
             if (response.data?.debug_otp) {
                 setOtp(response.data.debug_otp.split(""));
             }
@@ -179,7 +179,7 @@ const SignIn = () => {
         }
 
         try {
-            await axios.post(`${API_BASE}/verify_otp_signin/`, {
+            await axios.post(`${API_BASE_URL}/verify_otp_signin/`, {
                 email,
                 otp: otp.join(""),
             });
@@ -208,7 +208,7 @@ const SignIn = () => {
         }
 
         try {
-            await axios.post(`${API_BASE}/reset_password/`, {
+            await axios.post(`${API_BASE_URL}/reset_password/`, {
                 email,
                 newPassword,
             });
