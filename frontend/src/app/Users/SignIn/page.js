@@ -59,7 +59,7 @@ const SignIn = () => {
             const { credential } = credentialResponse;
             const response = await axios.post(
                 `${API_BASE}/decode-jwt/`,
-                { token: credential },
+                { token: credential, captcha: captchaValue },
                 { withCredentials: true }
             );
             await dispatch(Role_Action("Candidate"));
@@ -97,7 +97,7 @@ const SignIn = () => {
         try {
             const response = await axios.post(
                 `${API_BASE}/login/`,
-                { email, password },
+                { email, password, captcha: captchaValue },
                 { withCredentials: true }
             );
             // store access token and set axios default header so subsequent requests use Authorization
@@ -131,10 +131,9 @@ const SignIn = () => {
         } else {
             setEmailError("");
         }
-        setCaptchaValue(null);
         setLoading(true);
         try {
-            const response = await axios.post(`${API_BASE}/send-otp_signin/`, { email });
+            const response = await axios.post(`${API_BASE}/send-otp_signin/`, { email, captcha: captchaValue });
             if (response.data?.debug_otp) {
                 setOtp(response.data.debug_otp.split(""));
             }
@@ -149,9 +148,8 @@ const SignIn = () => {
 
     const handleResendOtp = async () => {
         setLoading(true);
-        setCaptchaValue(null);
         try {
-            const response = await axios.post(`${API_BASE}/send-otp_signin/`, { email });
+            const response = await axios.post(`${API_BASE}/send-otp_signin/`, { email, captcha: captchaValue });
             if (response.data?.debug_otp) {
                 setOtp(response.data.debug_otp.split(""));
             }
@@ -304,7 +302,7 @@ const SignIn = () => {
 
                         <div className="flex flex-col items-center">
                             <ReCAPTCHA
-                                sitekey="6LdnCAEtAAAAAOiys-U5JEGvEicQm-Gdtg4Rgepu"
+                                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
                                 onChange={handleCaptchaChange}
                             />
                             {captchaError && (

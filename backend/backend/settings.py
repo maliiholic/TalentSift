@@ -229,6 +229,9 @@ STRIPE_TEST_SECRET_KEY = os.getenv('STRIPE_TEST_SECRET_KEY', '')
 # Frontend base URL used in email links and candidate redirects.
 FRONTEND_BASE_URL = os.getenv('FRONTEND_BASE_URL', 'http://localhost:3000').rstrip('/')
 
+# reCAPTCHA secret for server-side verification (leave empty in local dev)
+RECAPTCHA_SECRET_KEY = os.getenv('RECAPTCHA_SECRET_KEY', '')
+
 # AI screening threshold: 8.0/10 = 80%
 INTERVIEW_PASS_SCORE = float(os.getenv('INTERVIEW_PASS_SCORE', '8.0'))
 

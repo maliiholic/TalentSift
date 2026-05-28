@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.cache import cache
 import jwt
 import datetime
+import requests
 
 COOKIE_SECURE = not settings.DEBUG
 COOKIE_SAMESITE = 'None' if not settings.DEBUG else 'Lax'
@@ -28,6 +29,20 @@ def send_otp_signin(request):
         user = User.objects.get(email=email)
     except User.DoesNotExist:
         return Response({'error': 'Email does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Optional server-side reCAPTCHA verification
+    captcha_token = request.data.get('captcha')
+    if settings.RECAPTCHA_SECRET_KEY:
+        verify_resp = requests.post(
+            'https://www.google.com/recaptcha/api/siteverify',
+            data={'secret': settings.RECAPTCHA_SECRET_KEY, 'response': captcha_token}
+        )
+        try:
+            verify_json = verify_resp.json()
+        except Exception:
+            return Response({'error': 'reCAPTCHA verification failed'}, status=status.HTTP_400_BAD_REQUEST)
+        if not verify_json.get('success'):
+            return Response({'error': 'Invalid CAPTCHA'}, status=status.HTTP_400_BAD_REQUEST)
 
     # Generate a random 6-digit OTP
     otp = random.randint(100000, 999999)
@@ -105,6 +120,20 @@ def reset_password(request):
 def sign_in(request):
     email = request.data.get('email')
     password = request.data.get('password')
+
+    # Verify CAPTCHA if secret configured
+    captcha_token = request.data.get('captcha')
+    if settings.RECAPTCHA_SECRET_KEY:
+        verify_resp = requests.post(
+            'https://www.google.com/recaptcha/api/siteverify',
+            data={'secret': settings.RECAPTCHA_SECRET_KEY, 'response': captcha_token}
+        )
+        try:
+            verify_json = verify_resp.json()
+        except Exception:
+            return Response({'error': 'reCAPTCHA verification failed'}, status=status.HTTP_400_BAD_REQUEST)
+        if not verify_json.get('success'):
+            return Response({'error': 'Invalid CAPTCHA'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
         user = User.objects.get(email=email)
