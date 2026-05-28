@@ -9,7 +9,7 @@ import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { show_search, Role_Action } from "@/Redux/Action";
+import { show_search, search_bar_action, Role_Action } from "@/Redux/Action";
 import { API_BASE_URL } from "@/utils/api";
 
 const OtpInput = ({ otp, setOtp }) => {
