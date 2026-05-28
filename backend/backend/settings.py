@@ -186,7 +186,10 @@ if os.environ.get('CLOUDINARY_URL'):
 
 
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '').strip()
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '').replace(' ', '').strip()
+# Keep the password exactly as provided by the environment, only trim accidental leading/trailing spaces.
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+if EMAIL_HOST_PASSWORD is not None:
+    EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD.strip()
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER).strip()
 
 if DEBUG and (not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD):
