@@ -194,8 +194,9 @@ if DEBUG and (not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD):
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False' if DEBUG else 'True') == 'True'
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True' if DEBUG and not EMAIL_USE_SSL else 'False') == 'True'
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '465' if EMAIL_USE_SSL else '587'))
 GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
 
 from datetime import timedelta

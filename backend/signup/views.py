@@ -2,6 +2,7 @@ import random
 import string
 import time
 import logging
+from threading import Thread
 from django.core.mail import send_mail  #smtp ke through email send 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -12,6 +13,19 @@ from .models import User, Profile, Candidate
 logger = logging.getLogger(__name__)
 
 otp_storage = {}  # Store email as key and {'otp': OTP, 'timestamp': time_created} as value
+
+
+def send_otp_email(subject, message, from_email, recipient_list):
+    try:
+        send_mail(
+            subject,
+            message,
+            from_email,
+            recipient_list,
+            fail_silently=False,
+        )
+    except Exception:
+        logger.exception('Signup OTP email send failed for %s', recipient_list[0] if recipient_list else 'unknown')
 
 def generate_otp(length=6):
     """Generate a random OTP of given length."""
@@ -57,14 +71,11 @@ If you have any questions, feel free to reach out to our support team.
 Best regards,
 The TalentSift Team
     """
-        # Send the email
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [email],
-            fail_silently=False,
-        )
+        Thread(
+            target=send_otp_email,
+            args=(subject, message, settings.DEFAULT_FROM_EMAIL, [email]),
+            daemon=True,
+        ).start()
         response_data = {'message': 'OTP sent to your email.'}
         if settings.DEBUG and settings.EMAIL_BACKEND.endswith('locmem.EmailBackend'):
             response_data['debug_otp'] = otp
