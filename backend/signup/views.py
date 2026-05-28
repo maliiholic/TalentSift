@@ -1,12 +1,15 @@
 import random
 import string
 import time
+import logging
 from django.core.mail import send_mail  #smtp ke through email send 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
 from .models import User, Profile, Candidate
+
+logger = logging.getLogger(__name__)
 
 otp_storage = {}  # Store email as key and {'otp': OTP, 'timestamp': time_created} as value
 
@@ -21,27 +24,25 @@ def send_otp(request):
     """
     API to send an OTP to a user's email for verification.
     """
-    email = request.data.get('email')
-    if not email:
-        return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        email = request.data.get('email')
+        if not email:
+            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Check if a user with this email already exists
-    if User.objects.filter(email=email).exists():
-        return Response({'message': 'User with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+        # Check if a user with this email already exists
+        if User.objects.filter(email=email).exists():
+            return Response({'message': 'User with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Generate the OTP and store it with a timestamp
-    otp = generate_otp()
-    otp_storage[email] = {
-        'otp': otp,
-        'timestamp': time.time()
-    }
+        # Generate the OTP and store it with a timestamp
+        otp = generate_otp()
+        otp_storage[email] = {
+            'otp': otp,
+            'timestamp': time.time()
+        }
 
-    # Fetch user's first name if available (if registering, you may not have this yet)
-    user_first_name = request.data.get('first_name', 'User')
-
-    # Construct the email message
-    subject = "Your TalentSift OTP"
-    message = f"""
+        # Construct the email message
+        subject = "Your TalentSift OTP"
+        message = f"""
 Hello {email},
 
 Thank you for signing up with TalentSift. To complete your account setup, please use the One-Time Password (OTP) below to verify your account:
@@ -56,7 +57,6 @@ If you have any questions, feel free to reach out to our support team.
 Best regards,
 The TalentSift Team
     """
-    try:
         # Send the email
         send_mail(
             subject,
@@ -70,6 +70,7 @@ The TalentSift Team
             response_data['debug_otp'] = otp
         return Response(response_data, status=status.HTTP_200_OK)
     except Exception as e:
+        logger.exception('Signup OTP failed for %s', request.data.get('email'))
         return Response({'error': 'Failed to send OTP email', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

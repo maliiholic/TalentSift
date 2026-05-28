@@ -11,9 +11,12 @@ from django.core.cache import cache
 import jwt
 import datetime
 import requests
+import logging
 
 COOKIE_SECURE = not settings.DEBUG
 COOKIE_SAMESITE = 'None' if not settings.DEBUG else 'Lax'
+
+logger = logging.getLogger(__name__)
 
 
 def verify_recaptcha_token(token, expected_action=None):
@@ -54,31 +57,28 @@ def send_otp_signin(request):
     """
     API to send an OTP for signing in via email.
     """
-    email = request.data.get('email')
-    if not email:
-        return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
-
     try:
+        email = request.data.get('email')
+        if not email:
+            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+
         # Verify if the email exists in the database
         user = User.objects.get(email=email)
-    except User.DoesNotExist:
-        return Response({'error': 'Email does not exist'}, status=status.HTTP_400_BAD_REQUEST)
+        captcha_token = request.data.get('captcha')
+        captcha_ok, captcha_result = verify_recaptcha_token(captcha_token, expected_action='send_otp')
+        if not captcha_ok:
+            return Response({'error': captcha_result}, status=status.HTTP_400_BAD_REQUEST)
 
-    captcha_token = request.data.get('captcha')
-    captcha_ok, captcha_result = verify_recaptcha_token(captcha_token, expected_action='send_otp')
-    if not captcha_ok:
-        return Response({'error': captcha_result}, status=status.HTTP_400_BAD_REQUEST)
+        # Generate a random 6-digit OTP
+        otp = random.randint(100000, 999999)
 
-    # Generate a random 6-digit OTP
-    otp = random.randint(100000, 999999)
+        # Store the OTP in the cache with a 60-second expiration
+        cache_key = f'otp_{email}'
+        cache.set(cache_key, otp, timeout=60)
 
-    # Store the OTP in the cache with a 60-second expiration
-    cache_key = f'otp_{email}'
-    cache.set(cache_key, otp, timeout=60)
-
-    # Prepare the email content
-    subject = "Your TalentSift OTP"
-    message = f"""
+        # Prepare the email content
+        subject = "Your TalentSift OTP"
+        message = f"""
 Hello {user.email or 'User'},
 
 Use this OTP to verify your account:
@@ -90,7 +90,6 @@ This OTP will expire in 60 seconds. If you didn’t request this, please ignore 
 Best regards,  
 The TalentSift Team
     """
-    try:
         # Send the OTP email
         send_mail(
             subject,
@@ -103,7 +102,10 @@ The TalentSift Team
         if settings.DEBUG and settings.EMAIL_BACKEND.endswith('locmem.EmailBackend'):
             response_data['debug_otp'] = str(otp)
         return Response(response_data, status=status.HTTP_200_OK)
+    except User.DoesNotExist:
+        return Response({'error': 'Email does not exist'}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
+        logger.exception('Signin OTP failed for %s', request.data.get('email'))
         return Response({'error': 'Failed to send OTP email', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # Verify the OTP and check for expiration
