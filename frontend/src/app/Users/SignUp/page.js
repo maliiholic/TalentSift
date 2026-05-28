@@ -159,7 +159,7 @@ const Signup = () => {
             setIsOtpSent(true);
             setTimer(60); // Reset timer for resend OTP
         } catch (error) {
-            const apiMessage = error.response?.data?.message || "Error sending OTP.";
+            const apiMessage = error.response?.data?.details || error.response?.data?.message || "Error sending OTP.";
             setErrors((prevErrors) => ({ ...prevErrors, email: apiMessage }));
         } finally {
             setLoading(false);
@@ -177,7 +177,7 @@ const Signup = () => {
             setErrors({});
             toast.success("OTP has been resent.");
         } catch (error) {
-            toast.error("Error resending OTP.");
+            toast.error(error.response?.data?.details || error.response?.data?.message || "Error resending OTP.");
         } finally {
             setLoading(false);
         }

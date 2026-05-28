@@ -148,7 +148,7 @@ const SignIn = () => {
             setIsOtpSent(true);
             setTimer(60); // Start countdown
         } catch (error) {
-            setEmailError(error.response?.data?.error || "Error sending OTP.");
+            setEmailError(error.response?.data?.details || error.response?.data?.error || "Error sending OTP.");
         } finally {
             setLoading(false);
         }
@@ -164,7 +164,7 @@ const SignIn = () => {
             }
             setTimer(60); // Restart countdown
         } catch (error) {
-            setEmailError(error.response?.data?.error || "Error resending OTP.");
+            setEmailError(error.response?.data?.details || error.response?.data?.error || "Error resending OTP.");
         } finally {
             setLoading(false);
         }
