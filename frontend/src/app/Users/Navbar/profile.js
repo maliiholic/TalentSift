@@ -7,12 +7,9 @@ import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import Image from "next/image";
 import { Role_Action } from "@/Redux/Action";
-import { API_BASE_URL } from "@/utils/api";
+import { performLogout } from "@/utils/logout";
 
-const storedToken = typeof window !== "undefined" ? localStorage.getItem("access") : null;
-if (storedToken) {
-  axios.defaults.headers.common["Authorization"] = `Bearer ${storedToken}`;
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const DEFAULT_IMAGE = "https://media.istockphoto.com/id/1300845620/vector/user-icon-flat-isolated-on-white-background-user-symbol-vector-illustration.jpg?s=612x612&w=0&k=20&c=yBeyba0hUkh14_jgv1OKqIH0CCSWU_4ckRkAoy2p73o=";
 
@@ -29,7 +26,7 @@ const ProfileLink = () => {
 
   const fetchUserData = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/get_picture/`, { withCredentials: true });
+      const response = await axios.get(`${API_BASE}/get_picture/`, { withCredentials: true });
       setUserData(response.data);
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -86,23 +83,15 @@ const ProfileLink = () => {
   };
 
   const handleLogout = async () => {
-    try {
-      setDropdownOpen(false);
-      await axios.post(`${API_BASE_URL}/logout/`, {}, { withCredentials: true });
-      localStorage.removeItem("access");
-      delete axios.defaults.headers.common["Authorization"];
-      await dispatch(Role_Action("Guest"));
-      router.replace("/Users/Home");
-    } catch (error) {
-      console.error("Error logging out:", error);
-    }
+    setDropdownOpen(false);
+    await performLogout(dispatch, router.replace);
   };
 
   const profileImageSrc = userData?.user_data?.profile_picture
     ? (() => {
       const rawSrc = userData.user_data.profile_picture.startsWith("http")
         ? userData.user_data.profile_picture
-        : `${API_BASE_URL}${userData.user_data.profile_picture.startsWith("/") ? "" : "/"}${userData.user_data.profile_picture}`;
+        : `${API_BASE}${userData.user_data.profile_picture.startsWith("/") ? "" : "/"}${userData.user_data.profile_picture}`;
 
       return `${rawSrc}${rawSrc.includes("?") ? "&" : "?"}v=${profileRefreshKey}`;
     })()

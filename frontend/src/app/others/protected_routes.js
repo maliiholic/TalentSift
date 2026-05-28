@@ -32,6 +32,8 @@
 
         if (role === 'admin') {
             allow =
+                pathname === '/' ||
+                pathname === '/Users/Home' ||
                 pathname === '/Admin/deleteusers' ||
                 pathname === '/Admin/deletesubscription' ||
                 pathname === '/Admin/dashboard' ||
@@ -40,6 +42,7 @@
             redirectPath = '/Users/Home';
         } else if (role === 'Candidate') {
             allow =
+                pathname === '/' ||
                 pathname === '/Users/Home' ||
                 pathname === '/Users/Jobs' ||
                 pathname === '/Users/Notifications' ||
@@ -50,6 +53,7 @@
             redirectPath = '/Users/Home';
         } else if (role === 'Recruiter') {
             allow =
+                pathname === '/' ||
                 pathname === '/Users/Home' ||
                 pathname === '/Users/Posts' ||
                 pathname === '/Users/Notifications' ||
@@ -59,6 +63,7 @@
             redirectPath = '/Users/Home';
         } else if (role === 'Guest') {
             allow =
+                pathname === '/' ||
                 pathname === '/Users/Home' ||
                 pathname === '/Users/SignIn' ||
                 pathname === '/Users/SignUp';
@@ -66,6 +71,7 @@
         } else {
             // Fallback for transient/unknown auth state to avoid blank screens.
             allow =
+                pathname === '/' ||
                 pathname === '/Users/Home' ||
                 pathname === '/Users/SignIn' ||
                 pathname === '/Users/SignUp';

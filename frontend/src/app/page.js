@@ -1,8 +1,34 @@
 "use client"; // For client-side rendering
 
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
 import Link from "next/link";
+import axios from "axios";
+import { Role_Action } from "@/Redux/Action";
+import { persistor } from "@/Store";
 
 const Home = () => {
+  const dispatch = useDispatch();
+
+  // Force-clear any lingering auth state when user lands on the Getting Started page
+  useEffect(() => {
+    try {
+      localStorage.removeItem("access");
+      localStorage.removeItem("refresh");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    } catch (e) {
+      // localStorage not available
+    }
+    delete axios.defaults.headers.common["Authorization"];
+    dispatch(Role_Action("Guest"));
+    try {
+      persistor.purge();
+    } catch (e) {
+      // ignore purge errors
+    }
+  }, [dispatch]);
+
   return (
     <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "40px", background: "radial-gradient(circle at top, #fef3c7 0%, #f4f2ee 45%, #e7edf8 100%)" }}>
       <div style={{ maxWidth: "760px", width: "100%", background: "rgba(255,255,255,0.72)", backdropFilter: "blur(18px)", border: "1px solid rgba(15, 23, 42, 0.08)", borderRadius: "28px", padding: "40px", boxShadow: "0 30px 80px rgba(15, 23, 42, 0.12)" }}>
@@ -25,3 +51,4 @@ const Home = () => {
 };
 
 export default Home;
+

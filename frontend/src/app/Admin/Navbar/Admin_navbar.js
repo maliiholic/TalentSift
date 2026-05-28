@@ -1,5 +1,6 @@
 "use client";
 import { API_BASE_URL } from "@/utils/api";
+import { performLogout } from "@/utils/logout";
 import Image from "next/image";
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -29,20 +30,7 @@ const AdminNavbar = () => {
   const toggleDrawer = () => setIsDrawerOpen((prev) => !prev);
 
   const handleLogout = async () => {
-    try {
-      await axios.post(`${API_BASE_URL}/logout/`, {}, { withCredentials: true });
-      // Clear Redux state and localStorage on logout
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      dispatch({ type: 'RESET_STATE' }); // Clear Redux if reducer supports it
-      router.push("/Users/SignIn");
-    } catch (error) {
-      console.error("Error logging out:", error);
-      // Still redirect even if logout endpoint fails
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      router.push("/Users/SignIn");
-    }
+    await performLogout(dispatch, router.replace);
   };
 
   return (

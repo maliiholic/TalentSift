@@ -18,6 +18,7 @@ import { useDispatch, useSelector } from "react-redux";
 // globals.css imported in root layout
 import { Role_Action } from "@/Redux/Action";
 import { API_BASE_URL } from "@/utils/api";
+import { performLogout } from "@/utils/logout";
 
 import { ProfileLink } from "./profile";
 import { SearchBar } from "./search";
@@ -48,15 +49,7 @@ const Navbar = () => {
   };
 
   const handleLogout = async () => {
-    try {
-      await axios.post(`${API_BASE_URL}/logout/`, {}, { withCredentials: true });
-      localStorage.removeItem("access");
-      delete axios.defaults.headers.common["Authorization"];
-      await dispatch(Role_Action("Guest"));
-      router.replace("/Users/Home");
-    } catch (error) {
-      console.error("Error logging out:", error);
-    }
+    await performLogout(dispatch, router.replace);
   };
 
   useEffect(() => {
@@ -148,7 +141,7 @@ const Navbar = () => {
                   router={router}
                 />
               </>
-            ) : userRole === "Candidate" || userRole === "Recruiter" ? (
+            ) : userRole === "Candidate" || userRole === "Recruiter" || userRole === "admin" ? (
               <>
                 <NavbarLink
                   icon={faHome}
@@ -156,19 +149,30 @@ const Navbar = () => {
                   path="/Users/Home"
                   router={router}
                 />
-                <NavbarLink
-                  icon={faBriefcase}
-                  label={userRole === "Candidate" ? "Jobs" : "Posts"}
-                  path={userRole === "Candidate" ? "/Users/Jobs" : "/Users/Posts"}
-                  router={router}
-                />
-                <NavbarLink
-                  icon={faBell}
-                  label="Notifications"
-                  path="/Users/Notifications"
-                  router={router}
-                  badgeCount={notificationCount}
-                />
+                {userRole === "admin" ? (
+                  <NavbarLink
+                    icon={faUser}
+                    label="Admin Panel"
+                    path="/Admin/dashboard"
+                    router={router}
+                  />
+                ) : (
+                  <NavbarLink
+                    icon={faBriefcase}
+                    label={userRole === "Candidate" ? "Jobs" : "Posts"}
+                    path={userRole === "Candidate" ? "/Users/Jobs" : "/Users/Posts"}
+                    router={router}
+                  />
+                )}
+                {userRole !== "admin" && (
+                  <NavbarLink
+                    icon={faBell}
+                    label="Notifications"
+                    path="/Users/Notifications"
+                    router={router}
+                    badgeCount={notificationCount}
+                  />
+                )}
                 {userRole === "Candidate" && (
                   <NavbarLink
                     icon={faUserGraduate}
@@ -219,7 +223,7 @@ const Navbar = () => {
                 router={router}
               />
             </>
-          ) : userRole === "Candidate" || userRole === "Recruiter" ? (
+          ) : userRole === "Candidate" || userRole === "Recruiter" || userRole === "admin" ? (
             <>
               <NavbarLinkMobile
                 icon={faHome}
@@ -227,29 +231,40 @@ const Navbar = () => {
                 path="/Users/Home"
                 router={router}
               />
-              <NavbarLinkMobile
-                icon={faBriefcase}
-                label={userRole === "Candidate" ? "Jobs" : "Posts"}
-                path={userRole === "Candidate" ? "/Users/Jobs" : "/Users/Posts"}
-                router={router}
-              />
-              <NavbarLinkMobile
-                icon={faBell}
-                label="Notifications"
-                path="/Users/Notifications"
-                router={router}
+              {userRole === "admin" ? (
+                <NavbarLinkMobile
+                  icon={faUser}
+                  label="Admin Panel"
+                  path="/Admin/dashboard"
+                  router={router}
+                />
+              ) : (
+                <NavbarLinkMobile
+                  icon={faBriefcase}
+                  label={userRole === "Candidate" ? "Jobs" : "Posts"}
+                  path={userRole === "Candidate" ? "/Users/Jobs" : "/Users/Posts"}
+                  router={router}
+                />
+              )}
+              {userRole !== "admin" && (
+                <NavbarLinkMobile
+                  icon={faBell}
+                  label="Notifications"
+                  path="/Users/Notifications"
+                  router={router}
                   badgeCount={notificationCount}
-              />
-                {userRole === "Candidate" && (
-                  <NavbarLinkMobile
-                    icon={faUserGraduate}
-                    label="Practice"
-                    path="/Users/Practice"
-                    router={router}
-                  />
-                )}
+                />
+              )}
+              {userRole === "Candidate" && (
+                <NavbarLinkMobile
+                  icon={faUserGraduate}
+                  label="Practice"
+                  path="/Users/Practice"
+                  router={router}
+                />
+              )}
 
-              <div className="flex flex-col space-y-2 mt-4">
+              <div className="flex flex-col space-y-2 mt-4 w-full">
                 <button
                   className="flex items-center space-x-2 w-full text-gray-700 hover:text-black px-3 py-2 transition duration-200 rounded-lg hover:bg-gray-200"
                   onClick={() => router.push("/Users/Profile")}
@@ -258,22 +273,24 @@ const Navbar = () => {
                   <span>View Profile</span>
                 </button>
 
-                {userRole === "Candidate" ? (
-                  <button
-                    className="flex items-center space-x-2 w-full text-gray-700 hover:text-black px-3 py-2 transition duration-200 rounded-lg hover:bg-gray-200"
-                    onClick={switchToRecruiter}
-                  >
-                    <FontAwesomeIcon icon={faRightLeft} className="h-4 w-4" />
-                    <span>Switch to Recruiter</span>
-                  </button>
-                ) : (
-                  <button
-                    className="flex items-center space-x-2 w-full text-gray-700 hover:text-black px-3 py-2 transition duration-200 rounded-lg hover:bg-gray-200"
-                    onClick={switchToCandidate}
-                  >
-                    <FontAwesomeIcon icon={faRightLeft} className="h-4 w-4" />
-                    <span>Switch to Candidate</span>
-                  </button>
+                {userRole !== "admin" && (
+                  userRole === "Candidate" ? (
+                    <button
+                      className="flex items-center space-x-2 w-full text-gray-700 hover:text-black px-3 py-2 transition duration-200 rounded-lg hover:bg-gray-200"
+                      onClick={switchToRecruiter}
+                    >
+                      <FontAwesomeIcon icon={faRightLeft} className="h-4 w-4" />
+                      <span>Switch to Recruiter</span>
+                    </button>
+                  ) : (
+                    <button
+                      className="flex items-center space-x-2 w-full text-gray-700 hover:text-black px-3 py-2 transition duration-200 rounded-lg hover:bg-gray-200"
+                      onClick={switchToCandidate}
+                    >
+                      <FontAwesomeIcon icon={faRightLeft} className="h-4 w-4" />
+                      <span>Switch to Candidate</span>
+                    </button>
+                  )
                 )}
                 <hr className="my-1 border-gray-300" />
                 <button
