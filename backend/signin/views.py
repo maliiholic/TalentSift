@@ -3,7 +3,6 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.core.mail import send_mail
 from signup.models import User, Profile
 import random
 from django.conf import settings
@@ -12,21 +11,12 @@ import jwt
 import datetime
 import requests
 import logging
+from email_service import send_otp_email
 
 COOKIE_SECURE = not settings.DEBUG
 COOKIE_SAMESITE = 'None' if not settings.DEBUG else 'Lax'
 
 logger = logging.getLogger(__name__)
-
-
-def send_otp_email(subject, message, from_email, recipient_list):
-    send_mail(
-        subject,
-        message,
-        from_email,
-        recipient_list,
-        fail_silently=False,
-    )
 
 
 def verify_recaptcha_token(token, expected_action=None):
@@ -100,7 +90,7 @@ This OTP will expire in 60 seconds. If you didn’t request this, please ignore 
 Best regards,  
 The TalentSift Team
     """
-        send_otp_email(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+        send_otp_email(subject, message, email)
         response_data = {'success': 'OTP sent to your email!'}
         if settings.DEBUG and settings.EMAIL_BACKEND.endswith('locmem.EmailBackend'):
             response_data['debug_otp'] = str(otp)
