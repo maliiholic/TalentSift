@@ -291,7 +291,7 @@ const Job = () => {
                 {/* Action Buttons */}
                 <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
                     <button
-                        onClick={() => window.history.back()}
+                        onClick={() => router.push('/Users/Jobs')}
                         className="w-full sm:w-auto px-6 py-3 bg-[#0073b1] text-white font-semibold rounded-lg shadow-md transition-colors duration-300 hover:bg-[#005f8c]"
                     >
                         <FaArrowLeft className="mr-2 inline-block" /> Back to Jobs

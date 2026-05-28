@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -37,16 +37,35 @@ export default function InterviewPage() {
 
 	const currentQuestion = questions[currentIndex];
 
+	const handleCompleteInterview = useCallback(async () => {
+		if (!sessionId) return;
+		if (finishing || completed) return;
+
+		setFinishing(true);
+		setTimeLeft(null);
+		try {
+			const res = await axios.post(`${API_BASE_URL}/interview/complete/${sessionId}/`, {}, { withCredentials: true });
+			setCompleted(true);
+			setResult(res.data);
+			toast.success(res.data?.passed ? "Passed screening!" : "Interview completed.");
+		} catch (err) {
+			setFinishing(false);
+			toast.error(err.response?.data?.error || "Failed to complete interview");
+		}
+	}, [sessionId, finishing, completed]);
+
 	// Timer tick
 	useEffect(() => {
 		if (timeLeft === null || completed || finishing) return;
 		if (timeLeft <= 0) {
-			handleCompleteInterview();
-			return;
+			const completionTimer = setTimeout(() => {
+				void handleCompleteInterview();
+			}, 0);
+			return () => clearTimeout(completionTimer);
 		}
 		const t = setInterval(() => setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0)), 1000);
 		return () => clearInterval(t);
-	}, [timeLeft, completed, finishing]);
+	}, [timeLeft, completed, finishing, handleCompleteInterview]);
 
 	// prevent copy on question and intercept document copy
 	useEffect(() => {
@@ -83,71 +102,83 @@ export default function InterviewPage() {
 		};
 	}, [sessionId]);
 
-	const startInterview = async () => {
+	useEffect(() => {
 		if (!applicationId) return;
-		setStarting(true);
-		setStartError("");
-		try {
-			const statusRes = await axios.get(`${API_BASE_URL}/application/${applicationId}/interview-status/`, { withCredentials: true });
-			if (statusRes.data?.status === 'passed' || statusRes.data?.status === 'failed') {
-				setCompleted(true);
-				setResult({
-					final_score: statusRes.data.final_score ?? statusRes.data.screening_score,
-					passed: statusRes.data.status === 'passed',
-				});
-				setStartStatus(statusRes.data.status === 'passed' ? "Interview already completed and passed." : "Interview already completed and not passed. Better luck next time.");
-				toast.info(statusRes.data.status === 'passed' ? "Interview already completed and passed." : "Interview already completed and not passed. Better luck next time.");
-				return;
-			}
 
-			if (statusRes.data?.status === 'in_progress' && statusRes.data?.session_id) {
-				setSessionId(statusRes.data.session_id);
-				setQuestions(normalizeQuestions(statusRes.data.questions));
-				setTimeLeft(statusRes.data.time_limit_seconds || null);
-				setCurrentIndex(0);
-				setAttemptFeedback(null);
-				setAnswer("");
-				setStartStatus("Resuming your in-progress interview.");
-				return;
-			}
+		let cancelled = false;
 
-			const res = await axios.post(`${API_BASE_URL}/application/${applicationId}/start-interview/`, {}, { withCredentials: true });
-			if (res.data?.message === "Interview already completed") {
-				setCompleted(true);
-				setResult({ final_score: res.data.final_score ?? res.data.screening_score, passed: Boolean(res.data.passed) });
-				setStartStatus(res.data.passed ? "Interview already completed and passed." : "Interview already completed and was not passed.");
-				toast.info(res.data.passed ? "Interview already completed and passed." : "Interview already completed and was not passed.");
-				return;
-			}
+		const loadInterview = async () => {
+			setStarting(true);
+			setStartError("");
+			try {
+				const statusRes = await axios.get(`${API_BASE_URL}/application/${applicationId}/interview-status/`, { withCredentials: true });
+				if (cancelled) return;
+				if (statusRes.data?.status === 'passed' || statusRes.data?.status === 'failed') {
+					setCompleted(true);
+					setResult({
+						final_score: statusRes.data.final_score ?? statusRes.data.screening_score,
+						passed: statusRes.data.status === 'passed',
+					});
+					setStartStatus(statusRes.data.status === 'passed' ? "Interview already completed and passed." : "Interview already completed and not passed. Better luck next time.");
+					toast.info(statusRes.data.status === 'passed' ? "Interview already completed and passed." : "Interview already completed and not passed. Better luck next time.");
+					return;
+				}
 
-			if (res.data?.message === "Interview already in progress") {
+				if (statusRes.data?.status === 'in_progress' && statusRes.data?.session_id) {
+					setSessionId(statusRes.data.session_id);
+					setQuestions(normalizeQuestions(statusRes.data.questions));
+					setTimeLeft(statusRes.data.time_limit_seconds || null);
+					setCurrentIndex(0);
+					setAttemptFeedback(null);
+					setAnswer("");
+					setStartStatus("Resuming your in-progress interview.");
+					return;
+				}
+
+				const res = await axios.post(`${API_BASE_URL}/application/${applicationId}/start-interview/`, {}, { withCredentials: true });
+				if (cancelled) return;
+				if (res.data?.message === "Interview already completed") {
+					setCompleted(true);
+					setResult({ final_score: res.data.final_score ?? res.data.screening_score, passed: Boolean(res.data.passed) });
+					setStartStatus(res.data.passed ? "Interview already completed and passed." : "Interview already completed and was not passed.");
+					toast.info(res.data.passed ? "Interview already completed and passed." : "Interview already completed and was not passed.");
+					return;
+				}
+
+				if (res.data?.message === "Interview already in progress") {
+					setSessionId(res.data.session_id);
+					setQuestions(normalizeQuestions(res.data.questions));
+					setTimeLeft(res.data.time_limit_seconds || null);
+					setCurrentIndex(0);
+					setAttemptFeedback(null);
+					setAnswer("");
+					setStartStatus("Resuming your in-progress interview.");
+					return;
+				}
 				setSessionId(res.data.session_id);
 				setQuestions(normalizeQuestions(res.data.questions));
 				setTimeLeft(res.data.time_limit_seconds || null);
 				setCurrentIndex(0);
 				setAttemptFeedback(null);
 				setAnswer("");
-				setStartStatus("Resuming your in-progress interview.");
-				return;
+			} catch (err) {
+				if (cancelled) return;
+				const message = err.response?.data?.error || "Failed to start interview";
+				setStartError(message);
+				toast.error(message);
+			} finally {
+				if (!cancelled) {
+					setStarting(false);
+					setLoading(false);
+				}
 			}
-			setSessionId(res.data.session_id);
-			setQuestions(normalizeQuestions(res.data.questions));
-			setTimeLeft(res.data.time_limit_seconds || null);
-			setCurrentIndex(0);
-			setAttemptFeedback(null);
-			setAnswer("");
-		} catch (err) {
-			const message = err.response?.data?.error || "Failed to start interview";
-			setStartError(message);
-			toast.error(message);
-		} finally {
-			setStarting(false);
-			setLoading(false);
-		}
-	};
+		};
 
-	useEffect(() => {
-		startInterview();
+		void loadInterview();
+
+		return () => {
+			cancelled = true;
+		};
 	}, [applicationId]);
 
 	const submitAnswer = async () => {
@@ -199,23 +230,6 @@ export default function InterviewPage() {
 			setCurrentIndex((p) => p + 1);
 		} else {
 			handleCompleteInterview();
-		}
-	};
-
-	const handleCompleteInterview = async () => {
-		if (!sessionId) return;
-		if (finishing || completed) return;
-
-		setFinishing(true);
-		setTimeLeft(null);
-		try {
-			const res = await axios.post(`${API_BASE_URL}/interview/complete/${sessionId}/`, {}, { withCredentials: true });
-			setCompleted(true);
-			setResult(res.data);
-			toast.success(res.data?.passed ? "Passed screening!" : "Interview completed.");
-		} catch (err) {
-			setFinishing(false);
-			toast.error(err.response?.data?.error || "Failed to complete interview");
 		}
 	};
 

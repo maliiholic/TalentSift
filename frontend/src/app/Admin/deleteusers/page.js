@@ -7,20 +7,50 @@ import { SearchBar } from "../../others/search";
 import { useDispatch, useSelector } from "react-redux";
 import { admin_search_bar_action } from "@/Redux/Action";
 
+const readAdminUsersCache = (cacheKey) => {
+    if (typeof window === "undefined") {
+        return { users: [], totalPages: 1, totalCount: 0, hasCache: false };
+    }
+
+    try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed.users)) {
+                return {
+                    users: parsed.users,
+                    totalPages: parsed.totalPages || 1,
+                    totalCount: parsed.totalCount || 0,
+                    hasCache: true,
+                };
+            }
+        }
+    } catch (cacheError) {
+        // Ignore cache parsing errors and fall back to a network fetch.
+    }
+
+    return { users: [], totalPages: 1, totalCount: 0, hasCache: false };
+};
+
 const DelUsers = () => {
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalCount, setTotalCount] = useState(0);
+    const searchQuery = useSelector((state) => state.admin_search_bar_reducer);
+    const [refreshKey, setRefreshKey] = useState(0);
+    const cacheKey = `admin-deleteusers:${page}:${searchQuery || ''}:${refreshKey}`;
+    const cachedUsers = readAdminUsersCache(cacheKey);
+
+    const [users, setUsers] = useState(cachedUsers.users);
+    const [loading, setLoading] = useState(!cachedUsers.hasCache);
+    const [error, setError] = useState(null);
+    const [totalPages, setTotalPages] = useState(cachedUsers.totalPages);
+    const [totalCount, setTotalCount] = useState(cachedUsers.totalCount);
     const [showModal, setShowModal] = useState(false);
     const [userToDelete, setUserToDelete] = useState(null);
-    const [refreshKey, setRefreshKey] = useState(0);
-    const searchQuery = useSelector((state) => state.admin_search_bar_reducer);
     const dispatch = useDispatch();
 
     useEffect(() => {
+        let cancelled = false;
+
         const fetchUsers = async () => {
             try {
                 setLoading(true);
@@ -30,19 +60,41 @@ const DelUsers = () => {
                     { withCredentials: true }
                 );
 
+                if (cancelled) return;
+
                 const total_pages = Math.ceil((response.data.count || 0) / 10);
                 setUsers(response.data.results || []);
                 setTotalPages(total_pages);
                 setTotalCount(response.data.count || 0);
+
+                try {
+                    sessionStorage.setItem(
+                        cacheKey,
+                        JSON.stringify({
+                            users: response.data.results || [],
+                            totalPages: total_pages,
+                            totalCount: response.data.count || 0,
+                        })
+                    );
+                } catch (cacheError) {
+                    // Ignore cache write errors.
+                }
             } catch (err) {
+                if (cancelled) return;
                 setError('Failed to fetch users: ' + (err?.message || err));
             } finally {
-                setLoading(false);
+                if (!cancelled) {
+                    setLoading(false);
+                }
             }
         };
 
         fetchUsers();
-    }, [page, searchQuery, refreshKey]);
+
+        return () => {
+            cancelled = true;
+        };
+    }, [page, searchQuery, refreshKey, cacheKey]);
 
    
 

@@ -21,33 +21,6 @@ const Notification = () => {
         dispatch(search_bar_action(""));
     }, [dispatch]);
 
-    useEffect(() => {
-        const fetchNotifications = async () => {
-            try {
-                setLoading(true);
-                const response = await axios.get(`${API_BASE_URL}/notifications/`, {
-                    withCredentials: true,
-                });
-                const items = response.data?.notifications || [];
-                // sort unread first
-                items.sort((a, b) => (a.is_read === b.is_read ? 0 : a.is_read ? 1 : -1));
-                setNotifications(items);
-                // notify navbar about unread count
-                dispatchUnreadUpdate(items);
-            } catch (err) {
-                setError(err.response?.data?.error || "Failed to load notifications.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (role !== "Guest") {
-            fetchNotifications();
-        } else {
-            setLoading(false);
-        }
-    }, [role]);
-
     const dispatchUnreadUpdate = (items) => {
         const unread = items.filter((i) => !i.is_read).length;
         try {
@@ -56,6 +29,48 @@ const Notification = () => {
             // ignore in non-browser contexts
         }
     };
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const fetchNotifications = async () => {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/notifications/`, {
+                    withCredentials: true,
+                });
+                if (cancelled) return;
+
+                const items = response.data?.notifications || [];
+                items.sort((a, b) => (a.is_read === b.is_read ? 0 : a.is_read ? 1 : -1));
+                setNotifications(items);
+                dispatchUnreadUpdate(items);
+            } catch (err) {
+                if (!cancelled) {
+                    setError(err.response?.data?.error || "Failed to load notifications.");
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        if (role !== "Guest") {
+            void fetchNotifications();
+        } else {
+            const guestLoadingTimer = setTimeout(() => {
+                setLoading(false);
+            }, 0);
+
+            return () => {
+                clearTimeout(guestLoadingTimer);
+            };
+        }
+
+        return () => {
+            cancelled = true;
+        };
+    }, [role]);
 
     const handleMarkRead = async (notificationId) => {
         try {

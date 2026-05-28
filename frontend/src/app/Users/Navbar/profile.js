@@ -24,17 +24,25 @@ const ProfileLink = () => {
 
   const toggleDropdown = () => setDropdownOpen((prev) => !prev);
 
-  const fetchUserData = async () => {
-    try {
-      const response = await axios.get(`${API_BASE}/get_picture/`, { withCredentials: true });
-      setUserData(response.data);
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
-
   useEffect(() => {
-    fetchUserData();
+    let cancelled = false;
+
+    const loadUserData = async () => {
+      try {
+        const response = await axios.get(`${API_BASE}/get_picture/`, { withCredentials: true });
+        if (!cancelled) {
+          setUserData(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    void loadUserData();
+
+    return () => {
+      cancelled = true;
+    };
   }, [profileRefreshKey]);
 
   useEffect(() => {

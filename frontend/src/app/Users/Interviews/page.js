@@ -10,21 +10,30 @@ export default function CandidateInterviews() {
     const [loading, setLoading] = useState(true);
     const [interviews, setInterviews] = useState([]);
 
-    const fetch = async () => {
-        setLoading(true);
-        try {
-            const res = await axios.get(`${API_BASE_URL}/candidate/interviews/`, { withCredentials: true });
-            setInterviews(res.data.interviews || []);
-        } catch (err) {
-            console.error(err);
-            toast.error(err.response?.data?.error || "Failed to load interviews");
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
-        fetch();
+        let cancelled = false;
+
+        const loadInterviews = async () => {
+            try {
+                const res = await axios.get(`${API_BASE_URL}/candidate/interviews/`, { withCredentials: true });
+                if (!cancelled) {
+                    setInterviews(res.data.interviews || []);
+                }
+            } catch (err) {
+                console.error(err);
+                toast.error(err.response?.data?.error || "Failed to load interviews");
+            } finally {
+                if (!cancelled) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        void loadInterviews();
+
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
     if (loading) return <Loader />;

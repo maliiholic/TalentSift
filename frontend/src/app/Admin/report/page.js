@@ -9,15 +9,43 @@ import { admin_search_bar_action } from "@/Redux/Action";
 import { FaBuilding, FaMapMarkerAlt, FaClipboardList, FaClock, FaArrowLeft, FaCheckCircle, FaFlag } from "react-icons/fa";
 import { MdOutlineWork } from "react-icons/md";
 
+const readAdminReportsCache = (cacheKey) => {
+    if (typeof window === "undefined") {
+        return { reportedJobs: [], totalPages: 1, totalCount: 0, hasCache: false };
+    }
+
+    try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed.reportedJobs)) {
+                return {
+                    reportedJobs: parsed.reportedJobs,
+                    totalPages: parsed.totalPages || 1,
+                    totalCount: parsed.totalCount || 0,
+                    hasCache: true,
+                };
+            }
+        }
+    } catch (cacheError) {
+        // Ignore cache parsing errors and fall back to a network fetch.
+    }
+
+    return { reportedJobs: [], totalPages: 1, totalCount: 0, hasCache: false };
+};
+
 const ReportedJobs = () => {
-    const [reportedJobs, setReportedJobs] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalCount, setTotalCount] = useState(0);
-    const [showModal, setShowModal] = useState(false);
     const searchQuery = useSelector((state) => state.admin_search_bar_reducer);
+    const cacheKey = `admin-report:${page}:${searchQuery || ''}`;
+    const cachedReports = readAdminReportsCache(cacheKey);
+
+    const [reportedJobs, setReportedJobs] = useState(cachedReports.reportedJobs);
+    const [loading, setLoading] = useState(!cachedReports.hasCache);
+    const [error, setError] = useState(null);
+    const [totalPages, setTotalPages] = useState(cachedReports.totalPages);
+    const [totalCount, setTotalCount] = useState(cachedReports.totalCount);
+    const [showModal, setShowModal] = useState(false);
     const dispatch = useDispatch();
     const [jobToDelete, setJobToDelete] = useState(null);
     const [reportId, setReportId] = useState(null);
@@ -48,6 +76,19 @@ const ReportedJobs = () => {
                 setReportedJobs(reported_jobs);
                 setTotalPages(total_pages);
                 setTotalCount(total_count);
+
+                try {
+                    sessionStorage.setItem(
+                        cacheKey,
+                        JSON.stringify({
+                            reportedJobs: reported_jobs,
+                            totalPages: total_pages,
+                            totalCount: total_count,
+                        })
+                    );
+                } catch (cacheError) {
+                    // Ignore cache write errors.
+                }
             } catch (err) {
                 if (cancelled) return;
                 setError("Failed to fetch reported jobs: " + (err?.message || err));
@@ -63,7 +104,7 @@ const ReportedJobs = () => {
         return () => {
             cancelled = true;
         };
-    }, [page, searchQuery]);
+    }, [page, searchQuery, cacheKey]);
 
 
 

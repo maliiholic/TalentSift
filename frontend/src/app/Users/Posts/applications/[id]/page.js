@@ -26,32 +26,41 @@ export default function ApplicationsPage() {
     const [location, setLocation] = useState("");
     const [notes, setNotes] = useState("");
 
-    const fetchApplications = async () => {
-        if (!jobId) return;
-        setLoading(true);
-        try {
-            if (viewMode === "screened") {
-                const res = await axios.get(`${API_BASE_URL}/job/${jobId}/screened/`, { withCredentials: true });
-                setJobName(res.data.job_name || "");
-                setApplications((res.data.screened_applications || []).map((x) => ({
-                    ...x,
-                    created_at: x.applied_at,
-                })));
-            } else {
-                const res = await axios.get(`${API_BASE_URL}/job/${jobId}/applications/`, { withCredentials: true });
-                setJobName(res.data.job_name || "");
-                setApplications(res.data.applications || []);
-            }
-        } catch (err) {
-            console.error(err);
-            toast.error(err.response?.data?.error || "Failed to load applications");
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
-        fetchApplications();
+        let cancelled = false;
+
+        const loadApplications = async () => {
+            if (!jobId) return;
+            try {
+                if (viewMode === "screened") {
+                    const res = await axios.get(`${API_BASE_URL}/job/${jobId}/screened/`, { withCredentials: true });
+                    if (cancelled) return;
+                    setJobName(res.data.job_name || "");
+                    setApplications((res.data.screened_applications || []).map((x) => ({
+                        ...x,
+                        created_at: x.applied_at,
+                    })));
+                } else {
+                    const res = await axios.get(`${API_BASE_URL}/job/${jobId}/applications/`, { withCredentials: true });
+                    if (cancelled) return;
+                    setJobName(res.data.job_name || "");
+                    setApplications(res.data.applications || []);
+                }
+            } catch (err) {
+                console.error(err);
+                toast.error(err.response?.data?.error || "Failed to load applications");
+            } finally {
+                if (!cancelled) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        void loadApplications();
+
+        return () => {
+            cancelled = true;
+        };
     }, [jobId, viewMode]);
 
     const updateStatus = async (applicationId, status) => {

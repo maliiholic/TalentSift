@@ -6,16 +6,45 @@ import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { admin_search_bar_action } from "@/Redux/Action";
 import { SearchBar } from "../../others/search";
+
+const readAdminJobsCache = (cacheKey) => {
+  if (typeof window === "undefined") {
+    return { jobs: [], totalPages: 1, totalCount: 0, hasCache: false };
+  }
+
+  try {
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed.jobs)) {
+        return {
+          jobs: parsed.jobs,
+          totalPages: parsed.totalPages || 1,
+          totalCount: parsed.totalCount || 0,
+          hasCache: true,
+        };
+      }
+    }
+  } catch (cacheError) {
+    // Ignore cache parsing errors and fall back to a network fetch.
+  }
+
+  return { jobs: [], totalPages: 1, totalCount: 0, hasCache: false };
+};
+
 const Deljobs = () => {
-  const [jobs, setjobs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
+  const searchQuery = useSelector((state) => state.admin_search_bar_reducer);
+  const cacheKey = `admin-deletejob:${page}:${searchQuery || ''}`;
+  const cachedJobs = readAdminJobsCache(cacheKey);
+
+  const [jobs, setjobs] = useState(cachedJobs.jobs);
+  const [loading, setLoading] = useState(!cachedJobs.hasCache);
+  const [error, setError] = useState(null);
+  const [totalPages, setTotalPages] = useState(cachedJobs.totalPages);
+  const [totalCount, setTotalCount] = useState(cachedJobs.totalCount);
   const [showModal, setShowModal] = useState(false);
   const [subscriptionToDelete, setSubscriptionToDelete] = useState(null);
-  const searchQuery = useSelector((state) => state.admin_search_bar_reducer);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -36,6 +65,19 @@ const Deljobs = () => {
         setjobs(response.data.results || []);
         setTotalPages(total_pages);
         setTotalCount(response.data.count || 0);
+
+        try {
+          sessionStorage.setItem(
+            cacheKey,
+            JSON.stringify({
+              jobs: response.data.results || [],
+              totalPages: total_pages,
+              totalCount: response.data.count || 0,
+            })
+          );
+        } catch (cacheError) {
+          // Ignore cache write errors.
+        }
       } catch (err) {
         if (cancelled) return;
         setError("Failed to fetch jobs: " + (err?.message || err));
@@ -51,7 +93,7 @@ const Deljobs = () => {
     return () => {
       cancelled = true;
     };
-  }, [page, searchQuery]);
+  }, [page, searchQuery, cacheKey]);
 
   const deleteUser = async () => {
     try {
