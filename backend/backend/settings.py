@@ -49,7 +49,9 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-change-me')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # Hosts allowed to serve the application (comma-separated in env)
-ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', '*').split(',') if h.strip()]
+_env_allowed_hosts = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', '').split(',') if h.strip()]
+_default_allowed_hosts = ['localhost', '127.0.0.1', '[::1]', '.onrender.com']
+ALLOWED_HOSTS = list(dict.fromkeys(_env_allowed_hosts + _default_allowed_hosts)) if _env_allowed_hosts else _default_allowed_hosts
 
 
 # Application definition
@@ -208,12 +210,26 @@ AUTH_USER_MODEL = "signup.User"
 CORS_ALLOW_CREDENTIALS = True  # Enable credentials
 
 # Read CORS and CSRF trusted origins from environment (comma-separated)
-CORS_ALLOWED_ORIGINS = [o.strip() for o in os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000').split(',') if o.strip()]
+_env_cors_origins = [o.strip() for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if o.strip()]
+_default_cors_origins = [
+    'http://localhost:3000',
+    'https://localhost:3000',
+    os.getenv('FRONTEND_BASE_URL', '').rstrip('/'),
+]
+CORS_ALLOWED_ORIGINS = [origin for origin in dict.fromkeys(_env_cors_origins + _default_cors_origins) if origin]
 
 # Remove CORS_ALLOW_ALL_ORIGINS to avoid conflicts with CORS_ALLOW_CREDENTIALS
 CORS_ALLOW_ALL_ORIGINS = False  # Remove or set to False if present
 
-CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:3000').split(',') if o.strip()]
+_env_csrf_origins = [o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()]
+_default_csrf_origins = [
+    'http://localhost:3000',
+    'https://localhost:3000',
+    os.getenv('FRONTEND_BASE_URL', '').rstrip('/'),
+    'https://*.vercel.app',
+    'https://*.onrender.com',
+]
+CSRF_TRUSTED_ORIGINS = [origin for origin in dict.fromkeys(_env_csrf_origins + _default_csrf_origins) if origin]
 
 # Security settings for production
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
