@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { show_search,search_bar_action } from "@/Redux/Action";
 import ReCAPTCHA from "react-google-recaptcha";
 import { setAuthToken } from "../../others/auth";
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://talentsift-ghee.onrender.com';
 
 const SignIn = () => {
     const [email, setEmail] = useState("");
