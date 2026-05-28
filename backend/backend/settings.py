@@ -116,11 +116,11 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 
 # Database
-# Prefer `DATABASE_URL` in production (Postgres). Falls back to sqlite for local dev.
-DATABASE_URL = os.environ.get('DATABASE_URL')
+# Prefer a pooler URL in production (Render/Supabase). Falls back to DATABASE_URL, then sqlite for local dev.
+DATABASE_URL = os.environ.get('DATABASE_URL_POOLER') or os.environ.get('DATABASE_URL')
 if DATABASE_URL and dj_database_url:
     DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600),
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=True),
     }
 else:
     DATABASES = {
