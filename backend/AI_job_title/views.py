@@ -2,7 +2,6 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from pydantic import BaseModel, Field
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from django.conf import settings
@@ -11,21 +10,10 @@ import os
 # Import your custom JWT authentication
 from getUserData.JWT import CustomJWTAuthentication
 
-# Pydantic models for input/output (Structured Output Model)
-class ProfessionalJobTitleRequest(BaseModel):
-    job_title: str = Field(..., description="The job title to be made more professional")
-
-class ProfessionalJobTitleResponse(BaseModel):
-    professional_job_title: str = Field(..., description="The enhanced professional job title")
-
 # Groq Model Setup
 # Use an environment-configurable model name with a safe fallback.
 groq_model = getattr(settings, "GROQ_MODEL", os.environ.get("GROQ_MODEL", "openai/gpt-oss-20b"))
 llm = ChatGroq(model=groq_model, api_key=settings.GROQ_API_KEY)
-
-# Structured Output Model (for Groq)
-class JobTitleEnhancementOutput(BaseModel):
-    professional_job_title: str
 
 # Prepare a prompt template for the job title enhancement
 job_title_prompt_template = """
@@ -34,9 +22,6 @@ Job Title: {job_title}
 """
 
 prompt_template = PromptTemplate(input_variables=["job_title"], template=job_title_prompt_template)
-
-# Use the structured LLM with the output model defined
-structured_llm = llm.with_structured_output(JobTitleEnhancementOutput)
 
 @api_view(['POST'])
 @authentication_classes([CustomJWTAuthentication])
@@ -55,15 +40,11 @@ def enhance_job_title(request):
     prompt = prompt_template.format(job_title=job_title)
 
     try:
-        # Generate a more professional job title using Groq/Mistral through structured_llm
-        response = structured_llm.invoke(prompt)  # Correctly using the structured_llm
-        
-        # Debug: Print the raw response
+        # Generate a more professional job title using Groq/Mistral.
+        response = llm.invoke(prompt)
 
-        # Check if the response contains the expected field
-        if hasattr(response, 'professional_job_title'):
-            professional_job_title = response.professional_job_title
-        else:
+        professional_job_title = getattr(response, 'content', None)
+        if not professional_job_title:
             professional_job_title = 'No professional job title found'
 
         # Return the structured response (professional job title)
