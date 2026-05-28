@@ -15,6 +15,40 @@ import requests
 COOKIE_SECURE = not settings.DEBUG
 COOKIE_SAMESITE = 'None' if not settings.DEBUG else 'Lax'
 
+
+def verify_recaptcha_token(token, expected_action=None):
+    if not settings.RECAPTCHA_SECRET_KEY:
+        return True, None
+
+    if not token:
+        return False, 'Missing CAPTCHA token'
+
+    min_score = float(getattr(settings, 'RECAPTCHA_MIN_SCORE', 0.5))
+
+    try:
+        verify_resp = requests.post(
+            'https://www.google.com/recaptcha/api/siteverify',
+            data={'secret': settings.RECAPTCHA_SECRET_KEY, 'response': token},
+            timeout=10,
+        )
+        verify_json = verify_resp.json()
+    except Exception:
+        return False, 'reCAPTCHA verification failed'
+
+    if not verify_json.get('success'):
+        return False, 'Invalid CAPTCHA'
+
+    score = verify_json.get('score')
+    if score is not None and float(score) < min_score:
+        return False, 'CAPTCHA score too low'
+
+    if expected_action:
+        action = verify_json.get('action')
+        if action and action != expected_action:
+            return False, 'CAPTCHA action mismatch'
+
+    return True, verify_json
+
 @api_view(['POST'])
 def send_otp_signin(request):
     """
@@ -30,19 +64,10 @@ def send_otp_signin(request):
     except User.DoesNotExist:
         return Response({'error': 'Email does not exist'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Optional server-side reCAPTCHA verification
     captcha_token = request.data.get('captcha')
-    if settings.RECAPTCHA_SECRET_KEY:
-        verify_resp = requests.post(
-            'https://www.google.com/recaptcha/api/siteverify',
-            data={'secret': settings.RECAPTCHA_SECRET_KEY, 'response': captcha_token}
-        )
-        try:
-            verify_json = verify_resp.json()
-        except Exception:
-            return Response({'error': 'reCAPTCHA verification failed'}, status=status.HTTP_400_BAD_REQUEST)
-        if not verify_json.get('success'):
-            return Response({'error': 'Invalid CAPTCHA'}, status=status.HTTP_400_BAD_REQUEST)
+    captcha_ok, captcha_result = verify_recaptcha_token(captcha_token, expected_action='send_otp')
+    if not captcha_ok:
+        return Response({'error': captcha_result}, status=status.HTTP_400_BAD_REQUEST)
 
     # Generate a random 6-digit OTP
     otp = random.randint(100000, 999999)
@@ -121,19 +146,10 @@ def sign_in(request):
     email = request.data.get('email')
     password = request.data.get('password')
 
-    # Verify CAPTCHA if secret configured
     captcha_token = request.data.get('captcha')
-    if settings.RECAPTCHA_SECRET_KEY:
-        verify_resp = requests.post(
-            'https://www.google.com/recaptcha/api/siteverify',
-            data={'secret': settings.RECAPTCHA_SECRET_KEY, 'response': captcha_token}
-        )
-        try:
-            verify_json = verify_resp.json()
-        except Exception:
-            return Response({'error': 'reCAPTCHA verification failed'}, status=status.HTTP_400_BAD_REQUEST)
-        if not verify_json.get('success'):
-            return Response({'error': 'Invalid CAPTCHA'}, status=status.HTTP_400_BAD_REQUEST)
+    captcha_ok, captcha_result = verify_recaptcha_token(captcha_token, expected_action='login')
+    if not captcha_ok:
+        return Response({'error': captcha_result}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
         user = User.objects.get(email=email)

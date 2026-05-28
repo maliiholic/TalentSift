@@ -11,7 +11,7 @@ import { Role_Action } from "@/Redux/Action";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { show_search,search_bar_action } from "@/Redux/Action";
-import ReCAPTCHA from "react-google-recaptcha";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { setAuthToken } from "../../others/auth";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://talentsift-ghee.onrender.com';
 
@@ -30,9 +30,9 @@ const SignIn = () => {
     const [newPasswordError, setNewPasswordError] = useState("");
     const [loading, setLoading] = useState(false);
     const [timer, setTimer] = useState(0);
-    const [captchaValue, setCaptchaValue] = useState(null);
     const [captchaError, setCaptchaError] = useState(""); // State for CAPTCHA error
     const dispatch = useDispatch();
+    const { executeRecaptcha } = useGoogleReCaptcha();
 
     const userRole = useSelector((state) => state.Role_Reducer);
     const router = useRouter();
@@ -44,22 +44,27 @@ const SignIn = () => {
 
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-    const handleCaptchaChange = (value) => {
-        console.log("Captcha value:", value);
-        setCaptchaValue(value);
-        setCaptchaError(""); // Clear error when CAPTCHA is filled
+    const getCaptchaToken = async (action) => {
+        if (!executeRecaptcha) {
+            throw new Error("reCAPTCHA is still loading.");
+        }
+
+        const token = await executeRecaptcha(action);
+        if (!token) {
+            throw new Error("Unable to generate CAPTCHA token.");
+        }
+
+        setCaptchaError("");
+        return token;
     };
 
     const handleGoogleLogin = async (credentialResponse) => {
         try {
-            // if (!captchaValue) {
-            //     setCaptchaError("Please complete the CAPTCHA.");
-            //     return;
-            // }
             const { credential } = credentialResponse;
+            const captchaToken = await getCaptchaToken("google_login");
             const response = await axios.post(
                 `${API_BASE}/decode-jwt/`,
-                { token: credential, captcha: captchaValue },
+                { token: credential, captcha: captchaToken },
                 { withCredentials: true }
             );
             await dispatch(Role_Action("Candidate"));
@@ -75,9 +80,11 @@ const SignIn = () => {
 
     const handleLogin = async (e) => {
         e.preventDefault();
-
-        if (!captchaValue) {
-            setCaptchaError("Please complete the CAPTCHA.");
+        let captchaToken;
+        try {
+            captchaToken = await getCaptchaToken("login");
+        } catch (error) {
+            setCaptchaError(error.message || "Please complete the CAPTCHA.");
             return;
         }
 
@@ -97,7 +104,7 @@ const SignIn = () => {
         try {
             const response = await axios.post(
                 `${API_BASE}/login/`,
-                { email, password, captcha: captchaValue },
+                { email, password, captcha: captchaToken },
                 { withCredentials: true }
             );
             // store access token and set axios default header so subsequent requests use Authorization
@@ -133,7 +140,8 @@ const SignIn = () => {
         }
         setLoading(true);
         try {
-            const response = await axios.post(`${API_BASE}/send-otp_signin/`, { email, captcha: captchaValue });
+            const captchaToken = await getCaptchaToken("send_otp");
+            const response = await axios.post(`${API_BASE}/send-otp_signin/`, { email, captcha: captchaToken });
             if (response.data?.debug_otp) {
                 setOtp(response.data.debug_otp.split(""));
             }
@@ -149,7 +157,8 @@ const SignIn = () => {
     const handleResendOtp = async () => {
         setLoading(true);
         try {
-            const response = await axios.post(`${API_BASE}/send-otp_signin/`, { email, captcha: captchaValue });
+            const captchaToken = await getCaptchaToken("send_otp");
+            const response = await axios.post(`${API_BASE}/send-otp_signin/`, { email, captcha: captchaToken });
             if (response.data?.debug_otp) {
                 setOtp(response.data.debug_otp.split(""));
             }
@@ -170,7 +179,6 @@ const SignIn = () => {
 
     const handleVerifyOtp = async (e) => {
         e.preventDefault();
-        setCaptchaValue(null);
         if (otp.includes("")) {
             setOtpError("Please enter the complete OTP.");
             return;
@@ -300,15 +308,9 @@ const SignIn = () => {
                             )}
                         </div>
 
-                        <div className="flex flex-col items-center">
-                            <ReCAPTCHA
-                                sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
-                                onChange={handleCaptchaChange}
-                            />
-                            {captchaError && (
-                                <p className="text-red-500 text-sm mt-1 text-center">{captchaError}</p>
-                            )}
-                        </div>
+                        {captchaError && (
+                            <p className="text-red-500 text-sm mt-1 text-center">{captchaError}</p>
+                        )}
 
                         <button
                             type="submit"
