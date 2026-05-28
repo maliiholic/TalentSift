@@ -34,6 +34,8 @@
             allow =
                 pathname === '/' ||
                 pathname === '/Users/Home' ||
+                pathname === '/Users/SignIn' ||
+                pathname === '/Users/SignUp' ||
                 pathname === '/Admin/deleteusers' ||
                 pathname === '/Admin/deletesubscription' ||
                 pathname === '/Admin/dashboard' ||
@@ -44,6 +46,8 @@
             allow =
                 pathname === '/' ||
                 pathname === '/Users/Home' ||
+                pathname === '/Users/SignIn' ||
+                pathname === '/Users/SignUp' ||
                 pathname === '/Users/Jobs' ||
                 pathname === '/Users/Notifications' ||
                 pathname === '/Users/Profile' ||
@@ -55,6 +59,8 @@
             allow =
                 pathname === '/' ||
                 pathname === '/Users/Home' ||
+                pathname === '/Users/SignIn' ||
+                pathname === '/Users/SignUp' ||
                 pathname === '/Users/Posts' ||
                 pathname === '/Users/Notifications' ||
                 pathname === '/Users/Profile' ||

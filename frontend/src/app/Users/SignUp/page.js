@@ -9,7 +9,8 @@ import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://talentsift-ghee.onrender.com';
+import { show_search, Role_Action } from "@/Redux/Action";
+import { API_BASE_URL } from "@/utils/api";
 
 const OtpInput = ({ otp, setOtp }) => {
 
@@ -84,7 +85,7 @@ const Signup = () => {
     useEffect(() => {
         const clearExistingSession = async () => {
             try {
-                await axios.post(`${API_BASE}/logout/`, {}, { withCredentials: true });
+                await axios.post(`${API_BASE_URL}/logout/`, {}, { withCredentials: true });
             } catch (error) {
                 // Ignore logout errors
             } finally {
@@ -151,7 +152,7 @@ const Signup = () => {
         if (!validateForm()) return;
         setLoading(true);
         try {
-            const response = await axios.post(`${API_BASE}/send_otp/`, { email });
+            const response = await axios.post(`${API_BASE_URL}/send_otp/`, { email });
             if (response.data?.debug_otp) {
                 setOtp(response.data.debug_otp);
             }
@@ -168,7 +169,7 @@ const Signup = () => {
     const handleResendOtp = async () => {
         setLoading(true);
         try {
-            const response = await axios.post(`${API_BASE}/send_otp/`, { email });
+            const response = await axios.post(`${API_BASE_URL}/send_otp/`, { email });
             if (response.data?.debug_otp) {
                 setOtp(response.data.debug_otp);
             }
@@ -190,7 +191,7 @@ const Signup = () => {
         }
         setLoading(true);
         try {
-            await axios.post(`${API_BASE}/verify_otp/`, { email, otp });
+            await axios.post(`${API_BASE_URL}/verify_otp/`, { email, otp });
             await handleSignup(); // Call signup function after successful OTP verification
             setErrors("")
             setSuccessMessage("Signup successful!");
@@ -213,7 +214,7 @@ const Signup = () => {
 
         setLoading(true);
         try {
-            await axios.post(`${API_BASE}/signup/`, formData, {
+            await axios.post(`${API_BASE_URL}/signup/`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
         } catch (error) {
