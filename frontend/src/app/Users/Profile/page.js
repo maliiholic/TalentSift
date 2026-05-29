@@ -228,7 +228,7 @@ const Profile = () => {
       setSuccessMessage("Profile updated successfully!");
       toast.success("Profile updated successfully!");
     } catch (error) {
-      const errorMsg = error.response?.data?.error || "Error updating profile.";
+      const errorMsg = error.response?.data?.details || error.response?.data?.error || "Error updating profile.";
       setError(errorMsg);
       toast.error(errorMsg);
     }
