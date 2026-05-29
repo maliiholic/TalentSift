@@ -230,7 +230,24 @@ _default_cors_origins = [
     'https://localhost:3000',
     os.getenv('FRONTEND_BASE_URL', '').rstrip('/'),
 ]
-CORS_ALLOWED_ORIGINS = [origin for origin in dict.fromkeys(_env_cors_origins + _default_cors_origins) if origin]
+_production_cors_hosts = [
+    'https://talentsift.live',
+    'https://www.talentsift.live',
+]
+# If VERCEL_URL is provided (e.g. talentsift-liard.vercel.app), include it as an allowed origin.
+_vercel_origin = None
+if os.getenv('VERCEL_URL'):
+    _vercel_origin = f"https://{os.getenv('VERCEL_URL').rstrip('/') }"
+
+_frontend_base = os.getenv('FRONTEND_BASE_URL', '').rstrip('/')
+
+_additional_origins = [o for o in (_frontend_base, _vercel_origin) if o]
+
+CORS_ALLOWED_ORIGINS = [
+    origin for origin in dict.fromkeys(
+        _env_cors_origins + _default_cors_origins + _additional_origins + _production_cors_hosts
+    ) if origin
+]
 
 # Remove CORS_ALLOW_ALL_ORIGINS to avoid conflicts with CORS_ALLOW_CREDENTIALS
 CORS_ALLOW_ALL_ORIGINS = False  # Remove or set to False if present
@@ -243,7 +260,18 @@ _default_csrf_origins = [
     'https://*.vercel.app',
     'https://*.onrender.com',
 ]
-CSRF_TRUSTED_ORIGINS = [origin for origin in dict.fromkeys(_env_csrf_origins + _default_csrf_origins) if origin]
+_production_csrf_hosts = [
+    'https://talentsift.live',
+    'https://www.talentsift.live',
+]
+
+_additional_csrf = [o for o in (_frontend_base, _vercel_origin) if o]
+
+CSRF_TRUSTED_ORIGINS = [
+    origin for origin in dict.fromkeys(
+        _env_csrf_origins + _default_csrf_origins + _additional_csrf + _production_csrf_hosts
+    ) if origin
+]
 
 # Security settings for production
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
