@@ -7,6 +7,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { API_BASE_URL } from '@/utils/api';
 import toast from 'react-hot-toast';
 
+const getResumeViewerUrl = (resumeUrl) => {
+    if (!resumeUrl) return "";
+    if (resumeUrl.startsWith("blob:") || resumeUrl.startsWith("data:")) return resumeUrl;
+    return `https://docs.google.com/gview?url=${encodeURIComponent(resumeUrl)}&embedded=1`;
+};
+
 const Notification = () => {
     const router = useRouter();
     const role = useSelector((state) => state.Role_Reducer);
@@ -179,7 +185,7 @@ const Notification = () => {
                                             <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">Cover Letter: {notification.cover_letter}</p>
                                         )}
                                         {notification.resume_url && (
-                                            <a href={notification.resume_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 mt-2 text-sm text-[#0073b1] hover:underline">
+                                            <a href={getResumeViewerUrl(notification.resume_url)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 mt-2 text-sm text-[#0073b1] hover:underline">
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                                                 <span className="hidden sm:inline">View Resume</span>
                                             </a>

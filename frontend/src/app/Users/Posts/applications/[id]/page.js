@@ -7,6 +7,12 @@ import Loader from "@/app/others/loader";
 import toast from "react-hot-toast";
 import { API_BASE_URL } from "@/utils/api";
 
+const getResumeViewerUrl = (resumeUrl) => {
+    if (!resumeUrl) return "";
+    if (resumeUrl.startsWith("blob:") || resumeUrl.startsWith("data:")) return resumeUrl;
+    return `https://docs.google.com/gview?url=${encodeURIComponent(resumeUrl)}&embedded=1`;
+};
+
 export default function ApplicationsPage() {
     const params = useParams();
     const jobId = params?.id;
@@ -321,7 +327,7 @@ export default function ApplicationsPage() {
                                         {app.cover_letter ? <p className="mt-1 text-sm text-gray-700 line-clamp-2">{app.cover_letter}</p> : null}
 
                                         {app.resume_url ? (
-                                            <a className="mt-3 inline-block text-[#0073b1] font-medium" href={app.resume_url} target="_blank" rel="noreferrer">View resume</a>
+                                            <a className="mt-3 inline-block text-[#0073b1] font-medium" href={getResumeViewerUrl(app.resume_url)} target="_blank" rel="noreferrer">View resume</a>
                                         ) : null}
                                     </div>
 
