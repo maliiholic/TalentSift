@@ -225,6 +225,13 @@ def update_profile(request):
         if warnings:
             response_payload['warnings'] = warnings
 
+        logger.info(
+            'Update response for user id=%s: profile_picture_url=%s resume_url=%s',
+            user.id,
+            updated_data.get('profile_picture'),
+            updated_data.get('resume'),
+        )
+
         return Response(response_payload, status=status.HTTP_200_OK)
 
     except Exception as e:

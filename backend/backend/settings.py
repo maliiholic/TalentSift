@@ -39,6 +39,8 @@ def load_dotenv_file(dotenv_path):
 
 load_dotenv_file(BASE_DIR / '.env')
 
+_logger = logging.getLogger('talentsift.storage')
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -55,6 +57,36 @@ _env_allowed_hosts = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', '').spl
 _default_allowed_hosts = ['localhost', '127.0.0.1', '[::1]', '.onrender.com']
 ALLOWED_HOSTS = list(dict.fromkeys(_env_allowed_hosts + _default_allowed_hosts)) if _env_allowed_hosts else _default_allowed_hosts
 
+
+# Cloudinary settings are optional at startup. If credentials are missing or malformed,
+# we fall back to local file storage so the app can boot and surface the env issue cleanly.
+_cloudinary_storage_config = None
+
+_cloudinary_url = os.getenv('CLOUDINARY_URL', '').strip()
+_cloudinary_cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME', '').strip()
+_cloudinary_api_key = os.getenv('CLOUDINARY_API_KEY', '').strip()
+_cloudinary_api_secret = os.getenv('CLOUDINARY_API_SECRET', '').strip()
+
+if _cloudinary_cloud_name and _cloudinary_api_key and _cloudinary_api_secret:
+    _cloudinary_storage_config = {
+        'CLOUD_NAME': _cloudinary_cloud_name,
+        'API_KEY': _cloudinary_api_key,
+        'API_SECRET': _cloudinary_api_secret,
+    }
+    _cloudinary_url = f'cloudinary://{_cloudinary_api_key}:{_cloudinary_api_secret}@{_cloudinary_cloud_name}'
+    os.environ['CLOUDINARY_URL'] = _cloudinary_url
+
+elif _cloudinary_url and _cloudinary_url.startswith('cloudinary://'):
+    try:
+        parsed = urlparse.urlparse(_cloudinary_url)
+        if parsed.username and parsed.password and parsed.hostname:
+            _cloudinary_storage_config = {
+                'CLOUD_NAME': parsed.hostname,
+                'API_KEY': parsed.username,
+                'API_SECRET': parsed.password,
+            }
+    except Exception as e:
+        _logger.exception('Failed to parse CLOUDINARY_URL: %s', e)
 
 # Application definition
 
@@ -81,9 +113,13 @@ INSTALLED_APPS = [
     'checkout',
     'applications',
     'practice',
-    'cloudinary_storage',
-    'cloudinary',
 ]
+
+if _cloudinary_storage_config:
+    INSTALLED_APPS += [
+        'cloudinary_storage',
+        'cloudinary',
+    ]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -184,69 +220,21 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
-_cloudinary_url = os.getenv('CLOUDINARY_URL', '').strip()
-_cloudinary_cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME', '').strip()
-_cloudinary_api_key = os.getenv('CLOUDINARY_API_KEY', '').strip()
-_cloudinary_api_secret = os.getenv('CLOUDINARY_API_SECRET', '').strip()
-
-# Allow either CLOUDINARY_URL or the split cloud name / key / secret variables.
-if not _cloudinary_url and _cloudinary_cloud_name and _cloudinary_api_key and _cloudinary_api_secret:
-    _cloudinary_url = f'cloudinary://{_cloudinary_api_key}:{_cloudinary_api_secret}@{_cloudinary_cloud_name}'
-    os.environ['CLOUDINARY_URL'] = _cloudinary_url
-
-_logger = logging.getLogger('talentsift.storage')
-
-# If CLOUDINARY_URL exists but is malformed (e.g. starts with 'http'), try to repair it
-if _cloudinary_url:
-    if not _cloudinary_url.startswith('cloudinary://'):
-        _logger.warning("CLOUDINARY_URL does not start with 'cloudinary://'. Attempting to repair or remove it to avoid startup errors.")
-        repaired = False
-        # Prefer split env vars to rebuild
-        if _cloudinary_cloud_name and _cloudinary_api_key and _cloudinary_api_secret:
-            _cloudinary_url = f'cloudinary://{_cloudinary_api_key}:{_cloudinary_api_secret}@{_cloudinary_cloud_name}'
-            os.environ['CLOUDINARY_URL'] = _cloudinary_url
-            _logger.info('Rebuilt CLOUDINARY_URL from CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET.')
-            repaired = True
-        else:
-            # Try to parse common res.cloudinary.com URL to extract cloud name
-            try:
-                p = urlparse.urlparse(_cloudinary_url)
-                if p.scheme in ('http', 'https') and 'res.cloudinary.com' in p.netloc:
-                    path_parts = p.path.strip('/').split('/')
-                    if path_parts:
-                        cloud_name = path_parts[0]
-                        if _cloudinary_api_key and _cloudinary_api_secret:
-                            _cloudinary_url = f'cloudinary://{_cloudinary_api_key}:{_cloudinary_api_secret}@{cloud_name}'
-                            os.environ['CLOUDINARY_URL'] = _cloudinary_url
-                            _logger.info('Constructed CLOUDINARY_URL from res.cloudinary.com URL and API key/secret.')
-                            repaired = True
-                        else:
-                            _logger.warning('Found res.cloudinary.com URL but missing API key/secret; will remove CLOUDINARY_URL to avoid cloudinary package error.')
-                
-            except Exception as e:
-                _logger.exception('Error while attempting to parse CLOUDINARY_URL: %s', e)
-
-        if not repaired:
-            try:
-                del os.environ['CLOUDINARY_URL']
-            except Exception:
-                pass
-            _cloudinary_url = ''
-
-    if _cloudinary_url:
-        STORAGES = {
-            'default': {
-                'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
-            },
-            'staticfiles': {
-                'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
-            },
-        }
+if _cloudinary_storage_config:
+    CLOUDINARY_STORAGE = _cloudinary_storage_config
+    STORAGES = {
+        'default': {
+            'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
+        },
+        'staticfiles': {
+            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        },
+    }
 
 # Keep the legacy setting for older integrations; Django 5 uses STORAGES above.
 DEFAULT_FILE_STORAGE = os.environ.get(
     'DEFAULT_FILE_STORAGE',
-    'cloudinary_storage.storage.MediaCloudinaryStorage' if _cloudinary_url else 'django.core.files.storage.FileSystemStorage'
+    'cloudinary_storage.storage.MediaCloudinaryStorage' if _cloudinary_storage_config else 'django.core.files.storage.FileSystemStorage'
 )
 
 # Emit a concise startup log so Render logs show which storage backend is active.

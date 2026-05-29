@@ -13,6 +13,16 @@ logger = logging.getLogger(__name__)
 
 otp_storage = {}  # Store email as key and {'otp': OTP, 'timestamp': time_created} as value
 
+
+def _safe_file_url(file_field):
+    if not file_field:
+        return None
+
+    try:
+        return file_field.url
+    except Exception:
+        return None
+
 def generate_otp(length=6):
     """Generate a random OTP of given length."""
     return ''.join(random.choices(string.digits, k=length))
@@ -131,7 +141,6 @@ def signup(request):
         profile_picture=profile_picture,
     )
     upload_logger = logging.getLogger('talentsift.upload')
-    upload_logger = logging.getLogger('talentsift.upload')
     try:
         upload_logger.info('Saving new profile for user email=%s; profile_picture=%s; storage=%s', email, getattr(profile_picture, 'name', None), getattr(__import__('django.core.files.storage', fromlist=['default_storage']).default_storage.__class__, '__name__', 'unknown'))
         profile.save()
@@ -154,5 +163,12 @@ def signup(request):
     except Exception as e:
         upload_logger.exception('Candidate.save() failed during signup for email=%s: %s', email, e)
         return Response({'error': 'Failed to save candidate', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    upload_logger.info(
+        'Signup response for email=%s: profile_picture_url=%s resume_url=%s',
+        email,
+        _safe_file_url(profile.profile_picture),
+        _safe_file_url(candidate.resume),
+    )
 
     return Response({'message': 'Signup successfully.'}, status=status.HTTP_201_CREATED)
