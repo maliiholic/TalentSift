@@ -93,33 +93,11 @@
             }
         }, [allow, loading, pathname, redirectPath, route]);
 
-        if (loading) {
+        if (loading || !allow) {
             return (
                 <>
                     <Loader></Loader>
                 </>
-            );
-        }
-
-        if (!allow) {
-            const hasToken = (typeof window !== 'undefined') && Boolean(localStorage.getItem('access'));
-
-            // If a token exists, the app is still resolving auth — show loader to avoid flicker.
-            if (hasToken) {
-                return <Loader />;
-            }
-
-            // No token: show Access Denied with login link.
-            return (
-                <div className="fixed inset-0 bg-white flex flex-col justify-center items-center z-50">
-                    <div className="text-center">
-                        <h1 className="text-3xl font-bold text-gray-800 mb-4">Access Denied</h1>
-                        <p className="text-gray-600 mb-6">You are not authorized to view this page. Please log in to continue.</p>
-                        <a href="/Users/SignIn" className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                            Go to Login
-                        </a>
-                    </div>
-                </div>
             );
         }
 
