@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Avg
 from django.utils import timezone
+from django.utils.text import slugify
 from .models import PracticeTopic, PracticeSession, PracticeQuestion, PracticeAttempt, PracticeSessionAnalytics
 from getUserData.JWT import CustomJWTAuthentication
 from .services.gemini import generate_questions, evaluate_text_answer
@@ -117,6 +118,15 @@ SAMPLE_QUESTIONS = {
 }
 
 
+DEFAULT_PRACTICE_TOPICS = [
+    {'name': 'Frontend Development', 'slug': 'frontend-development', 'icon': '💻'},
+    {'name': 'Backend Development', 'slug': 'backend-development', 'icon': '🖥️'},
+    {'name': 'Full Stack Development', 'slug': 'full-stack-development', 'icon': '🧩'},
+    {'name': 'Data Science', 'slug': 'data-science', 'icon': '📊'},
+    {'name': 'DevOps', 'slug': 'devops', 'icon': '⚙️'},
+]
+
+
 def _topic_key(topic_name):
     return (topic_name or '').strip().lower().replace(' ', '-')
 
@@ -179,15 +189,38 @@ def get_topics(request):
             }
             for topic in topics
         ]
+
+        if not data:
+            data = [
+                {
+                    'id': index + 1,
+                    'name': topic['name'],
+                    'slug': topic['slug'],
+                    'icon': topic['icon'],
+                    'is_active': True,
+                }
+                for index, topic in enumerate(DEFAULT_PRACTICE_TOPICS)
+            ]
+
         return Response({
             'status': 'success',
             'topics': data
         }, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({
-            'status': 'error',
-            'message': str(e)
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            'status': 'success',
+            'topics': [
+                {
+                    'id': index + 1,
+                    'name': topic['name'],
+                    'slug': topic['slug'],
+                    'icon': topic['icon'],
+                    'is_active': True,
+                }
+                for index, topic in enumerate(DEFAULT_PRACTICE_TOPICS)
+            ],
+            'warning': f'Using fallback topics because the database query failed: {str(e)}'
+        }, status=status.HTTP_200_OK)
 
 
 # ============ AUTHENTICATED ENDPOINTS ============
@@ -241,18 +274,15 @@ def start_session(request):
                 'message': f'Invalid question_type: {question_type}. Must be one of: {", ".join(valid_types)}'
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Get topic - try exact match first, then case-insensitive
-        try:
-            topic = PracticeTopic.objects.get(name=topic_name)
-        except PracticeTopic.DoesNotExist:
-            # Try case-insensitive match
-            topic = PracticeTopic.objects.get(name__iexact=topic_name)
-        except PracticeTopic.DoesNotExist:
-            available_topics = ', '.join([t.name for t in PracticeTopic.objects.filter(is_active=True)])
-            return Response({
-                'status': 'error',
-                'message': f'Topic "{topic_name}" not found. Available topics: {available_topics}'
-            }, status=status.HTTP_404_NOT_FOUND)
+        # Get topic - try exact match first, then case-insensitive, then create a topic row if needed.
+        topic = PracticeTopic.objects.filter(name=topic_name).first()
+        if topic is None:
+            topic = PracticeTopic.objects.filter(name__iexact=topic_name).first()
+        if topic is None:
+            topic, _ = PracticeTopic.objects.get_or_create(
+                slug=slugify(topic_name),
+                defaults={'name': topic_name, 'icon': ''},
+            )
 
         # Create session
         session = PracticeSession.objects.create(
@@ -339,11 +369,6 @@ def start_session(request):
             'questions': questions_data
         }, status=status.HTTP_201_CREATED)
 
-    except PracticeTopic.DoesNotExist:
-        return Response({
-            'status': 'error',
-            'message': 'Topic not found'
-        }, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         # Catch any other unexpected errors during setup
         return Response({
