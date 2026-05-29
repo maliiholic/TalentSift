@@ -9,6 +9,36 @@ import Loader from "@/app/others/loader";
 import { API_BASE_URL } from "@/utils/api";
 import toast from "react-hot-toast";
 
+const openResumePreview = async (resumeUrl) => {
+  if (!resumeUrl) return;
+
+  if (resumeUrl.startsWith("blob:") || resumeUrl.startsWith("data:")) {
+    window.open(resumeUrl, "_blank", "noopener,noreferrer");
+    return;
+  }
+
+  const previewWindow = window.open("", "_blank", "noopener,noreferrer");
+
+  try {
+    const response = await fetch(resumeUrl, { mode: "cors" });
+    if (!response.ok) throw new Error(`Failed to load resume: ${response.status}`);
+
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+
+    if (previewWindow) {
+      previewWindow.location.href = blobUrl;
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    } else {
+      window.open(blobUrl, "_blank", "noopener,noreferrer");
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    }
+  } catch (error) {
+    if (previewWindow) previewWindow.close();
+    window.open(resumeUrl, "_blank", "noopener,noreferrer");
+  }
+};
+
 const COUNTRIES = [
   "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
   "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi",
@@ -341,14 +371,13 @@ const Profile = () => {
                 <div className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4 bg-white hover:border-[#0073b1] transition">
                   <div className="flex items-center justify-between">
                     {resumePreview ? (
-                      <a
-                        href={resumePreview}
-                        target="_blank"
-                        rel="noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => openResumePreview(resumePreview)}
                         className="text-sm text-[#0073b1] font-medium hover:underline break-all"
                       >
                         {resumeFileName || "View resume"}
-                      </a>
+                      </button>
                     ) : (
                       <p className="text-sm text-gray-500">No resume uploaded yet</p>
                     )}

@@ -7,6 +7,36 @@ import Loader from "@/app/others/loader";
 import toast from "react-hot-toast";
 import { API_BASE_URL } from "@/utils/api";
 
+const openResumePreview = async (resumeUrl) => {
+    if (!resumeUrl) return;
+
+    if (resumeUrl.startsWith("blob:") || resumeUrl.startsWith("data:")) {
+        window.open(resumeUrl, "_blank", "noopener,noreferrer");
+        return;
+    }
+
+    const previewWindow = window.open("", "_blank", "noopener,noreferrer");
+
+    try {
+        const response = await fetch(resumeUrl, { mode: "cors" });
+        if (!response.ok) throw new Error(`Failed to load resume: ${response.status}`);
+
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        if (previewWindow) {
+            previewWindow.location.href = blobUrl;
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+        } else {
+            window.open(blobUrl, "_blank", "noopener,noreferrer");
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+        }
+    } catch (error) {
+        if (previewWindow) previewWindow.close();
+        window.open(resumeUrl, "_blank", "noopener,noreferrer");
+    }
+};
+
 export default function ApplicationsPage() {
     const params = useParams();
     const jobId = params?.id;
@@ -321,7 +351,7 @@ export default function ApplicationsPage() {
                                         {app.cover_letter ? <p className="mt-1 text-sm text-gray-700 line-clamp-2">{app.cover_letter}</p> : null}
 
                                         {app.resume_url ? (
-                                            <a className="mt-3 inline-block text-[#0073b1] font-medium" href={app.resume_url} target="_blank" rel="noreferrer">View resume</a>
+                                            <button type="button" className="mt-3 inline-block text-[#0073b1] font-medium text-left" onClick={() => openResumePreview(app.resume_url)}>View resume</button>
                                         ) : null}
                                     </div>
 
