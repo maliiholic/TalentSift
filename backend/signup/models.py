@@ -1,6 +1,9 @@
+import os
+
 from django.db import models
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.utils.deconstruct import deconstructible
 
 
 def _cloudinary_image_storage():
@@ -21,8 +24,91 @@ def _cloudinary_raw_storage():
         return FileSystemStorage()
 
 
+try:
+    from cloudinary_storage.storage import RawMediaCloudinaryStorage
+
+    @deconstructible
+    class AuthenticatedRawCloudinaryStorage(RawMediaCloudinaryStorage):
+        def _upload(self, name, content):
+            import cloudinary.uploader
+
+            options = {
+                'use_filename': True,
+                'unique_filename': False,
+                'type': 'authenticated',
+                'resource_type': self._get_resource_type(name),
+                'tags': self.TAG,
+            }
+            folder = os.path.dirname(name)
+            if folder:
+                options['folder'] = folder
+            return cloudinary.uploader.upload(content, **options)
+
+        def _get_url(self, name):
+            import cloudinary
+
+            name = self._prepend_prefix(name)
+            cloudinary_resource = cloudinary.CloudinaryResource(
+                name,
+                type='authenticated',
+                default_resource_type=self._get_resource_type(name),
+            )
+            return cloudinary_resource.build_url(sign_url=True)
+
+        def delete(self, name):
+            import cloudinary.uploader
+
+            response = cloudinary.uploader.destroy(
+                name,
+                invalidate=True,
+                resource_type=self._get_resource_type(name),
+                type='authenticated',
+            )
+            return response['result'] == 'ok'
+
+        def exists(self, name):
+            import requests
+
+            url = self._get_url(name)
+            response = requests.head(url)
+            if response.status_code == 404:
+                return False
+            response.raise_for_status()
+            return True
+
+        def size(self, name):
+            import requests
+
+            url = self._get_url(name)
+            response = requests.head(url)
+            if response.status_code == 200:
+                return int(response.headers['content-length'])
+            return None
+
+        def _open(self, name, mode='rb'):
+            import requests
+            from django.core.files.base import ContentFile
+
+            url = self._get_url(name)
+            response = requests.get(url)
+            if response.status_code == 404:
+                raise IOError
+            response.raise_for_status()
+            file = ContentFile(response.content)
+            file.name = name
+            file.mode = mode
+            return file
+
+except Exception:
+    from django.core.files.storage import FileSystemStorage
+
+    class AuthenticatedRawCloudinaryStorage(FileSystemStorage):
+        pass
+
+
 IMAGE_STORAGE = _cloudinary_image_storage()
 RAW_STORAGE = _cloudinary_raw_storage()
+AUTHENTICATED_RESUME_STORAGE = AuthenticatedRawCloudinaryStorage()
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -96,7 +182,7 @@ class Candidate(models.Model):
     profile = models.OneToOneField(Profile, on_delete=models.CASCADE, primary_key=True)
     score = models.FloatField(default=0)
     education = models.TextField(blank=True, null=True)
-    resume = models.FileField(storage=IMAGE_STORAGE, upload_to='resumes/', null=True, blank=True)
+    resume = models.FileField(storage=AUTHENTICATED_RESUME_STORAGE, upload_to='resumes/', null=True, blank=True)
     skills = models.TextField(blank=True, null=True)
     github_link = models.URLField(blank=True, null=True)
 
