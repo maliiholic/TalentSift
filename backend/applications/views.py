@@ -163,12 +163,6 @@ def apply_job(request, job_id):
         title=f'New application for {job.job_name}',
         message=f'{candidate_name} applied for {job.job_name}.',
     )
-    UserNotification.objects.create(
-        recipient=request.user,
-        application=application,
-        title=f'Application submitted for {job.job_name}',
-        message=f'Your application for {job.job_name} has been submitted successfully. You can take the AI screening interview now or later at /Users/Applications/{application.id}/interview',
-    )
 
     resume_url = _application_resume_url(request, application.id) if application.resume else None
     return Response(
@@ -832,9 +826,15 @@ def check_application_status(request, job_id):
 def get_notifications(request):
     notifications = UserNotification.objects.select_related(
         'application__job',
+        'application__job__recruiter__profile__user',
         'application__candidate__profile',
+        'application__candidate__profile__user',
         'recipient',
     ).filter(recipient=request.user).order_by('-created_at')
+
+    # Recruiters should only see notifications for jobs they posted.
+    if getattr(request.user, 'role', None) == 'Recruiter':
+        notifications = notifications.filter(application__job__recruiter__profile__user=request.user)
 
     unread_count = notifications.filter(is_read=False).count()
     data = []
@@ -846,6 +846,7 @@ def get_notifications(request):
         resume_url = _application_resume_url(request, application.id) if application.resume else None
         # build an action URL so frontend can navigate directly
         frontend_base = getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:3000')
+        recruiter_owner = hasattr(application.job, 'recruiter') and application.job.recruiter.profile.user == request.user
         # Recruiters go to the applications list; candidates only get a shortcut when the notification is interview-related.
         if notification.recipient == application.candidate.profile.user:
             notification_text = f'{notification.title} {notification.message}'.lower()
@@ -853,8 +854,11 @@ def get_notifications(request):
                 action_url = urljoin(frontend_base + '/', f'Users/Applications/{application.id}/interview')
             else:
                 action_url = None
-        else:
+        elif recruiter_owner:
             action_url = urljoin(frontend_base + '/', f'Users/Posts/applications/{application.job.id}')
+        else:
+            # Defensive fallback for malformed data; do not expose cross-job navigation.
+            action_url = None
 
         data.append({
             'id': notification.id,
@@ -862,7 +866,7 @@ def get_notifications(request):
             'message': notification.message,
             'is_read': notification.is_read,
             'created_at': notification.created_at,
-            'job_id': application.job.id,
+            'job_id': application.job.id if recruiter_owner or notification.recipient == application.candidate.profile.user else None,
             'job_name': application.job.job_name,
             'application_id': application.id,
             'candidate_name': f"{profile.first_name or ''} {profile.last_name or ''}".strip() or candidate.profile.user.email,
