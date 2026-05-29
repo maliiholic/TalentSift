@@ -297,7 +297,7 @@ class JobApplication(models.Model):
 
     job = models.ForeignKey('Job', on_delete=models.CASCADE, related_name='applications')
     candidate = models.ForeignKey('Candidate', on_delete=models.CASCADE, related_name='applications')
-    resume = models.FileField(upload_to='applications/resumes/', null=True, blank=True)
+    resume = models.FileField(storage=AUTHENTICATED_RESUME_STORAGE, upload_to='applications/resumes/', null=True, blank=True)
     cover_letter = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=APPLICATION_STATUS_CHOICES, default='pending')
     # Screening fields added for AI interview screening
