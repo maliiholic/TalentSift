@@ -96,7 +96,7 @@ class Candidate(models.Model):
     profile = models.OneToOneField(Profile, on_delete=models.CASCADE, primary_key=True)
     score = models.FloatField(default=0)
     education = models.TextField(blank=True, null=True)
-    resume = models.FileField(storage=RAW_STORAGE, upload_to='resumes/', null=True, blank=True)
+    resume = models.FileField(storage=IMAGE_STORAGE, upload_to='resumes/', null=True, blank=True)
     skills = models.TextField(blank=True, null=True)
     github_link = models.URLField(blank=True, null=True)
 
