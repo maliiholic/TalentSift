@@ -119,6 +119,7 @@ const ProfileLink = () => {
             alt="Profile"
             fill
             className="rounded-full border-2 border-gray-200 object-cover"
+            unoptimized
           />
         </div>
       </button>

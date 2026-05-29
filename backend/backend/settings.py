@@ -79,6 +79,8 @@ INSTALLED_APPS = [
     'checkout',
     'applications',
     'practice',
+    'cloudinary_storage',
+    'cloudinary',
 ]
 
 MIDDLEWARE = [
@@ -179,8 +181,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
-# Optional: use Cloudinary (set CLOUDINARY_URL in env) when available
-if os.environ.get('CLOUDINARY_URL'):
+
+_cloudinary_url = os.getenv('CLOUDINARY_URL', '').strip()
+_cloudinary_cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME', '').strip()
+_cloudinary_api_key = os.getenv('CLOUDINARY_API_KEY', '').strip()
+_cloudinary_api_secret = os.getenv('CLOUDINARY_API_SECRET', '').strip()
+
+# Allow either CLOUDINARY_URL or the split cloud name / key / secret variables.
+if not _cloudinary_url and _cloudinary_cloud_name and _cloudinary_api_key and _cloudinary_api_secret:
+    _cloudinary_url = f'cloudinary://{_cloudinary_api_key}:{_cloudinary_api_secret}@{_cloudinary_cloud_name}'
+    os.environ['CLOUDINARY_URL'] = _cloudinary_url
+
+if _cloudinary_url:
     STORAGES = {
         'default': {
             'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
@@ -193,7 +205,7 @@ if os.environ.get('CLOUDINARY_URL'):
 # Keep the legacy setting for older integrations; Django 5 uses STORAGES above.
 DEFAULT_FILE_STORAGE = os.environ.get(
     'DEFAULT_FILE_STORAGE',
-    'cloudinary_storage.storage.MediaCloudinaryStorage' if os.environ.get('CLOUDINARY_URL') else 'django.core.files.storage.FileSystemStorage'
+    'cloudinary_storage.storage.MediaCloudinaryStorage' if _cloudinary_url else 'django.core.files.storage.FileSystemStorage'
 )
 
 
