@@ -215,7 +215,6 @@ const Signup = () => {
         setLoading(true);
         try {
             await axios.post(`${API_BASE_URL}/signup/`, formData, {
-                headers: { "Content-Type": "multipart/form-data" },
             });
         } catch (error) {
             setErrors({ general: "Signup failed! Please try again." });

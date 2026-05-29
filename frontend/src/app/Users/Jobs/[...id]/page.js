@@ -155,7 +155,6 @@ const Job = () => {
 
             const response = await axios.post(`${API_BASE_URL}/apply-job/${jobId}/`, formData, {
                 withCredentials: true,
-                headers: { "Content-Type": "multipart/form-data" },
             });
 
             setHasApplied(true);

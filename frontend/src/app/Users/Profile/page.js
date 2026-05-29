@@ -214,7 +214,6 @@ const Profile = () => {
 
     try {
       const response = await axios.put(`${API_BASE_URL}/update_profile/`, formDataToSubmit, {
-        headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });
       const updatedProfilePicture = response.data?.profile?.profile_picture || null;
