@@ -1,4 +1,5 @@
 from django.core.files.base import ContentFile
+from django.http import FileResponse
 from django.core.mail import EmailMultiAlternatives, send_mail
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
@@ -15,6 +16,7 @@ from datetime import timedelta, timezone as dt_timezone
 from .models import InterviewSession
 from practice.services.gemini import generate_questions, evaluate_text_answer
 import logging
+import os
 from uuid import uuid4
 import base64
 import html
@@ -22,12 +24,49 @@ import html
 logger = logging.getLogger(__name__)
 from django.utils.dateparse import parse_datetime
 from .models import Interview, InterviewFeedback
+from django.urls import reverse
 from urllib.parse import urljoin
 
 
 def _get_candidate(request_user):
     profile = Profile.objects.get(user=request_user)
     return Candidate.objects.get(profile=profile)
+
+
+def _application_resume_url(request, application_id):
+    return request.build_absolute_uri(reverse('serve_application_resume', args=[application_id]))
+
+
+def _inline_resume_response(resume_field, filename):
+    resume_field.open('rb')
+    response = FileResponse(resume_field, content_type='application/pdf', as_attachment=False, filename=filename)
+    response['Content-Disposition'] = f'inline; filename="{filename}"'
+    return response
+
+
+@api_view(['GET'])
+@authentication_classes([CustomJWTAuthentication])
+@permission_classes([IsAuthenticated])
+def serve_application_resume(request, application_id):
+    try:
+        application = JobApplication.objects.select_related('candidate__profile__user', 'job__recruiter__profile__user').get(id=application_id)
+    except JobApplication.DoesNotExist:
+        return Response({'error': 'Application not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    is_candidate_owner = application.candidate.profile.user == request.user
+    is_recruiter_owner = hasattr(application.job, 'recruiter') and application.job.recruiter.profile.user == request.user
+    if not (is_candidate_owner or is_recruiter_owner):
+        return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+    if not application.resume:
+        return Response({'error': 'Resume not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        filename = os.path.basename(application.resume.name) or f'application-{application_id}.pdf'
+        return _inline_resume_response(application.resume, filename)
+    except Exception as exc:
+        logger.exception('Failed to serve application resume for application id=%s: %s', application_id, exc)
+        return Response({'error': 'Failed to open resume.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 def _build_calendar_invite(*, subject, description, location, start_dt, end_dt, organizer_email, organizer_name, recipient_name, recipient_email):
@@ -131,7 +170,7 @@ def apply_job(request, job_id):
         message=f'Your application for {job.job_name} has been submitted successfully. You can take the AI screening interview now or later at /Users/Applications/{application.id}/interview',
     )
 
-    resume_url = request.build_absolute_uri(application.resume.url) if application.resume else None
+    resume_url = _application_resume_url(request, application.id) if application.resume else None
     return Response(
         {
             'message': 'Application submitted successfully',
@@ -823,7 +862,7 @@ def screened_applications(request, job_id):
     data = []
     for app in apps:
         profile = app.candidate.profile
-        resume_url = request.build_absolute_uri(app.resume.url) if app.resume else None
+        resume_url = _application_resume_url(request, app.id) if app.resume else None
         latest_interview = app.interviews.select_related('scheduled_by').order_by('-start').first()
         scheduled_by_name = latest_interview.scheduled_by.email if latest_interview and latest_interview.scheduled_by else None
         data.append({
@@ -885,7 +924,7 @@ def get_notifications(request):
         application = notification.application
         candidate = application.candidate
         profile = candidate.profile
-        resume_url = request.build_absolute_uri(application.resume.url) if application.resume else None
+        resume_url = _application_resume_url(request, application.id) if application.resume else None
         # build an action URL so frontend can navigate directly
         frontend_base = getattr(settings, 'FRONTEND_BASE_URL', 'http://localhost:3000')
         # Recruiters go to the applications list; candidates only get a shortcut when the notification is interview-related.
@@ -975,7 +1014,7 @@ def list_applications(request, job_id):
         try:
             profile = app.candidate.profile
             candidate_user = profile.user
-            resume_url = request.build_absolute_uri(app.resume.url) if app.resume else None
+            resume_url = _application_resume_url(request, app.id) if app.resume else None
             latest_interview = app.interviews.select_related('scheduled_by').order_by('-start').first()
             scheduled_by_name = latest_interview.scheduled_by.email if latest_interview and latest_interview.scheduled_by else None
             data.append({

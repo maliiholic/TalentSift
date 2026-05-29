@@ -4,9 +4,12 @@ from rest_framework import status
 from signup.models import Profile, Candidate, Recruiter, Subscription, User
 from getUserData.JWT import CustomJWTAuthentication 
 from rest_framework.permissions import IsAuthenticated
+from django.http import FileResponse
+from django.urls import reverse
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 import logging
+import os
 
 logger = logging.getLogger('talentsift.upload')
 
@@ -27,6 +30,30 @@ def _safe_file_url(request, file_field):
         return file_url
 
     return request.build_absolute_uri(file_url)
+
+
+@api_view(['GET'])
+@authentication_classes([CustomJWTAuthentication])
+@permission_classes([IsAuthenticated])
+def serve_profile_resume(request):
+    try:
+        profile = Profile.objects.get(user=request.user)
+        candidate = Candidate.objects.get(profile=profile)
+    except (Profile.DoesNotExist, Candidate.DoesNotExist):
+        return Response({'error': 'Resume not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if not candidate.resume:
+        return Response({'error': 'Resume not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        candidate.resume.open('rb')
+        filename = os.path.basename(candidate.resume.name) or 'resume.pdf'
+        response = FileResponse(candidate.resume, content_type='application/pdf', as_attachment=False, filename=filename)
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        return response
+    except Exception as exc:
+        logger.exception('Failed to serve profile resume for user id=%s: %s', request.user.id, exc)
+        return Response({'error': 'Failed to open resume.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET', 'PUT'])
 @authentication_classes([CustomJWTAuthentication])
@@ -77,7 +104,7 @@ def get_profile(request):
                     candidate_data = {
                         'score': candidate.score,
                         'education': candidate.education,
-                        'resume': _safe_file_url(request, candidate.resume),
+                        'resume': request.build_absolute_uri(reverse('serve_profile_resume')) if candidate.resume else None,
                         'skills': candidate.skills,
                         'github_link': candidate.github_link,
                         'experience': profile.bio,
@@ -215,7 +242,7 @@ def update_profile(request):
             'skills': candidate.skills if role == 'Candidate' else None,
             'education': candidate.education if role == 'Candidate' else None,
             'github_link': candidate.github_link if role == 'Candidate' else None,
-            'resume': _safe_file_url(request, candidate.resume) if role == 'Candidate' else None,
+            'resume': request.build_absolute_uri(reverse('serve_profile_resume')) if role == 'Candidate' and candidate.resume else None,
             'bio': profile.bio if role == 'Candidate' else None,
             'company_name': recruiter.company_name if role == 'Recruiter' else None,
             'company_website': recruiter.company_website if role == 'Recruiter' else None,

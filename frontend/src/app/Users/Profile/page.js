@@ -17,26 +17,7 @@ const openResumePreview = async (resumeUrl) => {
     return;
   }
 
-  const previewWindow = window.open("", "_blank", "noopener,noreferrer");
-
-  try {
-    const response = await fetch(resumeUrl, { mode: "cors" });
-    if (!response.ok) throw new Error(`Failed to load resume: ${response.status}`);
-
-    const blob = await response.blob();
-    const blobUrl = URL.createObjectURL(blob);
-
-    if (previewWindow) {
-      previewWindow.location.href = blobUrl;
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-    } else {
-      window.open(blobUrl, "_blank", "noopener,noreferrer");
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-    }
-  } catch (error) {
-    if (previewWindow) previewWindow.close();
-    window.open(resumeUrl, "_blank", "noopener,noreferrer");
-  }
+  window.open(resumeUrl, "_blank", "noopener,noreferrer");
 };
 
 const COUNTRIES = [

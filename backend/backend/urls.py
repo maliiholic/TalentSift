@@ -22,6 +22,7 @@ from getUserData.views import get_user_data, get_user_role, admin_dashboard, all
 from signin.views import decode_jwt, reset_password, send_otp_signin, sign_in, verify_otp_signin
 from signup.views import send_otp, signup, verify_otp
 from profil.views import update_profile,get_profile
+from profil.views import serve_profile_resume
 from signout.views import logout_view
 from JobList.views import get_jobs_for_recruiter,get_all_jobs
 from createjob.views import get_recruiter_company,create_job
@@ -45,6 +46,7 @@ from applications.views import (
     complete_interview,
     interview_status,
     screened_applications,
+    serve_application_resume,
 )
 from applications.views import (
     schedule_interview,
@@ -66,6 +68,7 @@ urlpatterns = [
     path('reset_password/', reset_password, name='reset-password'),
     path('decode-jwt/', decode_jwt, name='decode_jwt'),
     path('profile/', get_profile, name='get_profile'),
+    path('profile/resume/', serve_profile_resume, name='serve_profile_resume'),
     path('update_profile/', update_profile, name='update_profile'),
     path('get_picture/', get_user_data, name='get_user_data'),
     path('get_user_role/', get_user_role, name='get_role'),
@@ -111,6 +114,7 @@ urlpatterns = [
     path('notifications/<int:notification_id>/', delete_notification, name='delete_notification'),
     path('job/<int:job_id>/applications/', list_applications, name='list_applications'),
     path('application/<int:application_id>/status/', update_application_status, name='update_application_status'),
+    path('application/<int:application_id>/resume/', serve_application_resume, name='serve_application_resume'),
     path('application/<int:application_id>/start-interview/', start_interview, name='start_interview'),
     path('interview/submit-answer/', submit_interview_answer, name='submit_interview_answer'),
     path('interview/complete/<int:session_id>/', complete_interview, name='complete_interview'),
