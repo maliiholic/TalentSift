@@ -3,6 +3,8 @@ import os
 from django.db import models
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
 from django.utils.deconstruct import deconstructible
 
 
@@ -15,13 +17,7 @@ def _cloudinary_image_storage():
         return FileSystemStorage()
 
 
-def _cloudinary_raw_storage():
-    try:
-        from cloudinary_storage.storage import RawMediaCloudinaryStorage
-        return RawMediaCloudinaryStorage()
-    except Exception:
-        from django.core.files.storage import FileSystemStorage
-        return FileSystemStorage()
+RESUME_STORAGE = FileSystemStorage(location=os.path.join(settings.BASE_DIR, 'media'), base_url=settings.MEDIA_URL)
 
 
 try:
@@ -100,15 +96,12 @@ try:
             return file
 
 except Exception:
-    from django.core.files.storage import FileSystemStorage
-
     class AuthenticatedRawCloudinaryStorage(FileSystemStorage):
         pass
 
 
 IMAGE_STORAGE = _cloudinary_image_storage()
-RAW_STORAGE = _cloudinary_raw_storage()
-AUTHENTICATED_RESUME_STORAGE = AuthenticatedRawCloudinaryStorage()
+AUTHENTICATED_RESUME_STORAGE = RESUME_STORAGE
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
