@@ -623,102 +623,21 @@ def schedule_interview(request, application_id):
         status='scheduled',
     )
 
-    # send email to candidate
-    try:
-        candidate_email = application.candidate.profile.user.email
-        company_name = getattr(application.job.recruiter, 'company_name', '') or 'TalentSift Company'
-        subject = f"Your interview is scheduled: {application.job.job_name} at {company_name}"
-        start_display_dt = timezone.localtime(start_dt) if timezone.is_aware(start_dt) else start_dt
-        end_display_dt = timezone.localtime(end_dt) if timezone.is_aware(end_dt) else end_dt
-        start_display = start_display_dt.strftime('%A, %B %d, %Y at %I:%M %p %Z')
-        end_display = end_display_dt.strftime('%I:%M %p %Z')
-        where_text = location.strip() or 'Location/link will be shared in the interview schedule.'
-        recipient_name = 'there'
-        organizer_name = company_name
-        email_body = (
-            f"Hi {recipient_name},\n\n"
-            f"We are pleased to inform you that you have been shortlisted for the next stage.\n\n"
-            f"Your interview for {application.job.job_name} at {company_name} has been scheduled.\n\n"
-            f"When: {start_display} to {end_display}\n"
-            f"Company: {company_name}\n"
-            f"Location: {where_text}\n\n"
-            f"Please log in to your TalentSift account to review the full interview details and prepare in advance.\n\n"
-            f"A few tips before the interview:\n"
-            f"- Join a few minutes early\n"
-            f"- Make sure your connection and microphone are working\n"
-            f"- Have any relevant notes or documents ready\n\n"
-            f"Best regards,\n"
-            f"TalentSift Team\n"
-            f"Scheduled by: {company_name}"
-        )
-        from_email = getattr(settings, 'EMAIL_HOST_USER', None) or None
-        invite_description = (
-            f"Interview for {application.job.job_name} at {company_name}\n\n"
-            f"When: {start_display} to {end_display}\n"
-            f"Company: {company_name}\n"
-            f"Location: {where_text}\n\n"
-            f"Please log in to your TalentSift account for more details."
-        )
-        invite = _build_calendar_invite(
-            subject=subject,
-            description=invite_description,
-            location=where_text,
-            start_dt=start_dt,
-            end_dt=end_dt,
-            organizer_email=request.user.email,
-            organizer_name=organizer_name,
-            recipient_name=recipient_name,
-            recipient_email=candidate_email,
-        )
-        calendar_data_uri = "data:text/calendar;charset=utf-8;base64," + base64.b64encode(invite.encode('utf-8')).decode('ascii')
-        safe_subject = html.escape(subject)
-        safe_job = html.escape(application.job.job_name)
-        safe_company = html.escape(company_name)
-        safe_when = html.escape(f"{start_display} to {end_display}")
-        safe_where = html.escape(where_text)
-        safe_recipient = html.escape(recipient_name)
-        html_message = f"""
-        <div style="margin:0;padding:0;background:#f4f7fb;font-family:Arial,Helvetica,sans-serif;">
-            <div style="max-width:640px;margin:0 auto;padding:32px 16px;">
-                <div style="background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 8px 24px rgba(15,23,42,0.08);">
-                    <div style="background:linear-gradient(135deg,#0073b1,#0f172a);padding:24px 28px;color:#ffffff;">
-                        <div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;opacity:.85;">TalentSift Interview Update</div>
-                        <h1 style="margin:10px 0 0;font-size:26px;line-height:1.2;">Your interview is scheduled</h1>
-                    </div>
-                    <div style="padding:28px; color:#111827; font-size:15px; line-height:1.7;">
-                        <p style="margin:0 0 16px;">Hi {safe_recipient},</p>
-                        <p style="margin:0 0 16px;">We are pleased to inform you that you have been shortlisted for the next stage.</p>
-                        <p style="margin:0 0 16px;">Your interview for <strong>{safe_job}</strong> at <strong>{safe_company}</strong> has been scheduled.</p>
-                        <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px;margin:20px 0;">
-                            <p style="margin:0 0 8px;"><strong>When:</strong> {safe_when}</p>
-                            <p style="margin:0 0 8px;"><strong>Company:</strong> {safe_company}</p>
-                            <p style="margin:0;"><strong>Location:</strong> {safe_where}</p>
-                        </div>
-                        <p style="margin:0 0 18px;">We also attached a calendar invite so you can add it to your calendar with one click. If your email client doesn't show the button, use the attached <strong>.ics</strong> file.</p>
-                        <div style="text-align:center;margin:28px 0;">
-                            <a href="{calendar_data_uri}" download="interview-invite.ics" style="display:inline-block;background:#0073b1;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;">Add to Calendar</a>
-                        </div>
-                        <div style="background:#eff6ff;border-left:4px solid #0073b1;padding:14px 16px;border-radius:10px;">
-                            <div style="font-weight:700;margin-bottom:6px;">Before the interview</div>
-                            <ul style="margin:0;padding-left:20px;">
-                                <li>Join a few minutes early</li>
-                                <li>Test your camera and microphone</li>
-                                <li>Keep any relevant notes or documents ready</li>
-                            </ul>
-                        </div>
-                        <p style="margin:22px 0 0;">Best regards,<br/>TalentSift Team<br/>Scheduled by: {safe_company}</p>
-                    </div>
-                </div>
-                <p style="color:#6b7280;font-size:12px;line-height:1.6;text-align:center;margin:14px 0 0;">This email was sent automatically from TalentSift.</p>
-            </div>
-        </div>
-        """
-        email = EmailMultiAlternatives(subject, email_body, from_email, [candidate_email])
-        email.attach_alternative(html_message, 'text/html')
-        email.attach('interview-invite.ics', invite, 'text/calendar; method=REQUEST; charset=UTF-8')
-        email.send(fail_silently=True)
-    except Exception as e:
-        logger.exception(f"Failed to send interview email: {e}")
+    start_display_dt = timezone.localtime(start_dt) if timezone.is_aware(start_dt) else start_dt
+    start_display = start_display_dt.strftime('%A, %B %d, %Y at %I:%M %p %Z')
+
+    UserNotification.objects.create(
+        recipient=application.candidate.profile.user,
+        application=application,
+        title=f'Interview scheduled for {application.job.job_name}',
+        message=f'Your interview for {application.job.job_name} has been scheduled on {start_display}.',
+    )
+    logger.info(
+        'Interview scheduled for application id=%s by user id=%s at %s',
+        application.id,
+        request.user.id,
+        start_display,
+    )
 
     return Response({'message': 'Interview scheduled', 'interview_id': interview.id}, status=status.HTTP_201_CREATED)
 

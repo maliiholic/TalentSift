@@ -37,33 +37,36 @@ export default function ApplicationsPage() {
     const [location, setLocation] = useState("");
     const [notes, setNotes] = useState("");
 
+    const fetchApplications = async (nextViewMode = viewMode) => {
+        if (!jobId) return;
+
+        try {
+            if (nextViewMode === "screened") {
+                const res = await axios.get(`${API_BASE_URL}/job/${jobId}/screened/`, { withCredentials: true });
+                setJobName(res.data.job_name || "");
+                setApplications((res.data.screened_applications || []).map((x) => ({
+                    ...x,
+                    created_at: x.applied_at,
+                })));
+            } else {
+                const res = await axios.get(`${API_BASE_URL}/job/${jobId}/applications/`, { withCredentials: true });
+                setJobName(res.data.job_name || "");
+                setApplications(res.data.applications || []);
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error(err.response?.data?.error || "Failed to load applications");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         let cancelled = false;
 
         const loadApplications = async () => {
-            if (!jobId) return;
-            try {
-                if (viewMode === "screened") {
-                    const res = await axios.get(`${API_BASE_URL}/job/${jobId}/screened/`, { withCredentials: true });
-                    if (cancelled) return;
-                    setJobName(res.data.job_name || "");
-                    setApplications((res.data.screened_applications || []).map((x) => ({
-                        ...x,
-                        created_at: x.applied_at,
-                    })));
-                } else {
-                    const res = await axios.get(`${API_BASE_URL}/job/${jobId}/applications/`, { withCredentials: true });
-                    if (cancelled) return;
-                    setJobName(res.data.job_name || "");
-                    setApplications(res.data.applications || []);
-                }
-            } catch (err) {
-                console.error(err);
-                toast.error(err.response?.data?.error || "Failed to load applications");
-            } finally {
-                if (!cancelled) {
-                    setLoading(false);
-                }
+            if (!cancelled) {
+                await fetchApplications(viewMode);
             }
         };
 
@@ -78,7 +81,7 @@ export default function ApplicationsPage() {
         try {
             const res = await axios.patch(`${API_BASE_URL}/application/${applicationId}/status/`, { status }, { withCredentials: true });
             toast.success(res.data.message || "Status updated");
-            fetchApplications();
+            await fetchApplications();
         } catch (err) {
             console.error(err);
             toast.error(err.response?.data?.error || "Failed to update status");
@@ -118,7 +121,7 @@ export default function ApplicationsPage() {
             );
             toast.success(res.data.message || "Interview scheduled");
             closeSchedule();
-            fetchApplications();
+            await fetchApplications();
         } catch (err) {
             console.error(err);
             toast.error(err.response?.data?.error || "Failed to schedule interview");
