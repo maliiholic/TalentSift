@@ -9,12 +9,6 @@ import Loader from "@/app/others/loader";
 import { API_BASE_URL } from "@/utils/api";
 import toast from "react-hot-toast";
 
-const getResumeViewerUrl = (resumeUrl) => {
-  if (!resumeUrl) return "";
-  if (resumeUrl.startsWith("blob:") || resumeUrl.startsWith("data:")) return resumeUrl;
-  return `https://docs.google.com/gview?url=${encodeURIComponent(resumeUrl)}&embedded=1`;
-};
-
 const COUNTRIES = [
   "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
   "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi",
@@ -348,7 +342,7 @@ const Profile = () => {
                   <div className="flex items-center justify-between">
                     {resumePreview ? (
                       <a
-                        href={getResumeViewerUrl(resumePreview)}
+                        href={resumePreview}
                         target="_blank"
                         rel="noreferrer"
                         className="text-sm text-[#0073b1] font-medium hover:underline break-all"

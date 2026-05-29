@@ -3,7 +3,7 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
 
-def _media_storage():
+def _cloudinary_image_storage():
     try:
         from cloudinary_storage.storage import MediaCloudinaryStorage
         return MediaCloudinaryStorage()
@@ -12,7 +12,17 @@ def _media_storage():
         return FileSystemStorage()
 
 
-MEDIA_STORAGE = _media_storage()
+def _cloudinary_raw_storage():
+    try:
+        from cloudinary_storage.storage import RawMediaCloudinaryStorage
+        return RawMediaCloudinaryStorage()
+    except Exception:
+        from django.core.files.storage import FileSystemStorage
+        return FileSystemStorage()
+
+
+IMAGE_STORAGE = _cloudinary_image_storage()
+RAW_STORAGE = _cloudinary_raw_storage()
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -75,7 +85,7 @@ class Profile(models.Model):
     country = models.CharField(max_length=100, blank=True, null=True)
     linkedin_link = models.URLField(blank=True, null=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
-    profile_picture = models.ImageField(storage=MEDIA_STORAGE, upload_to='profile_pictures/', null=True, blank=True)
+    profile_picture = models.ImageField(storage=IMAGE_STORAGE, upload_to='profile_pictures/', null=True, blank=True)
     bio = models.TextField(blank=True, null=True)
 
     def __str__(self):
@@ -86,7 +96,7 @@ class Candidate(models.Model):
     profile = models.OneToOneField(Profile, on_delete=models.CASCADE, primary_key=True)
     score = models.FloatField(default=0)
     education = models.TextField(blank=True, null=True)
-    resume = models.FileField(storage=MEDIA_STORAGE, upload_to='resumes/', null=True, blank=True)
+    resume = models.FileField(storage=RAW_STORAGE, upload_to='resumes/', null=True, blank=True)
     skills = models.TextField(blank=True, null=True)
     github_link = models.URLField(blank=True, null=True)
 
