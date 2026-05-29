@@ -8,6 +8,14 @@ const nextConfig = {
       remotePatterns: [
         {
           protocol: 'https',
+          hostname: 'talentsift-9q1m.onrender.com',
+        },
+        {
+          protocol: 'https',
+          hostname: '*.onrender.com',
+        },
+        {
+          protocol: 'https',
           hostname: 'media.istockphoto.com',
         },
         {
