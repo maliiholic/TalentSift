@@ -10,6 +10,11 @@ import { useParams, useRouter } from "next/navigation";
 import { show_search } from "@/Redux/Action";
 import { API_BASE_URL } from "@/utils/api";
 
+const openResumePreview = (resumeUrl) => {
+    if (!resumeUrl) return;
+    window.open(resumeUrl, "_blank", "noopener,noreferrer");
+};
+
 const Job = () => {
     const router = useRouter();
     const [job, setJob] = useState(null);
@@ -164,7 +169,8 @@ const Job = () => {
             setLatestApplicationId(response.data?.application_id || null);
             setShowInterviewPrompt(true);
         } catch (error) {
-            setApplyMessage(error.response?.data?.error || error.response?.data?.message || "Failed to submit application.");
+            const message = error.response?.data?.error || error.response?.data?.message || "Failed to submit application.";
+            setApplyMessage(message);
             setApplyError(true);
         } finally {
             setApplying(false);
@@ -366,9 +372,13 @@ const Job = () => {
                         <div className="mb-4 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
                             <p className="font-medium">Resume from Profile</p>
                             {profileResume ? (
-                                <a href={profileResume} target="_blank" rel="noreferrer" className="text-blue-600 underline break-all">
+                                <button
+                                    type="button"
+                                    onClick={() => openResumePreview(profileResume)}
+                                    className="text-left text-blue-600 underline break-all"
+                                >
                                     {profileResumeName || "View resume"}
-                                </a>
+                                </button>
                             ) : (
                                 <p className="text-red-500">No resume found in profile. Please upload one in your profile first.</p>
                             )}
