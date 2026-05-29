@@ -6,6 +6,9 @@ from getUserData.JWT import CustomJWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+import logging
+
+logger = logging.getLogger('talentsift.upload')
 
 
 def _safe_file_url(request, file_field):
@@ -141,25 +144,30 @@ def update_profile(request):
         previous_profile_picture = profile.profile_picture
         new_profile_picture = request.FILES.get('profile_picture')
 
-        # Attempt to save profile
+        # Attempt to save profile (save text fields first so partial updates work)
+        logger.info("Saving profile for user id=%s, storage=%s, new_profile_picture=%s", user.id, getattr(default_storage.__class__, '__name__', str(default_storage.__class__)), getattr(new_profile_picture, 'name', None))
         try:
             profile.save()
         except Exception as save_error:
+            logger.exception('Profile.save() failed for user id=%s: %s', user.id, save_error)
             return Response(
                 {'error': 'Failed to save profile data.', 'details': str(save_error)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
         if new_profile_picture is not None:
+            logger.info('Attempting to save profile_picture for user id=%s; filename=%s', user.id, getattr(new_profile_picture, 'name', None))
             try:
                 profile.profile_picture = new_profile_picture
                 profile.save()
+                logger.info('Saved profile_picture for user id=%s', user.id)
             except Exception as picture_error:
+                logger.exception('Profile picture save failed for user id=%s: %s', user.id, picture_error)
                 profile.profile_picture = previous_profile_picture
                 try:
                     profile.save(update_fields=['profile_picture'])
                 except Exception:
-                    pass
+                    logger.exception('Failed to roll back profile_picture for user id=%s', user.id)
                 warnings.append(f'Profile picture upload failed: {picture_error}')
 
         # Candidate or Recruiter logic
@@ -175,15 +183,18 @@ def update_profile(request):
             candidate.save()
 
             if new_resume is not None:
+                logger.info('Attempting to save resume for user id=%s; filename=%s', user.id, getattr(new_resume, 'name', None))
                 try:
                     candidate.resume = new_resume
                     candidate.save()
+                    logger.info('Saved resume for user id=%s', user.id)
                 except Exception as resume_error:
+                    logger.exception('Resume save failed for user id=%s: %s', user.id, resume_error)
                     candidate.resume = previous_resume
                     try:
                         candidate.save(update_fields=['resume'])
                     except Exception:
-                        pass
+                        logger.exception('Failed to roll back resume for user id=%s', user.id)
                     warnings.append(f'Resume upload failed: {resume_error}')
 
         elif role == 'Recruiter' or user.role == 'Recruiter':

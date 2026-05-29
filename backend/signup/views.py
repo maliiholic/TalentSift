@@ -130,7 +130,14 @@ def signup(request):
         phone_number=phone_number,
         profile_picture=profile_picture,
     )
-    profile.save()
+    upload_logger = logging.getLogger('talentsift.upload')
+    upload_logger = logging.getLogger('talentsift.upload')
+    try:
+        upload_logger.info('Saving new profile for user email=%s; profile_picture=%s; storage=%s', email, getattr(profile_picture, 'name', None), getattr(__import__('django.core.files.storage', fromlist=['default_storage']).default_storage.__class__, '__name__', 'unknown'))
+        profile.save()
+    except Exception as e:
+        upload_logger.exception('Profile.save() failed during signup for email=%s: %s', email, e)
+        return Response({'error': 'Failed to save profile', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     # Create Candidate (linking the candidate to the profile)
     candidate = Candidate(
@@ -141,6 +148,11 @@ def signup(request):
         resume=resume,
         score=score if score is not None else 0.0  # Provide a default score if none is passed
     )
-    candidate.save()
+    try:
+        upload_logger.info('Saving candidate for email=%s; resume=%s; storage=%s', email, getattr(resume, 'name', None), getattr(__import__('django.core.files.storage', fromlist=['default_storage']).default_storage.__class__, '__name__', 'unknown'))
+        candidate.save()
+    except Exception as e:
+        upload_logger.exception('Candidate.save() failed during signup for email=%s: %s', email, e)
+        return Response({'error': 'Failed to save candidate', 'details': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return Response({'message': 'Signup successfully.'}, status=status.HTTP_201_CREATED)

@@ -19,12 +19,25 @@ def _safe_file_url(request, file_field):
     try:
         file_url = file_field.url
     except Exception:
+        # Log why url access failed and fallback to string form
+        try:
+            import logging
+            logger = logging.getLogger('talentsift.upload')
+            logger.exception('Failed to access .url on file_field=%s; falling back to str()', file_field)
+        except Exception:
+            pass
         file_url = str(file_field)
 
     if not file_url:
         return None
 
     if file_url.startswith('http://') or file_url.startswith('https://'):
+        try:
+            import logging
+            logger = logging.getLogger('talentsift.upload')
+            logger.info('Resolved remote file URL for file_field=%s -> %s', getattr(file_field, 'name', str(file_field)), file_url)
+        except Exception:
+            pass
         return file_url
 
     return request.build_absolute_uri(file_url)
