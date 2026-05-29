@@ -126,6 +126,7 @@ def update_profile(request):
     try:
         # Retrieve or create the user's profile
         profile, created = Profile.objects.get_or_create(user=user)
+        warnings = []
 
         # Update general profile fields
         profile.first_name = request.data.get('first_name', profile.first_name)
@@ -137,8 +138,8 @@ def update_profile(request):
         profile.bio = request.data.get('bio', profile.bio)
 
         # Handle profile picture update
-        if 'profile_picture' in request.FILES:
-            profile.profile_picture = request.FILES['profile_picture']
+        previous_profile_picture = profile.profile_picture
+        new_profile_picture = request.FILES.get('profile_picture')
 
         # Attempt to save profile
         try:
@@ -149,15 +150,41 @@ def update_profile(request):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+        if new_profile_picture is not None:
+            try:
+                profile.profile_picture = new_profile_picture
+                profile.save()
+            except Exception as picture_error:
+                profile.profile_picture = previous_profile_picture
+                try:
+                    profile.save(update_fields=['profile_picture'])
+                except Exception:
+                    pass
+                warnings.append(f'Profile picture upload failed: {picture_error}')
+
         # Candidate or Recruiter logic
+        candidate = None
+        recruiter = None
         if role == 'Candidate' or user.role == 'Candidate':
             candidate, _ = Candidate.objects.get_or_create(profile=profile)
             candidate.skills = request.data.get('skills', candidate.skills)
             candidate.education = request.data.get('education', candidate.education)
             candidate.github_link = request.data.get('github_link', candidate.github_link)
-            if 'resume' in request.FILES:
-                candidate.resume = request.FILES['resume']
+            previous_resume = candidate.resume
+            new_resume = request.FILES.get('resume')
             candidate.save()
+
+            if new_resume is not None:
+                try:
+                    candidate.resume = new_resume
+                    candidate.save()
+                except Exception as resume_error:
+                    candidate.resume = previous_resume
+                    try:
+                        candidate.save(update_fields=['resume'])
+                    except Exception:
+                        pass
+                    warnings.append(f'Resume upload failed: {resume_error}')
 
         elif role == 'Recruiter' or user.role == 'Recruiter':
             recruiter, _ = Recruiter.objects.get_or_create(profile=profile)
@@ -183,7 +210,11 @@ def update_profile(request):
             'company_website': recruiter.company_website if role == 'Recruiter' else None,
         }
 
-        return Response({'message': 'Profile updated successfully', 'profile': updated_data}, status=status.HTTP_200_OK)
+        response_payload = {'message': 'Profile updated successfully', 'profile': updated_data}
+        if warnings:
+            response_payload['warnings'] = warnings
+
+        return Response(response_payload, status=status.HTTP_200_OK)
 
     except Exception as e:
         return Response(
