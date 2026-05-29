@@ -7,6 +7,24 @@ from rest_framework.permissions import IsAuthenticated
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 
+
+def _safe_file_url(request, file_field):
+    if not file_field:
+        return None
+
+    try:
+        file_url = file_field.url
+    except Exception:
+        file_url = str(file_field)
+
+    if not file_url:
+        return None
+
+    if file_url.startswith('http://') or file_url.startswith('https://'):
+        return file_url
+
+    return request.build_absolute_uri(file_url)
+
 @api_view(['GET', 'PUT'])
 @authentication_classes([CustomJWTAuthentication])
 @permission_classes([IsAuthenticated])
@@ -28,19 +46,13 @@ def get_profile(request):
                 
             }
 
+            profile = None
+            candidate = None
+            recruiter = None
+
             # Retrieve profile data
             try:
                 profile = Profile.objects.get(user=request.user)
-
-                # Handle profile picture URL
-                profile_picture = profile.profile_picture
-
-                if profile_picture and hasattr(profile_picture, 'url'):
-                    profile_picture_url = request.build_absolute_uri(profile_picture.url)
-                elif profile_picture and "googleusercontent.com" in str(profile_picture):
-                    profile_picture_url = str(profile_picture)
-                else:
-                    profile_picture_url = None
 
                 profile_data = {
                     'first_name': profile.first_name,
@@ -49,35 +61,41 @@ def get_profile(request):
                     'country': profile.country,
                     'linkedin_link': profile.linkedin_link,
                     'phone_number': profile.phone_number,
-                    'profile_picture': profile_picture_url,
+                    'profile_picture': _safe_file_url(request, profile.profile_picture),
                 }
             except Profile.DoesNotExist:
                 profile_data = None
             user_data['profile'] = profile_data
 
             # Retrieve candidate data
-            try:
-                candidate = Candidate.objects.get(profile=profile)
-                candidate_data = {
-                    'score': candidate.score,
-                    'education': candidate.education,
-                    'resume': request.build_absolute_uri(candidate.resume.url) if candidate.resume else None,
-                    'skills': candidate.skills,
-                    'github_link': candidate.github_link,
-                    'experience': profile.bio,
-                }
-            except Candidate.DoesNotExist:
+            if profile is not None:
+                try:
+                    candidate = Candidate.objects.get(profile=profile)
+                    candidate_data = {
+                        'score': candidate.score,
+                        'education': candidate.education,
+                        'resume': _safe_file_url(request, candidate.resume),
+                        'skills': candidate.skills,
+                        'github_link': candidate.github_link,
+                        'experience': profile.bio,
+                    }
+                except Candidate.DoesNotExist:
+                    candidate_data = None
+            else:
                 candidate_data = None
             user_data['candidate'] = candidate_data
 
             # Retrieve recruiter data
-            try:
-                recruiter = Recruiter.objects.get(profile=profile)
-                recruiter_data = {
-                    'company_name': recruiter.company_name,
-                    'company_website': recruiter.company_website,
-                }
-            except Recruiter.DoesNotExist:
+            if profile is not None:
+                try:
+                    recruiter = Recruiter.objects.get(profile=profile)
+                    recruiter_data = {
+                        'company_name': recruiter.company_name,
+                        'company_website': recruiter.company_website,
+                    }
+                except Recruiter.DoesNotExist:
+                    recruiter_data = None
+            else:
                 recruiter_data = None
             user_data['recruiter'] = recruiter_data
 
@@ -155,11 +173,11 @@ def update_profile(request):
             'country': profile.country,
             'linkedin_link': profile.linkedin_link,
             'phone_number': profile.phone_number,
-            'profile_picture': request.build_absolute_uri(profile.profile_picture.url) if profile.profile_picture else None,
+            'profile_picture': _safe_file_url(request, profile.profile_picture),
             'skills': candidate.skills if role == 'Candidate' else None,
             'education': candidate.education if role == 'Candidate' else None,
             'github_link': candidate.github_link if role == 'Candidate' else None,
-            'resume': request.build_absolute_uri(candidate.resume.url) if role == 'Candidate' and candidate.resume else None,
+            'resume': _safe_file_url(request, candidate.resume) if role == 'Candidate' else None,
             'bio': profile.bio if role == 'Candidate' else None,
             'company_name': recruiter.company_name if role == 'Recruiter' else None,
             'company_website': recruiter.company_website if role == 'Recruiter' else None,

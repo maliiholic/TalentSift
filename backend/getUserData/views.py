@@ -11,6 +11,24 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 
+
+def _safe_file_url(request, file_field):
+    if not file_field:
+        return None
+
+    try:
+        file_url = file_field.url
+    except Exception:
+        file_url = str(file_field)
+
+    if not file_url:
+        return None
+
+    if file_url.startswith('http://') or file_url.startswith('https://'):
+        return file_url
+
+    return request.build_absolute_uri(file_url)
+
 @api_view(['GET'])
 @authentication_classes([CustomJWTAuthentication])
 @permission_classes([IsAuthenticated])
@@ -22,14 +40,7 @@ def get_user_data(request):
     try:
         profile = Profile.objects.get(user=request.user)
 
-        profile_picture = profile.profile_picture
-
-        if profile_picture and hasattr(profile_picture, 'url'):
-            profile_picture_url = request.build_absolute_uri(profile_picture.url)
-        elif profile_picture and "googleusercontent.com" in str(profile_picture):
-            profile_picture_url = str(profile_picture)
-        else:
-            profile_picture_url = None
+        profile_picture_url = _safe_file_url(request, profile.profile_picture)
 
 
         user_data = {
