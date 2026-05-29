@@ -22,14 +22,14 @@ def get_user_data(request):
     try:
         profile = Profile.objects.get(user=request.user)
 
-        profile_picture = profile.profile_picture.name if profile.profile_picture else None
+        profile_picture = profile.profile_picture
 
-        if profile_picture and "googleusercontent.com" in profile_picture:
-            profile_picture_url = profile_picture  
-        elif profile_picture:  
-            profile_picture_url = request.build_absolute_uri(f"/media/{profile_picture}")
+        if profile_picture and hasattr(profile_picture, 'url'):
+            profile_picture_url = request.build_absolute_uri(profile_picture.url)
+        elif profile_picture and "googleusercontent.com" in str(profile_picture):
+            profile_picture_url = str(profile_picture)
         else:
-            profile_picture_url = None 
+            profile_picture_url = None
 
 
         user_data = {
