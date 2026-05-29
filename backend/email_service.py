@@ -8,32 +8,75 @@ logger = logging.getLogger(__name__)
 
 
 def send_otp_email(subject, message, recipient_email):
-    resend_api_key = getattr(settings, 'RESEND_API_KEY', '').strip()
-    resend_from_email = getattr(settings, 'RESEND_FROM_EMAIL', '').strip() or getattr(settings, 'DEFAULT_FROM_EMAIL', '').strip()
+    brevo_api_key = getattr(settings, 'BREVO_API_KEY', '').strip()
+    brevo_from_email = getattr(settings, 'BREVO_FROM_EMAIL', '').strip() or getattr(settings, 'DEFAULT_FROM_EMAIL', '').strip()
+    brevo_from_name = getattr(settings, 'BREVO_FROM_NAME', 'TalentSift').strip() or 'TalentSift'
+    sendgrid_api_key = getattr(settings, 'SENDGRID_API_KEY', '').strip()
+    sendgrid_from_email = getattr(settings, 'SENDGRID_FROM_EMAIL', '').strip() or getattr(settings, 'DEFAULT_FROM_EMAIL', '').strip()
+    sendgrid_from_name = getattr(settings, 'SENDGRID_FROM_NAME', 'TalentSift').strip() or 'TalentSift'
 
-    if resend_api_key:
+    if brevo_api_key:
         response = requests.post(
-            'https://api.resend.com/emails',
+            'https://api.brevo.com/v3/smtp/email',
             headers={
-                'Authorization': f'Bearer {resend_api_key}',
+                'api-key': brevo_api_key,
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
             },
             json={
-                'from': resend_from_email,
-                'to': [recipient_email],
+                'sender': {
+                    'email': brevo_from_email,
+                    'name': brevo_from_name,
+                },
+                'to': [
+                    {
+                        'email': recipient_email,
+                    }
+                ],
                 'subject': subject,
-                'text': message,
+                'textContent': message,
             },
             timeout=20,
         )
-        if not response.ok:
-            raise RuntimeError(f'Resend API failed: {response.status_code} {response.text}')
+        if response.status_code not in (200, 201, 202):
+            raise RuntimeError(f'Brevo API failed: {response.status_code} {response.text}')
+        return
+
+    if sendgrid_api_key:
+        response = requests.post(
+            'https://api.sendgrid.com/v3/mail/send',
+            headers={
+                'Authorization': f'Bearer {sendgrid_api_key}',
+                'Content-Type': 'application/json',
+            },
+            json={
+                'personalizations': [
+                    {
+                        'to': [{'email': recipient_email}],
+                        'subject': subject,
+                    }
+                ],
+                'from': {
+                    'email': sendgrid_from_email,
+                    'name': sendgrid_from_name,
+                },
+                'content': [
+                    {
+                        'type': 'text/plain',
+                        'value': message,
+                    }
+                ],
+            },
+            timeout=20,
+        )
+        if response.status_code not in (200, 202):
+            raise RuntimeError(f'SendGrid API failed: {response.status_code} {response.text}')
         return
 
     send_mail(
         subject,
         message,
-        getattr(settings, 'DEFAULT_FROM_EMAIL', resend_from_email),
+        getattr(settings, 'DEFAULT_FROM_EMAIL', sendgrid_from_email),
         [recipient_email],
         fail_silently=False,
     )

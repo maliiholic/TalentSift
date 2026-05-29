@@ -195,8 +195,12 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 if EMAIL_HOST_PASSWORD is not None:
     EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD.strip()
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER).strip()
-RESEND_API_KEY = os.getenv('RESEND_API_KEY', '').strip()
-RESEND_FROM_EMAIL = os.getenv('RESEND_FROM_EMAIL', DEFAULT_FROM_EMAIL).strip()
+BREVO_API_KEY = os.getenv('BREVO_API_KEY', '').strip()
+BREVO_FROM_EMAIL = os.getenv('BREVO_FROM_EMAIL', DEFAULT_FROM_EMAIL).strip()
+BREVO_FROM_NAME = os.getenv('BREVO_FROM_NAME', 'TalentSift').strip()
+SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '').strip()
+SENDGRID_FROM_EMAIL = os.getenv('SENDGRID_FROM_EMAIL', DEFAULT_FROM_EMAIL).strip()
+SENDGRID_FROM_NAME = os.getenv('SENDGRID_FROM_NAME', 'TalentSift').strip()
 
 if DEBUG and (not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD):
     EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
