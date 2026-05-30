@@ -68,7 +68,22 @@ const SignIn = () => {
                 { token: credential, captcha: captchaToken },
                 { withCredentials: true }
             );
-            await dispatch(Role_Action("Candidate"));
+            const googleData = response.data?.data || {};
+            const accessToken = googleData.access;
+            const refreshToken = googleData.refresh;
+
+            if (accessToken) {
+                localStorage.setItem("access", accessToken);
+                setAuthToken(accessToken);
+            }
+
+            if (refreshToken) {
+                localStorage.setItem("refresh", refreshToken);
+            }
+
+            await dispatch(Role_Action(googleData.role === "admin" ? "admin" : "Candidate"));
+            setEmailError("");
+            setPasswordError("");
             router.push("/Users/Home");
         } catch (error) {
             setEmailError(error.response?.data?.error || "Google Login failed.");
