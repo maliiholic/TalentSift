@@ -1,13 +1,14 @@
 from django.core.files.base import ContentFile
 from django.http import FileResponse
 from django.core.mail import EmailMultiAlternatives, send_mail
+from django.db import models
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from getUserData.JWT import CustomJWTAuthentication
-from signup.models import Candidate, Job, JobApplication, Profile, UserNotification
+from signup.models import Candidate, Job, JobApplication, Profile, Recruiter, UserNotification
 from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta, timezone as dt_timezone
@@ -824,6 +825,7 @@ def check_application_status(request, job_id):
 @authentication_classes([CustomJWTAuthentication])
 @permission_classes([IsAuthenticated])
 def get_notifications(request):
+    mode = (request.query_params.get('mode') or '').strip().lower()
     notifications = UserNotification.objects.select_related(
         'application__job',
         'application__job__recruiter__profile__user',
@@ -832,9 +834,24 @@ def get_notifications(request):
         'recipient',
     ).filter(recipient=request.user).order_by('-created_at')
 
-    # Recruiters should only see notifications for jobs they posted.
-    if getattr(request.user, 'role', None) == 'Recruiter':
+    has_recruiter_profile = Recruiter.objects.filter(profile__user=request.user).exists()
+    has_candidate_profile = Candidate.objects.filter(profile__user=request.user).exists()
+
+    # Mode-aware visibility keeps recruiter and candidate inboxes separate even for older records.
+    if mode == 'recruiter' or (not mode and has_recruiter_profile and not has_candidate_profile):
         notifications = notifications.filter(application__job__recruiter__profile__user=request.user)
+    elif mode == 'candidate' or (not mode and has_candidate_profile and not has_recruiter_profile):
+        notifications = notifications.filter(application__candidate__profile__user=request.user)
+        # Old self-application notices should stay hidden from the candidate inbox.
+        notifications = notifications.exclude(title__icontains='application submitted')
+        notifications = notifications.exclude(message__icontains='submitted successfully')
+    else:
+        # If the account has both profiles or the mode is unknown, only keep records that
+        # match the logged-in user's actual ownership on the underlying application.
+        notifications = notifications.filter(
+            models.Q(application__job__recruiter__profile__user=request.user) |
+            models.Q(application__candidate__profile__user=request.user)
+        )
 
     unread_count = notifications.filter(is_read=False).count()
     data = []

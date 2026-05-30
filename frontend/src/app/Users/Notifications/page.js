@@ -46,7 +46,9 @@ const Notification = () => {
 
         const fetchNotifications = async () => {
             try {
+                const mode = role === 'Recruiter' ? 'recruiter' : 'candidate';
                 const response = await axios.get(`${API_BASE_URL}/notifications/`, {
+                    params: { mode },
                     withCredentials: true,
                 });
                 if (cancelled) return;
