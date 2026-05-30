@@ -27,6 +27,7 @@ from django.utils.dateparse import parse_datetime
 from .models import Interview, InterviewFeedback
 from django.urls import reverse
 from urllib.parse import urljoin
+from email_service import send_otp_email
 
 
 def _get_candidate(request_user):
@@ -620,6 +621,26 @@ def schedule_interview(request, application_id):
 
     start_display_dt = timezone.localtime(start_dt) if timezone.is_aware(start_dt) else start_dt
     start_display = start_display_dt.strftime('%A, %B %d, %Y at %I:%M %p %Z')
+    end_display_dt = timezone.localtime(end_dt) if timezone.is_aware(end_dt) else end_dt
+    end_display = end_display_dt.strftime('%I:%M %p %Z')
+    candidate_email = application.candidate.profile.user.email
+    candidate_name = application.candidate.profile.first_name or application.candidate.profile.user.get_full_name() or 'there'
+    company_name = application.job.recruiter.profile.user.get_full_name() or 'TalentSift'
+    interview_type_label = (interview_type or 'virtual').strip().title()
+    location_text = location.strip() or 'The interview location/link will be shared in your account.'
+    subject = f'Interview scheduled for {application.job.job_name}'
+    message = (
+        f'Hello {candidate_name},\n\n'
+        f'Your interview for {application.job.job_name} has been scheduled.\n\n'
+        f'Job: {application.job.job_name}\n'
+        f'Company: {company_name}\n'
+        f'When: {start_display} to {end_display}\n'
+        f'Type: {interview_type_label}\n'
+        f'Location: {location_text}\n\n'
+        f'Please log in to TalentSift to view the latest details.\n\n'
+        f'Best regards,\n'
+        f'TalentSift Team'
+    )
 
     UserNotification.objects.create(
         recipient=application.candidate.profile.user,
@@ -627,6 +648,10 @@ def schedule_interview(request, application_id):
         title=f'Interview scheduled for {application.job.job_name}',
         message=f'Your interview for {application.job.job_name} has been scheduled on {start_display}.',
     )
+    try:
+        send_otp_email(subject, message, candidate_email)
+    except Exception:
+        logger.exception('Failed to send interview email for application id=%s', application.id)
     logger.info(
         'Interview scheduled for application id=%s by user id=%s at %s',
         application.id,
