@@ -11,6 +11,8 @@ import { useEffect } from 'react';
 import { setAuthToken } from "./others/auth";
 
 export default function RootLayout({ children }) {
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+
   useEffect(() => {
     try {
       const token = localStorage.getItem('access');
@@ -22,18 +24,29 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <GoogleOAuthProvider clientId="166424008698-umf0iijpbmf0he2qdg70ebpbjhv9ol4b.apps.googleusercontent.com">
-          <GoogleReCaptchaProvider reCaptchaKey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ""} scriptProps={{ async: true, defer: true, appendTo: "body" }}>
-            <Provider store={Store}>
-              <PersistGate loading={null} persistor={persistor}>
-                <Protect>
-                  {children}
-                  <ChatBot />
-                </Protect>
-              </PersistGate>
-            </Provider>
-          </GoogleReCaptchaProvider>
-        </GoogleOAuthProvider>
+        {googleClientId ? (
+          <GoogleOAuthProvider clientId={googleClientId}>
+            <GoogleReCaptchaProvider reCaptchaKey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ""} scriptProps={{ async: true, defer: true, appendTo: "body" }}>
+              <Provider store={Store}>
+                <PersistGate loading={null} persistor={persistor}>
+                  <Protect>
+                    {children}
+                    <ChatBot />
+                  </Protect>
+                </PersistGate>
+              </Provider>
+            </GoogleReCaptchaProvider>
+          </GoogleOAuthProvider>
+        ) : (
+          <Provider store={Store}>
+            <PersistGate loading={null} persistor={persistor}>
+              <Protect>
+                {children}
+                <ChatBot />
+              </Protect>
+            </PersistGate>
+          </Provider>
+        )}
       </body>
     </html>
   );

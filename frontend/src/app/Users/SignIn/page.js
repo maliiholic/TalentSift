@@ -14,6 +14,7 @@ import { show_search,search_bar_action } from "@/Redux/Action";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { setAuthToken } from "../../others/auth";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://talentsift-ghee.onrender.com';
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
 const SignIn = () => {
     const [email, setEmail] = useState("");
@@ -319,12 +320,18 @@ const SignIn = () => {
                             Login
                         </button>
                         <div className="flex items-center justify-center mt-6">
-                            <GoogleLogin
-                                onSuccess={handleGoogleLogin}
-                                onError={() => setEmailError("Google Login Failed")}
-                                shape="pill"
-                                buttonText="Sign In with Google"
-                            />
+                                    {GOOGLE_CLIENT_ID ? (
+                                        <GoogleLogin
+                                            onSuccess={handleGoogleLogin}
+                                            onError={() => setEmailError("Google Login Failed")}
+                                            shape="pill"
+                                            buttonText="Sign In with Google"
+                                        />
+                                    ) : (
+                                        <p className="text-sm text-red-600 text-center">
+                                            Google login is not configured for this deployment.
+                                        </p>
+                                    )}
                         </div>
                         <p className="mt-4 text-center text-gray-600 text-sm">
                             <a
