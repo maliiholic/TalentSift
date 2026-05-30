@@ -28,8 +28,11 @@ const Job = () => {
     const [showApplyModal, setShowApplyModal] = useState(false);
     const [coverLetter, setCoverLetter] = useState("");
     const [resumeFile, setResumeFile] = useState(null);
+    const [resumeFileName, setResumeFileName] = useState("");
     const [profileResume, setProfileResume] = useState("");
     const [profileResumeName, setProfileResumeName] = useState("");
+    const [applicationResumeUrl, setApplicationResumeUrl] = useState("");
+    const [applicationResumeName, setApplicationResumeName] = useState("");
     const [hasApplied, setHasApplied] = useState(false);
     const [applying, setApplying] = useState(false);
     const [applyMessage, setApplyMessage] = useState("");
@@ -135,6 +138,9 @@ const Job = () => {
         setApplyMessage("");
         setApplyError(false);
         setResumeFile(null);
+        setResumeFileName("");
+        setApplicationResumeUrl("");
+        setApplicationResumeName("");
         setCoverLetter("");
         setShowApplyModal(true);
     };
@@ -167,6 +173,8 @@ const Job = () => {
             setApplyMessage("Application submitted successfully.");
             setApplyError(false);
             setLatestApplicationId(response.data?.application_id || null);
+            setApplicationResumeUrl(response.data?.resume || (resumeFile ? URL.createObjectURL(resumeFile) : profileResume) || "");
+            setApplicationResumeName(resumeFile?.name || response.data?.resume?.split("/").pop() || profileResumeName || "Resume");
             setShowInterviewPrompt(true);
         } catch (error) {
             const message = error.response?.data?.error || error.response?.data?.message || "Failed to submit application.";
@@ -389,9 +397,31 @@ const Job = () => {
                             <input
                                 type="file"
                                 accept=".pdf,.doc,.docx"
-                                onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0] || null;
+                                    setResumeFile(file);
+                                    setResumeFileName(file?.name || "");
+                                }}
                                 className="w-full text-sm"
                             />
+                            {resumeFileName && (
+                                <p className="mt-2 text-sm text-gray-600">
+                                    Selected file: <span className="font-medium text-gray-900">{resumeFileName}</span>
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="mb-4 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+                            <p className="font-medium">Resume that will be used for this application</p>
+                            {resumeFileName ? (
+                                <p className="text-gray-600 mt-1">Uploading your selected resume for this job.</p>
+                            ) : profileResume ? (
+                                <button type="button" onClick={() => openResumePreview(profileResume)} className="mt-1 text-left text-blue-600 underline break-all">
+                                    {profileResumeName || "View profile resume"}
+                                </button>
+                            ) : (
+                                <p className="text-red-500 mt-1">No resume found in profile. Please upload one in your profile first.</p>
+                            )}
                         </div>
 
                         <textarea
@@ -405,6 +435,15 @@ const Job = () => {
                             <p className={`text-sm mb-3 ${applyError ? "text-red-500" : "text-green-600"}`}>
                                 {applyMessage}
                             </p>
+                        )}
+
+                        {applicationResumeUrl && (
+                            <div className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+                                <p className="font-medium">Uploaded resume for this application</p>
+                                <button type="button" onClick={() => openResumePreview(applicationResumeUrl)} className="mt-1 text-left text-emerald-700 underline break-all">
+                                    {applicationResumeName || "View uploaded resume"}
+                                </button>
+                            </div>
                         )}
 
                         <div className="flex justify-between gap-3">
@@ -434,6 +473,14 @@ const Job = () => {
                         <p className="text-gray-700 mb-4">
                             You can take the AI screening interview now, or do it later from Notifications.
                         </p>
+                        {applicationResumeUrl && (
+                            <div className="mb-4 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+                                <p className="font-medium">Resume attached to this application</p>
+                                <button type="button" onClick={() => openResumePreview(applicationResumeUrl)} className="mt-1 text-left text-blue-600 underline break-all">
+                                    {applicationResumeName || "View application resume"}
+                                </button>
+                            </div>
+                        )}
                         <div className="flex justify-end gap-3">
                             <button
                                 onClick={() => setShowInterviewPrompt(false)}
