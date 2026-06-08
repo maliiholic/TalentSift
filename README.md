@@ -2,6 +2,7 @@
   <h1>TalentSift</h1>
   <p><strong>Intelligent Applicant Tracking & AI-Powered Recruitment Platform</strong></p>
 
+  [![TalentSift CI](https://github.com/mearslanahmed/TalentSift/actions/workflows/ci.yml/badge.svg)](https://github.com/mearslanahmed/TalentSift/actions/workflows/ci.yml)
   [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat&logo=next.js)](https://nextjs.org/)
   [![Django](https://img.shields.io/badge/Django-5.2-092E20?style=flat&logo=django)](https://www.djangoproject.com/)
   [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-336791?style=flat&logo=postgresql)](https://supabase.com/)
