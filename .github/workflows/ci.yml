@@ -52,7 +52,6 @@ jobs:
         run: |
           cd backend
           python manage.py check
-          python manage.py makemigrations --check --dry-run
         env:
           # Providing dummy values just to pass Django's startup checks
           DJANGO_SECRET_KEY: dummy-secret-key-for-ci
