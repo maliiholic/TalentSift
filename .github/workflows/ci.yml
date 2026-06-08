@@ -1,0 +1,59 @@
+name: TalentSift CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies and Build
+        run: |
+          cd frontend
+          npm install
+          npm run build
+        env:
+          # Next.js requires these build-time environment variables to compile successfully
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+          NEXT_PUBLIC_STRIPE_PUBLIC_KEY: pk_test_dummy
+
+  check-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Django Checks
+        run: |
+          cd backend
+          python manage.py check
+          python manage.py makemigrations --check --dry-run
+        env:
+          # Providing dummy values just to pass Django's startup checks
+          DJANGO_SECRET_KEY: dummy-secret-key-for-ci
+          DEBUG: True
