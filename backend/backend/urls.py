@@ -56,8 +56,20 @@ from applications.views import (
     add_interview_feedback,
 )
 from chatbot.views import chat_message, chat_clear
+from django.http import JsonResponse
+from django.db import connection
+
+def health_check(request):
+    try:
+        # Ping the database to keep Supabase awake
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        return JsonResponse({"status": "ok", "message": "Render and Supabase are awake!"})
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 urlpatterns = [
+    path('health_check/', health_check, name='health_check'),
     path('admin/', admin.site.urls),
     path('signup/', signup, name='signup'),
     path('send_otp/', send_otp, name='send_otp'),
