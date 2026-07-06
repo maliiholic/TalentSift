@@ -383,7 +383,7 @@ INTERVIEW_BUFFER_MINUTES = int(os.getenv('INTERVIEW_BUFFER_MINUTES', '5'))
 # Django REST Framework Settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'getUserData.authentication.CustomJWTAuthentication',
+        'getUserData.JWT.CustomJWTAuthentication',
     ),
     'DEFAULT_THROTTLING_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
