@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "next/navigation";
+import { useSelector } from "react-redux";
 import Loader from "@/app/others/loader";
 import toast from "react-hot-toast";
 import { API_BASE_URL } from "@/utils/api";
@@ -21,6 +22,7 @@ const openResumePreview = async (resumeUrl) => {
 export default function ApplicationsPage() {
     const params = useParams();
     const jobId = params?.id;
+    const role = useSelector((state) => state.Role_Reducer);
 
     const [loading, setLoading] = useState(true);
     const [applications, setApplications] = useState([]);
@@ -40,16 +42,19 @@ export default function ApplicationsPage() {
     const fetchApplications = async (nextViewMode = viewMode) => {
         if (!jobId) return;
 
+        const token = typeof window !== 'undefined' ? localStorage.getItem('access') : null;
+        const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
         try {
             if (nextViewMode === "screened") {
-                const res = await axios.get(`${API_BASE_URL}/job/${jobId}/screened/`, { withCredentials: true });
+                const res = await axios.get(`${API_BASE_URL}/job/${jobId}/screened/`, { withCredentials: true, headers: authHeaders });
                 setJobName(res.data.job_name || "");
                 setApplications((res.data.screened_applications || []).map((x) => ({
                     ...x,
                     created_at: x.applied_at,
                 })));
             } else {
-                const res = await axios.get(`${API_BASE_URL}/job/${jobId}/applications/`, { withCredentials: true });
+                const res = await axios.get(`${API_BASE_URL}/job/${jobId}/applications/`, { withCredentials: true, headers: authHeaders });
                 setJobName(res.data.job_name || "");
                 setApplications(res.data.applications || []);
             }
@@ -65,7 +70,7 @@ export default function ApplicationsPage() {
         let cancelled = false;
 
         const loadApplications = async () => {
-            if (!cancelled) {
+            if (!cancelled && role && role !== 'Guest') {
                 await fetchApplications(viewMode);
             }
         };
@@ -75,11 +80,13 @@ export default function ApplicationsPage() {
         return () => {
             cancelled = true;
         };
-    }, [jobId, viewMode]);
+    }, [jobId, viewMode, role]);
 
     const updateStatus = async (applicationId, status) => {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('access') : null;
+        const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
         try {
-            const res = await axios.patch(`${API_BASE_URL}/application/${applicationId}/status/`, { status }, { withCredentials: true });
+            const res = await axios.patch(`${API_BASE_URL}/application/${applicationId}/status/`, { status }, { withCredentials: true, headers: authHeaders });
             toast.success(res.data.message || "Status updated");
             await fetchApplications();
         } catch (err) {
@@ -108,6 +115,9 @@ export default function ApplicationsPage() {
             return;
         }
 
+        const token = typeof window !== 'undefined' ? localStorage.getItem('access') : null;
+        const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+
         try {
             const res = await axios.post(
                 `${API_BASE_URL}/application/${schedAppId}/schedule-interview/`,
@@ -117,7 +127,7 @@ export default function ApplicationsPage() {
                     location,
                     notes,
                 },
-                { withCredentials: true }
+                { withCredentials: true, headers: authHeaders }
             );
             toast.success(res.data.message || "Interview scheduled");
             closeSchedule();

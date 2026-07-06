@@ -77,88 +77,118 @@ const CandidateJobs = () => {
     };
 
     return (
-        <div className="min-h-screen py-12 mt-12" style={{ backgroundColor: "#F4F2EE" }}>
+        <div className="min-h-screen pt-24 pb-16 px-4" style={{ backgroundColor: "#F4F2EE" }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {jobs.length > 0 && (
-                    <header className="text-center mb-10">
-                        <h1 className="text-5xl font-extrabold tracking-wide text-gray-900 leading-tight">
-                            <span className="bg-gradient-to-r from-[#0073b1] to-[#0073b1] text-transparent bg-clip-text">
-                                Discover Your Dream Job
-                            </span>
-                        </h1>
-                        <p className="mt-6 text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed">
-                            Unlock top opportunities tailored to your skills and aspirations. Apply with confidence and take the next step in your career journey.
-                        </p>
-                    </header>
-                )}
+                {/* Stable Page Header */}
+                <header className="text-center mb-12">
+                    <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 leading-tight">
+                        <span className="bg-gradient-to-r from-[#0073b1] to-[#005582] text-transparent bg-clip-text">
+                            Discover Your Dream Job
+                        </span>
+                    </h1>
+                    <p className="mt-4 text-base md:text-lg text-gray-600 max-w-xl mx-auto leading-relaxed">
+                        Explore top opportunities matching your skills and aspirations. Apply and take the next step.
+                    </p>
+                </header>
 
                 {loading ? (
-                    <></>
+                    <div className="flex justify-center items-center min-h-[40vh]">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0073b1]"></div>
+                    </div>
                 ) : jobs.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center min-h-[50vh] bg-[#F9FAFB] rounded-lg p-8 shadow-md">
-                        <div className="bg-[#0073b1] text-white w-16 h-16 flex items-center justify-center rounded-full mb-6">
-                            <FaBriefcase className="text-white w-6 h-6" />
+                    <div className="flex flex-col items-center justify-center min-h-[40vh] bg-white rounded-2xl p-10 shadow-sm border border-gray-200/60 max-w-xl mx-auto">
+                        <div className="bg-[#0073b1]/10 text-[#0073b1] w-14 h-14 flex items-center justify-center rounded-full mb-5">
+                            <FaBriefcase className="w-5 h-5" />
                         </div>
-                        <h2 className="text-3xl font-bold text-[#0073b1] mb-4">No Jobs Found</h2>
-                        <p className="text-lg text-gray-600 text-center max-w-md">
-                            We couldn&apos;t find any jobs matching your search. Refine your search criteria or check back later for new opportunities.
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">No Jobs Found</h2>
+                        <p className="text-sm text-gray-500 text-center max-w-sm">
+                            We couldn&apos;t find any jobs matching your search criteria. Try adjusting your filters or search keywords.
                         </p>
                     </div>
                 ) : (
                     <>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {jobs.map((job) => (
                                 <div
                                     key={job.job_id}
-                                    className="bg-white rounded-lg shadow-sm p-4 transition-all duration-200 hover:bg-gray-50 hover:shadow-md cursor-pointer"
+                                    className="group relative flex flex-col justify-between bg-white rounded-2xl border border-gray-200/60 p-6 shadow-[0_2px_15px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-gray-300 hover:scale-[1.01] cursor-pointer"
                                     onClick={() => handleJobClick(job.job_id)}
                                 >
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="p-2 bg-[#0073b1] rounded-full">
-                                            <FaBuilding className="text-white w-5 h-5" />
+                                    <div>
+                                        {/* Company and Icon */}
+                                        <div className="flex items-start gap-4 mb-4">
+                                            <div className="p-3 bg-[#0073b1]/5 text-[#0073b1] rounded-xl group-hover:bg-[#0073b1] group-hover:text-white transition-all duration-300">
+                                                <FaBuilding className="w-5 h-5" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="text-lg font-bold text-gray-950 truncate transition-colors duration-200 group-hover:text-[#0073b1]" title={job.job_name}>
+                                                    {job.job_name}
+                                                </h3>
+                                                <p className="text-sm font-medium text-gray-500 truncate" title={job.company_name}>
+                                                    {job.company_name}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div className="flex-1">
-                                            <h3 className="text-base font-medium text-gray-900 truncate" title={job.job_name}>
-                                                {truncateText(job.job_name, 15)}
-                                            </h3>
-                                            <p className="text-sm text-gray-500 truncate" title={job.company_name}>
-                                                {truncateText(job.company_name, 15)}
-                                            </p>
+
+                                        {/* Dynamic Badges */}
+                                        <div className="flex flex-wrap gap-2 mb-4">
+                                            {job.job_location && (
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-600">
+                                                    <FaMapMarkerAlt className="w-3 h-3 text-gray-400" />
+                                                    {job.job_location}
+                                                </span>
+                                            )}
+                                            {job.employment_type && (
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-[#0073b1]/5 text-[#0073b1]">
+                                                    <FaBriefcase className="w-3 h-3 text-[#0073b1]/70" />
+                                                    {job.employment_type}
+                                                </span>
+                                            )}
                                         </div>
-                                    </div>
-                                    <div className="text-gray-600 text-sm space-y-2">
-                                        <p className="flex items-center">
-                                            <FaMapMarkerAlt className="mr-2 text-gray-400" />
-                                            {truncateText(job.job_location, 15)}
-                                        </p>
-                                        <p className="flex items-center">
-                                            <FaSuitcase className="mr-2 text-gray-400" />
-                                            {truncateText(job.employment_type, 15)}
+
+                                        {/* Job Description Line-Clamped */}
+                                        <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed mb-6" title={job.description}>
+                                            {job.description}
                                         </p>
                                     </div>
-                                    <div className="mt-3 text-sm text-gray-700 line-clamp-3" title={job.description}>
-                                        {truncateText(job.description, 20)}
+
+                                    {/* Action link */}
+                                    <div className="flex items-center justify-end border-t border-gray-100 pt-4 mt-auto">
+                                        <div className="text-[#0073b1] font-semibold text-sm inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform duration-200">
+                                            View Details
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        <div className="mt-12 flex justify-center">
-                            <nav className="inline-flex rounded-md shadow-sm">
-                                {Array.from({ length: totalPages }).map((_, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => handlePageChange(index + 1)}
-                                        className={`px-4 py-2 text-sm font-medium rounded-md mx-1 ${currentPage === index + 1
-                                            ? "bg-[#0073b1] text-white"
-                                            : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-                                            }`}
-                                    >
-                                        {index + 1}
-                                    </button>
-                                ))}
-                            </nav>
-                        </div>
+                        {/* Modernized Pagination */}
+                        {totalPages > 1 && (
+                            <div className="mt-12 flex justify-center">
+                                <nav className="inline-flex items-center gap-1">
+                                    {Array.from({ length: totalPages }).map((_, index) => {
+                                        const pageNum = index + 1;
+                                        const isActive = currentPage === pageNum;
+                                        return (
+                                            <button
+                                                key={index}
+                                                onClick={() => handlePageChange(pageNum)}
+                                                className={`h-9 w-9 rounded-full text-sm font-semibold transition-all duration-200 ${
+                                                    isActive
+                                                        ? "bg-gradient-to-r from-[#0073b1] to-[#005582] text-white shadow-sm"
+                                                        : "bg-white text-gray-600 border border-gray-200 hover:border-[#0073b1]/30 hover:bg-[#0073b1]/5"
+                                                }`}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        );
+                                    })}
+                                </nav>
+                            </div>
+                        )}
                     </>
                 )}
             </div>

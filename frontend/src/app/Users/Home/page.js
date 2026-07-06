@@ -1,11 +1,14 @@
 'use client';
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBriefcase, faRobot, faChartLine, faUserGraduate } from "@fortawesome/free-solid-svg-icons";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import { useDispatch, useSelector } from 'react-redux';
 import { show_search, search_bar_action } from "@/Redux/Action";
+import bgImage from "../../Photos/file.png";
 
 // Use path directly instead of importing video as module
 const talentsiftVideo = "/talentsift1.mp4";
@@ -59,9 +62,9 @@ const quickActionsByRole = {
 };
 
 const homeStats = [
-  { value: "AI", label: "assisted screening" },
-  { value: "24/7", label: "candidate practice" },
-  { value: "Fast", label: "recruiter workflows" },
+  { value: "10x", label: "faster shortlisting" },
+  { value: "24/7", label: "AI practice interviews" },
+  { value: "85%", label: "recruiter time saved" },
 ];
 
 export default function Home() {
@@ -95,44 +98,57 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/40 to-black/75"></div>
 
         <div className="relative z-10 mx-auto flex min-h-[92vh] max-w-7xl flex-col items-center justify-center px-4 py-16 text-center sm:px-6 lg:px-8">
-          <div className="max-w-4xl rounded-3xl border border-white/10 bg-black/25 p-6 shadow-2xl backdrop-blur-md sm:p-10">
-            <div className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-white/80">
-              <span className="h-2 w-2 rounded-full bg-[#0073b1]"></span>
-              {hero.label}
-            </div>
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-white/70">
-              {hero.eyebrow}
-            </p>
-            <h1 className="text-4xl font-extrabold leading-tight text-white drop-shadow-xl sm:text-6xl lg:text-7xl">
+          <div className="max-w-5xl w-full p-6 sm:p-12 relative">
+            {/* Ambient Glow Behind Text */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-gradient-to-tr from-[#0073b1]/20 to-purple-500/10 blur-[100px] -z-10 rounded-full"></div>
+            
+            {/* Sophisticated Mode Indicator (Only shown if user is logged in as Candidate or Recruiter) */}
+            {(role === "Candidate" || role === "Recruiter") && (
+              <div className="flex justify-center mb-6">
+                <div className="relative group flex items-center gap-3">
+                  <div className="flex items-center gap-3 relative z-10">
+                    <div className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00a8ff] opacity-40"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-[#0073b1] shadow-[0_0_8px_#00a8ff]"></span>
+                    </div>
+                    <span className="text-sm font-medium tracking-[0.2em] uppercase text-white/90">
+                      Current Mode: <span className="font-bold text-white">{role}</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <h1 className="mx-auto max-w-4xl text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/70 drop-shadow-sm sm:text-7xl lg:text-[5rem] mb-6">
               {hero.title}
             </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-gray-200 sm:text-xl">
+            
+            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-gray-300 sm:text-xl font-light">
               {hero.description}
             </p>
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-white/80">
-              <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5">AI interview prep</span>
-              <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5">Role-based workflow</span>
-              <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5">Notifications + tracking</span>
-            </div>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+
+            <div className="mt-12 flex flex-col items-center justify-center gap-5 sm:flex-row">
               <button
                 onClick={() => router.push(hero.primaryPath)}
-                className="rounded-lg bg-[#0073b1] px-7 py-3.5 text-base font-semibold text-white shadow-lg transition duration-300 ease-in-out hover:bg-[#005582] hover:scale-105"
+                className="relative inline-flex items-center justify-center px-8 py-4 text-base font-medium text-white transition-all duration-300 ease-out bg-white/5 border border-white/10 rounded-full hover:bg-white/10 hover:border-white/20 hover:scale-[1.02] overflow-hidden group shadow-[0_0_40px_-10px_rgba(0,115,177,0.3)] hover:shadow-[0_0_60px_-15px_rgba(0,115,177,0.5)]"
               >
-                {hero.primaryLabel}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0073b1]/0 via-[#0073b1]/40 to-[#0073b1]/0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-1000"></div>
+                <span className="relative font-semibold tracking-wide">{hero.primaryLabel}</span>
               </button>
+              
               <button
                 onClick={() => router.push("#quick-actions")}
-                className="rounded-lg border border-white/20 bg-white/10 px-7 py-3.5 text-base font-semibold text-white transition duration-300 ease-in-out hover:bg-white/20"
+                className="inline-flex items-center justify-center px-8 py-4 text-base font-medium text-white/80 transition-all duration-300 rounded-full hover:text-white hover:bg-white/5"
               >
-                Quick Actions
+                Explore Features <span className="ml-2 transition-transform group-hover:translate-x-1">→</span>
               </button>
             </div>
-            <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            
+            <div className="mt-16 flex flex-wrap items-center justify-center gap-x-10 gap-y-6 pt-10 border-t border-white/10">
               {homeStats.map((stat) => (
-                <div key={stat.label} className="rounded-2xl border border-white/10 bg-white/10 px-4 py-4 text-center">
-                  <div className="text-2xl font-bold text-white">{stat.value}</div>
-                  <div className="mt-1 text-sm text-gray-200">{stat.label}</div>
+                <div key={stat.label} className="flex flex-col items-center">
+                  <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">{stat.value}</div>
+                  <div className="mt-2 text-xs font-medium tracking-widest text-gray-400 uppercase">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -154,7 +170,7 @@ export default function Home() {
               <button
                 key={action.title}
                 onClick={() => router.push(action.path)}
-                className="group rounded-2xl border border-gray-200 bg-[#F4F2EE] p-5 text-left shadow-sm transition duration-300 hover:-translate-y-1 hover:border-[#0073b1] hover:shadow-lg"
+                className="group rounded-2xl border border-gray-100 bg-[#F4F2EE]/50 hover:bg-white p-6 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#0073b1]/30 hover:shadow-[0_8px_30px_rgba(0,115,177,0.06)] cursor-pointer"
               >
                 <h3 className="text-lg font-semibold text-gray-900 group-hover:text-[#0073b1]">{action.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-gray-600">{action.description}</p>
@@ -199,15 +215,15 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-t border-gray-200 bg-gradient-to-b from-[#F4F2EE] to-[#E2DFDA] py-20">
+      <section className="border-t border-gray-100 bg-gradient-to-b from-gray-50 to-[#F4F2EE]/50 py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-3xl border border-white/70 bg-white/80 p-8 shadow-xl backdrop-blur md:p-10">
             <div className="mx-auto mb-10 max-w-2xl text-center">
               <h2 className="text-3xl font-semibold text-[#0073b1] sm:text-4xl">
                 Trusted by teams that hire with intent
               </h2>
-              <p className="mt-4 text-sm leading-7 text-gray-600 sm:text-base">
-                    A cleaner trust section works better here until you have verified customer quotes to display.
+              <p className="mt-4 text-sm leading-relaxed text-gray-600 sm:text-base">
+                Proven frameworks that elevate hiring efficiency and empower candidates.
               </p>
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -242,17 +258,29 @@ export default function Home() {
           <p className="mx-auto mb-12 max-w-2xl text-sm sm:text-base text-gray-600">
             A quick overview of the product flow from posting to hiring.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
+          <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-4 max-w-6xl mx-auto">
             <StepCard
               step="1"
               title="Create Job Post"
               description="Recruiters can quickly create job listings with all the necessary details."
             />
+            {/* Arrow 1 -> 2 */}
+            <div className="hidden lg:flex items-center justify-center text-gray-300 w-8 shrink-0">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
             <StepCard
               step="2"
               title="Automated AI Interviews"
               description="Candidates can take AI interviews that simulate real interview questions."
             />
+            {/* Arrow 2 -> 3 */}
+            <div className="hidden lg:flex items-center justify-center text-gray-300 w-8 shrink-0">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
             <StepCard
               step="3"
               title="Apply, Review, and Hire"
@@ -276,7 +304,7 @@ export default function Home() {
             role === "Guest" &&
             <button
               onClick={() => router.push("/Users/SignUp")}
-              className="px-8 py-4 bg-[#0073b1] text-white font-semibold text-lg rounded-lg shadow-lg hover:bg-[#005582] hover:scale-105 transition duration-300 ease-in-out transform"
+              className="px-8 py-4 bg-gradient-to-r from-[#0073b1] to-[#005582] hover:from-[#005582] hover:to-[#00446a] text-white font-semibold text-lg rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] tracking-wide"
             >
               Sign Up Now
             </button>
@@ -286,7 +314,7 @@ export default function Home() {
             role === "Candidate" &&
             <button
               onClick={() => router.push("/Users/Practice")}
-              className="px-8 py-4 bg-[#0073b1] text-white font-semibold text-lg rounded-lg shadow-lg hover:bg-[#005582] hover:scale-105 transition duration-300 ease-in-out transform"
+              className="px-8 py-4 bg-gradient-to-r from-[#0073b1] to-[#005582] hover:from-[#005582] hover:to-[#00446a] text-white font-semibold text-lg rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] tracking-wide"
             >
               Practice Interview
             </button>
@@ -296,7 +324,7 @@ export default function Home() {
             role === "Recruiter" &&
             <button
               onClick={() => router.push("/Users/Posts")}
-              className="px-8 py-4 bg-[#0073b1] text-white font-semibold text-lg rounded-lg shadow-lg hover:bg-[#005582] hover:scale-105 transition duration-300 ease-in-out transform"
+              className="px-8 py-4 bg-gradient-to-r from-[#0073b1] to-[#005582] hover:from-[#005582] hover:to-[#00446a] text-white font-semibold text-lg rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] tracking-wide"
             >
               Check Jobs
             </button>
@@ -310,43 +338,42 @@ export default function Home() {
 // Reusable Feature Card Component
 function FeatureCard({ icon, title, description }) {
   return (
-    <div className="group rounded-2xl border border-gray-200 bg-[#F4F2EE] p-6 text-center shadow-sm transition duration-300 hover:-translate-y-1 hover:border-[#0073b1] hover:bg-white hover:shadow-lg">
-      <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0073b1]/15 to-[#0073b1]/5 text-[#0073b1] ring-1 ring-[#0073b1]/10 transition duration-300 group-hover:bg-[#0073b1] group-hover:text-white">
-        <FontAwesomeIcon icon={icon} className="text-2xl" />
+    <div className="rounded-2xl border border-gray-100 bg-[#F4F2EE]/40 p-6 text-center shadow-sm">
+      <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0073b1]/5 text-[#0073b1] ring-1 ring-[#0073b1]/10">
+        <FontAwesomeIcon icon={icon} className="text-xl" />
       </div>
-      <h3 className="text-lg font-semibold mb-3 text-gray-900">{title}</h3>
-      <p className="text-sm leading-6 text-gray-600">{description}</p>
+      <h3 className="text-base font-bold mb-2 text-gray-900">{title}</h3>
+      <p className="text-sm leading-relaxed text-gray-600">{description}</p>
     </div>
   );
 }
 
 function TrustCard({ title, value, description }) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 text-left shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
+    <div className="rounded-2xl border border-gray-100 bg-white p-6 text-left shadow-sm">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-gray-500">{title}</p>
-          <h3 className="mt-2 text-2xl font-bold text-[#0073b1]">{value}</h3>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{title}</p>
+          <h3 className="mt-1 text-2xl font-extrabold text-[#0073b1]">{value}</h3>
         </div>
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#0073b1]/10 text-[#0073b1]">
-          <span className="h-2.5 w-2.5 rounded-full bg-[#0073b1]"></span>
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0073b1]/5 text-[#0073b1]">
+          <span className="h-2 w-2 rounded-full bg-[#0073b1]"></span>
         </div>
       </div>
-      <p className="mt-4 text-sm leading-6 text-gray-600">{description}</p>
+      <p className="mt-4 text-sm leading-relaxed text-gray-600">{description}</p>
     </div>
   );
 }
 
 
-// Reusable Step Card Component
 function StepCard({ step, title, description }) {
   return (
-    <div className="group rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-lg transition-all duration-300 ease-in-out hover:-translate-y-1 hover:border-[#0073b1] hover:shadow-2xl">
-      <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#0073b1] text-xl font-bold text-white shadow-lg shadow-[#0073b1]/20 transition duration-300 group-hover:scale-105">
+    <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center shadow-sm">
+      <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-[#0073b1] text-lg font-bold text-white shadow-sm">
         {step}
       </div>
-      <h3 className="mb-4 text-xl font-semibold text-gray-900">{title}</h3>
-      <p className="text-sm leading-6 text-gray-600">{description}</p>
+      <h3 className="mb-3 text-lg font-bold text-gray-900">{title}</h3>
+      <p className="text-sm leading-relaxed text-gray-600">{description}</p>
     </div>
   );
 }

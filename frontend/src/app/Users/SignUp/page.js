@@ -52,7 +52,7 @@ const OtpInput = ({ otp, setOtp }) => {
                     onChange={(e) => handleChange(e, index)}
                     onKeyDown={(e) => handleKeyDown(e, index)}
                     ref={(el) => (inputRefs.current[index] = el)}
-                    className="w-12 h-12 text-center border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0073b1]"
+                    className="w-12 h-12 text-center border border-gray-200 rounded-xl focus:outline-none focus:border-[#0073b1]/50 focus:ring-4 focus:ring-[#0073b1]/10 bg-white/60 backdrop-blur-sm transition-all duration-200 shadow-sm font-semibold text-lg"
                 />
             ))}
         </div>
@@ -236,20 +236,24 @@ const Signup = () => {
     const triggerFileSelect = () => fileInputRef.current.click();
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-[#F4F2EE] px-4 sm:px-6 lg:px-8 py-10">
-            <div className="bg-[#FFFFFF] rounded-lg mt-12 shadow-2xl p-8 sm:p-10 max-w-lg w-full">
+        <div className="relative flex flex-col items-center justify-center min-h-screen bg-[#F4F2EE] px-4 sm:px-6 lg:px-8 py-10 overflow-hidden">
+            {/* Ambient background glows */}
+            <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#0073b1]/10 blur-[120px] rounded-full pointer-events-none"></div>
+            <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-80 h-80 bg-purple-500/10 blur-[120px] rounded-full pointer-events-none"></div>
+
+            <div className="relative bg-white/80 backdrop-blur-md rounded-2xl mt-12 border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.05)] p-8 sm:p-10 max-w-lg w-full">
                 <div className="text-center mb-8">
                     <Image src={bgImage} alt="Brand Logo" className="w-20 h-20 rounded-full mx-auto mb-4" priority />
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                    <h1 className="text-2xl font-bold text-gray-800 mb-2 tracking-tight">
                         {isOtpSent ? "Verify Your OTP" : "Create Your TalentSift Account"}
                     </h1>
-                    <p className="text-gray-500 text-sm">
+                    <p className="text-gray-500 text-sm font-light">
                         {isOtpSent ? "Enter the OTP sent to your email to complete your registration." : "Sign up to access all features and start your hiring journey with TalentSift!"}
                     </p>
                 </div>
 
                 {successMessage && (
-                    <p className="text-green-500 text-center text-sm mb-4">{successMessage}</p>
+                    <p className="text-green-500 text-center text-sm mb-4 font-semibold">{successMessage}</p>
                 )}
 
                 {!isOtpSent ? (
@@ -260,9 +264,9 @@ const Signup = () => {
                                 value={firstName}
                                 onChange={(e) => setFirstName(e.target.value)}
                                 placeholder="First Name"
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0073b1]"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0073b1]/50 focus:ring-4 focus:ring-[#0073b1]/10 bg-white/60 backdrop-blur-sm transition-all duration-200 shadow-sm"
                             />
-                            {errors.firstName && <p className="text-red-500 text-sm">{errors.firstName}</p>}
+                            {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
                         </div>
                         <div>
                             <input
@@ -270,9 +274,9 @@ const Signup = () => {
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
                                 placeholder="Last Name"
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0073b1]"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0073b1]/50 focus:ring-4 focus:ring-[#0073b1]/10 bg-white/60 backdrop-blur-sm transition-all duration-200 shadow-sm"
                             />
-                            {errors.lastName && <p className="text-red-500 text-sm">{errors.lastName}</p>}
+                            {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
                         </div>
                         <div>
                             <input
@@ -280,9 +284,9 @@ const Signup = () => {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="Email"
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0073b1]"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0073b1]/50 focus:ring-4 focus:ring-[#0073b1]/10 bg-white/60 backdrop-blur-sm transition-all duration-200 shadow-sm"
                             />
-                            {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
+                            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                         </div>
                         <div className="relative">
                             <input
@@ -290,34 +294,34 @@ const Signup = () => {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Password"
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0073b1]"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0073b1]/50 focus:ring-4 focus:ring-[#0073b1]/10 bg-white/60 backdrop-blur-sm transition-all duration-200 shadow-sm"
                             />
                             <FontAwesomeIcon
                                 icon={showPassword ? faEyeSlash : faEye}
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-4 top-3 cursor-pointer text-gray-500"
+                                className="absolute right-4 top-3.5 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors duration-200"
                             />
-                            {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
+                            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
                         </div>
                         <div>
                             <button
                                 type="button"
                                 onClick={triggerFileSelect}
-                                className="w-full bg-[#0073b1] text-white py-3 rounded-lg hover:bg-[#005582] focus:outline-none shadow-lg"
+                                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl border border-gray-200 transition duration-200 focus:outline-none shadow-sm cursor-pointer"
                             >
                                 Upload Profile Picture
                             </button>
                             <input type="file" ref={fileInputRef} onChange={handleImageChange} hidden />
-                            {errors.profilePicture && <p className="text-red-500 text-sm">{errors.profilePicture}</p>}
+                            {errors.profilePicture && <p className="text-red-500 text-sm mt-1">{errors.profilePicture}</p>}
                         </div>
                         {previewSrc && (
                             <div className="mb-4">
-                                <Image src={previewSrc} alt="Profile Preview" width={96} height={96} className="w-24 h-24 rounded-full mx-auto mt-4 object-cover" />
+                                <Image src={previewSrc} alt="Profile Preview" width={96} height={96} className="w-24 h-24 rounded-full mx-auto mt-4 object-cover shadow-md border-2 border-white" />
                             </div>
                         )}
                         <button
                             type="submit"
-                            className="w-full bg-[#0073b1] text-white py-3 rounded-lg hover:bg-[#005582] focus:outline-none shadow-lg"
+                            className="w-full bg-gradient-to-r from-[#0073b1] to-[#005582] text-white font-semibold py-3 rounded-xl hover:shadow-[0_4px_20px_rgba(0,115,177,0.35)] transition-all duration-300 focus:outline-none hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
                             disabled={loading}
                         >
                             {loading ? "Processing..." : "Sign Up"}
@@ -326,10 +330,10 @@ const Signup = () => {
                 ) : (
                     <form onSubmit={handleVerifyOtp}>
                         <OtpInput otp={otp} setOtp={setOtp} />
-                        {errors.otp && <p className="text-red-500 text-sm text-center">{errors.otp}</p>}
+                        {errors.otp && <p className="text-red-500 text-sm text-center font-medium mt-1">{errors.otp}</p>}
                         <button
                             type="submit"
-                            className="w-full bg-[#0073b1] text-white py-3 rounded-lg hover:bg-[#005582] focus:outline-none shadow-lg"
+                            className="w-full bg-gradient-to-r from-[#0073b1] to-[#005582] text-white font-semibold py-3 rounded-xl hover:shadow-[0_4px_20px_rgba(0,115,177,0.35)] transition-all duration-300 focus:outline-none hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
                             disabled={loading}
                         >
                             {loading ? "Verifying..." : `Verify OTP (${timer}s)`}
@@ -338,7 +342,7 @@ const Signup = () => {
                             <button
                                 type="button"
                                 onClick={handleResendOtp}
-                                className="w-full bg-gray-200 text-[#0073b1] py-3 mt-2 rounded-lg focus:outline-none shadow-lg"
+                                className="w-full bg-gray-100/80 text-gray-700 hover:bg-gray-100 hover:text-black py-3 mt-2 rounded-xl transition duration-200 font-semibold focus:outline-none cursor-pointer"
                             >
                                 Resend OTP
                             </button>

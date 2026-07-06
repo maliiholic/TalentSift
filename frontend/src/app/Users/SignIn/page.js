@@ -96,17 +96,20 @@ const SignIn = () => {
 
     const handleLogin = async (e) => {
         e.preventDefault();
+        setLoading(true);
         let captchaToken;
         try {
             captchaToken = await getCaptchaToken("login");
         } catch (error) {
             setCaptchaError(error.message || "Please complete the CAPTCHA.");
+            setLoading(false);
             return;
         }
 
 
         if (!validateEmail(email)) {
             setEmailError("Invalid email format.");
+            setLoading(false);
             return;
         } else {
             setEmailError("");
@@ -114,6 +117,7 @@ const SignIn = () => {
 
         if (!email || !password) {
             setPasswordError("Please enter both email and password.");
+            setLoading(false);
             return;
         }
 
@@ -142,6 +146,7 @@ const SignIn = () => {
             resetForm();
         } catch (error) {
             setPasswordError("Invalid email or password.");
+            setLoading(false);
         }
     };
 
@@ -257,8 +262,12 @@ const SignIn = () => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-[#F4F2EE] px-4 sm:px-6 lg:px-8 py-20">
-            <div className="bg-[#FFFFFF] rounded-lg shadow-2xl p-8 sm:p-10 max-w-md w-full">
+        <div className="relative flex flex-col items-center justify-center min-h-screen bg-[#F4F2EE] px-4 sm:px-6 lg:px-8 py-20 overflow-hidden">
+            {/* Ambient background glows */}
+            <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#0073b1]/10 blur-[120px] rounded-full pointer-events-none"></div>
+            <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-80 h-80 bg-purple-500/10 blur-[120px] rounded-full pointer-events-none"></div>
+
+            <div className="relative bg-white/80 backdrop-blur-md rounded-2xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.05)] p-8 sm:p-10 max-w-md w-full">
                 <div className="text-center mb-6">
                     <Image
                         src={bgImage}
@@ -268,7 +277,7 @@ const SignIn = () => {
                         className="w-16 sm:w-20 mx-auto mb-4"
                         priority
                     />
-                    <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
+                    <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 tracking-tight">
                         {showForgotPassword
                             ? isOtpSent
                                 ? otpVerified
@@ -298,7 +307,7 @@ const SignIn = () => {
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 aria-label="Email"
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-300 ease-in-out shadow-sm"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0073b1]/50 focus:ring-4 focus:ring-[#0073b1]/10 bg-white/60 backdrop-blur-sm transition-all duration-200 shadow-sm"
                             />
                             {emailError && (
                                 <p className="text-red-500 text-sm mt-1">{emailError}</p>
@@ -312,12 +321,12 @@ const SignIn = () => {
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
                                 aria-label="Password"
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-300 ease-in-out shadow-sm"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0073b1]/50 focus:ring-4 focus:ring-[#0073b1]/10 bg-white/60 backdrop-blur-sm transition-all duration-200 shadow-sm"
                             />
                             <FontAwesomeIcon
                                 icon={showPassword ? faEyeSlash : faEye}
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-4 top-3 cursor-pointer text-gray-500"
+                                className="absolute right-4 top-3.5 cursor-pointer text-gray-400 hover:text-gray-600 transition-colors duration-200"
                             />
                             {passwordError && (
                                 <p className="text-red-500 text-sm mt-1">{passwordError}</p>
@@ -330,9 +339,10 @@ const SignIn = () => {
 
                         <button
                             type="submit"
-                            className="w-full bg-[#0073b1] text-white py-3 rounded-lg hover:bg-[#005582] focus:outline-none shadow-lg"
+                            disabled={loading}
+                            className={`w-full bg-gradient-to-r from-[#0073b1] to-[#005582] text-white py-3 px-4 rounded-xl hover:shadow-[0_4px_20px_rgba(0,115,177,0.35)] transition-all duration-300 font-semibold focus:outline-none hover:scale-[1.01] active:scale-[0.99] cursor-pointer ${loading ? "opacity-85 cursor-wait" : ""}`}
                         >
-                            Login
+                            {loading ? "Logging in..." : "Login"}
                         </button>
                         <div className="flex items-center justify-center mt-6">
                                     {GOOGLE_CLIENT_ID ? (
@@ -351,7 +361,7 @@ const SignIn = () => {
                         <p className="mt-4 text-center text-gray-600 text-sm">
                             <a
                                 onClick={() => setShowForgotPassword(true)}
-                                className="text-[#0073b1] hover:underline cursor-pointer"
+                                className="text-[#0073b1] hover:underline cursor-pointer font-medium"
                             >
                                 Forgot Password?
                             </a>
@@ -359,7 +369,7 @@ const SignIn = () => {
                         <div className="px-4 py-2 text-sm text-center">
                             <span className="text-gray-600">Do not have an account?</span>
                             <button
-                                className="text-[#0073b1] font-bold hover:underline ml-1"
+                                className="text-[#0073b1] font-bold hover:underline ml-1 cursor-pointer"
                                 onClick={handleSignupRedirect}
                             >
                                 Sign Up
@@ -373,13 +383,13 @@ const SignIn = () => {
                                 <form onSubmit={handleVerifyOtp}>
                                     <OtpInput otp={otp} setOtp={setOtp} />
                                     {otpError && (
-                                        <p className="text-red-500 text-sm mt-1 text-center">
+                                        <p className="text-red-500 text-sm mt-1 text-center font-medium">
                                             {otpError}
                                         </p>
                                     )}
                                     <button
                                         type="submit"
-                                        className="w-full  bg-[#0073b1] text-white font-bold py-3 rounded-lg transition duration-300 ease-in-out shadow-md transform hover:scale-105 active:scale-95"
+                                        className="w-full bg-gradient-to-r from-[#0073b1] to-[#005582] text-white font-semibold py-3 rounded-xl hover:shadow-[0_4px_20px_rgba(0,115,177,0.35)] transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] focus:outline-none cursor-pointer"
                                     >
                                         Verify OTP
                                     </button>
@@ -387,7 +397,7 @@ const SignIn = () => {
                                         <button
                                             type="button"
                                             onClick={handleResendOtp}
-                                            className="w-full  bg-gray-200 text-blue-600 py-3 mt-2 rounded-lg focus:outline-none shadow-lg"
+                                            className="w-full bg-gray-100/80 text-gray-700 hover:bg-gray-100 hover:text-black py-3 mt-2 rounded-xl transition duration-200 font-semibold focus:outline-none cursor-pointer"
                                         >
                                             Resend OTP
                                         </button>
@@ -407,7 +417,7 @@ const SignIn = () => {
                                             onChange={(e) => setEmail(e.target.value)}
                                             required
                                             aria-label="Email"
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-300 ease-in-out shadow-sm"
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0073b1]/50 focus:ring-4 focus:ring-[#0073b1]/10 bg-white/60 backdrop-blur-sm transition-all duration-200 shadow-sm"
                                         />
                                         {emailError && (
                                             <p className="text-red-500 text-sm mt-1">{emailError}</p>
@@ -415,7 +425,7 @@ const SignIn = () => {
                                     </div>
                                     <button
                                         type="submit"
-                                        className="w-full bg-[#0073b1] text-white font-bold py-3 rounded-lg transition duration-300 ease-in-out shadow-md transform hover:scale-105 active:scale-95"
+                                        className="w-full bg-gradient-to-r from-[#0073b1] to-[#005582] text-white font-semibold py-3 rounded-xl hover:shadow-[0_4px_20px_rgba(0,115,177,0.35)] transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] focus:outline-none cursor-pointer"
                                     >
                                         {loading ? "Processing..." : "Send OTP"}
                                     </button>
@@ -431,7 +441,7 @@ const SignIn = () => {
                                         onChange={(e) => setNewPassword(e.target.value)}
                                         required
                                         aria-label="New Password"
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-300 ease-in-out shadow-sm"
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0073b1]/50 focus:ring-4 focus:ring-[#0073b1]/10 bg-white/60 backdrop-blur-sm transition-all duration-200 shadow-sm"
                                     />
                                     {newPasswordError && (
                                         <p className="text-red-500 text-sm mt-1">
@@ -441,7 +451,7 @@ const SignIn = () => {
                                 </div>
                                 <button
                                     type="submit"
-                                    className="w-full bg-[#0073b1]  text-white font-bold py-3 rounded-lg transition duration-300 ease-in-out shadow-md transform hover:scale-105 active:scale-95"
+                                    className="w-full bg-gradient-to-r from-[#0073b1] to-[#005582] text-white font-semibold py-3 rounded-xl hover:shadow-[0_4px_20px_rgba(0,115,177,0.35)] transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] focus:outline-none cursor-pointer"
                                 >
                                     Reset Password
                                 </button>
@@ -493,7 +503,7 @@ const OtpInput = ({ otp, setOtp }) => {
                         }
                     }}
                     maxLength="1"
-                    className="w-12 h-12 mx-1 text-center border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 transition duration-300 ease-in-out shadow-sm"
+                    className="w-12 h-12 mx-1 text-center border border-gray-200 rounded-xl focus:outline-none focus:border-[#0073b1]/50 focus:ring-4 focus:ring-[#0073b1]/10 bg-white/60 backdrop-blur-sm transition-all duration-200 shadow-sm font-semibold text-lg"
                 />
             ))}
         </div>

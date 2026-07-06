@@ -39,7 +39,7 @@ export default function CandidateInterviews() {
     if (loading) return <Loader />;
 
     return (
-        <div className="min-h-screen bg-[#F4F2EE] py-12 px-4">
+        <div className="min-h-screen bg-[#F4F2EE] pt-24 pb-16 px-4">
                 <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-sm p-4">
                 <h1 className="text-2xl font-semibold text-[#0073b1] mb-4">Your Scheduled Interviews</h1>
                 {interviews.length === 0 && <div className="text-gray-600">No scheduled interviews.</div>}

@@ -211,128 +211,120 @@ const Job = () => {
     }
 
     return (
-        <div className="min-h-screen py-8 mt-12 bg-gray-50" style={{ backgroundColor: "#F4F2EE" }}>
-            <div className="max-w-4xl mx-auto bg-white shadow-xl rounded-xl p-6 sm:p-8 border border-gray-200">
-                <h1 className="text-4xl font-extrabold text-[#0073b1] mb-6 ">{job.job_name}</h1>
+        <div className="min-h-screen py-16 mt-14 bg-gray-50" style={{ backgroundColor: "#F4F2EE" }}>
+            <div className="max-w-4xl mx-auto bg-white shadow-[0_4px_25px_rgba(0,0,0,0.03)] rounded-2xl p-8 sm:p-10 border border-gray-200/60">
+                {/* Header Back Link */}
+                <button
+                    onClick={() => router.push('/Users/Jobs')}
+                    className="group mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-[#0073b1] transition-colors duration-200"
+                >
+                    <FaArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform duration-200" /> 
+                    Back to Jobs
+                </button>
 
-                {/* Job Details Section */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-                    <div className="flex items-center space-x-4 text-gray-700">
-                        <FaBuilding className="text-[#0073b1] h-6 w-6" />
-                        <p className="font-medium break-words max-w-full">
-                            Company: <span className="text-gray-800">{job.company_name}</span>
+                <h1 className="text-3xl sm:text-4xl font-black text-gray-950 tracking-tight mb-6">{job.job_name}</h1>
+
+                {/* Job Metadata Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 bg-gray-50/60 border border-gray-200/50 rounded-2xl p-6">
+                    <div className="flex items-center space-x-3.5 text-gray-700">
+                        <div className="p-2.5 bg-[#0073b1]/5 text-[#0073b1] rounded-xl">
+                            <FaBuilding className="h-5 w-5" />
+                        </div>
+                        <p className="font-medium text-sm text-gray-500">
+                            Company: <span className="text-gray-900 font-semibold block">{job.company_name}</span>
                         </p>
                     </div>
-                    <div className="flex items-center space-x-4 text-gray-700">
-                        <FaMapMarkerAlt className="text-red-500 h-6 w-6" />
-                        <p className="font-medium break-words max-w-full">
-                            Location: <span className="text-gray-800">{job.job_location}</span>
+                    <div className="flex items-center space-x-3.5 text-gray-700">
+                        <div className="p-2.5 bg-rose-50 text-rose-600 rounded-xl">
+                            <FaMapMarkerAlt className="h-5 w-5" />
+                        </div>
+                        <p className="font-medium text-sm text-gray-500">
+                            Location: <span className="text-gray-900 font-semibold block">{job.job_location}</span>
                         </p>
                     </div>
-                    <div className="flex items-center space-x-4 text-gray-700">
-                        <MdOutlineWork className="text-green-600 h-6 w-6" />
-                        <p className="font-medium break-words max-w-full">
-                            Workplace Type: <span className="text-gray-800">{job.workplace_type}</span>
+                    <div className="flex items-center space-x-3.5 text-gray-700">
+                        <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                            <MdOutlineWork className="h-5 w-5" />
+                        </div>
+                        <p className="font-medium text-sm text-gray-500">
+                            Workplace: <span className="text-gray-900 font-semibold block">{job.workplace_type}</span>
                         </p>
                     </div>
-                    <div className="flex items-center space-x-4 text-gray-700">
-                        <FaClipboardList className="text-yellow-600 h-6 w-6" />
-                        <p className="font-medium break-words max-w-full">
-                            Employment Type: <span className="text-gray-800">{job.employment_type}</span>
+                    <div className="flex items-center space-x-3.5 text-gray-700">
+                        <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
+                            <FaClipboardList className="h-5 w-5" />
+                        </div>
+                        <p className="font-medium text-sm text-gray-500">
+                            Employment: <span className="text-gray-900 font-semibold block">{job.employment_type}</span>
                         </p>
                     </div>
-                    <div className="flex items-center space-x-4 text-gray-700">
-                        <FaClock className="text-[#0073b1] h-6 w-6" />
-                        <p className="font-medium break-words max-w-full">
-                            Posted On: <span className="text-gray-800">{new Date(job.created_at).toLocaleDateString()}</span>
+                    <div className="flex items-center space-x-3.5 text-gray-700">
+                        <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
+                            <FaClock className="h-5 w-5" />
+                        </div>
+                        <p className="font-medium text-sm text-gray-500">
+                            Posted On: <span className="text-gray-900 font-semibold block">{new Date(job.created_at).toLocaleDateString()}</span>
                         </p>
                     </div>
-                    <div className="flex items-center space-x-4 text-gray-700">
-                        <FaClock className="text-gray-500 h-6 w-6" />
-                        <p className="font-medium break-words max-w-full">
-                            Last Updated: <span className="text-gray-800">{new Date(job.updated_at).toLocaleDateString()}</span>
+                    <div className="flex items-center space-x-3.5 text-gray-700">
+                        <div className="p-2.5 bg-purple-50 text-purple-600 rounded-xl">
+                            {job.interview_type.toLowerCase() === "ai" ? (
+                                <FaRobot className="h-5 w-5" />
+                            ) : (
+                                <FaUserTie className="h-5 w-5" />
+                            )}
+                        </div>
+                        <p className="font-medium text-sm text-gray-500">
+                            Interview Style: <span className="text-gray-900 font-semibold block capitalize">{job.interview_type} Interview</span>
                         </p>
-                    </div>
-                    <div className="flex items-center space-x-4 text-gray-700">
-                        {job.interview_type.toLowerCase() === "ai" ? (
-                            <>
-                                <FaRobot className="text-[#0073b1] h-6 w-6" />
-                                <p className="font-medium break-words max-w-full">
-                                    <span className="text-gray-800">AI Interview</span>
-                                </p>
-                            </>
-                        ) : job.interview_type.toLowerCase() === "manual" ? (
-                            <>
-                                <FaUserTie className="text-[#0073b1] h-6 w-6" />
-                                <p className="font-medium break-words max-w-full">
-                                    <span className="text-gray-800">Manual Interview</span>
-                                </p>
-                            </>
-                        ) : (
-                            <>
-                                <FaExclamationCircle className="text-[#0073b1] h-6 w-6" />
-                                <p className="font-medium break-words max-w-full">
-                                    <span className="text-gray-800">Unknown Interview Type</span>
-                                </p>
-                            </>
-                        )}
                     </div>
                 </div>
-
-
 
                 {/* Job Description */}
-                <div className="border-t border-gray-200 pt-6 mb-6">
-                    <h2 className="text-2xl font-bold text-gray-700 mb-4">Job Description</h2>
-                    <p className="text-gray-700 leading-relaxed break-words">{job.description}</p>
+                <div className="border-t border-gray-100 pt-8 mb-8">
+                    <h2 className="text-xl font-bold text-gray-900 mb-4">Job Description</h2>
+                    <p className="text-gray-650 leading-relaxed text-base break-words whitespace-pre-line">{job.description}</p>
                 </div>
 
-
-
                 {/* Required Skills */}
-                <div className="border-t border-gray-200 pt-6">
-                    <h2 className="text-2xl font-bold text-gray-700 mb-4">Required Skills</h2>
-                    <ul className="list-disc pl-5 text-gray-700">
+                <div className="border-t border-gray-100 pt-8 mb-8">
+                    <h2 className="text-xl font-bold text-gray-900 mb-4">Required Skills</h2>
+                    <div className="flex flex-wrap gap-2.5">
                         {job.skills.split(",").map((skill, index) => (
-                            <li key={index} className="py-1 font-medium">
+                            <span key={index} className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold bg-[#0073b1]/5 text-[#0073b1]">
                                 {skill.trim()}
-                            </li>
+                            </span>
                         ))}
-                    </ul>
+                    </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <button
-                        onClick={() => router.push('/Users/Jobs')}
-                        className="w-full sm:w-auto px-6 py-3 bg-[#0073b1] text-white font-semibold rounded-lg shadow-md transition-colors duration-300 hover:bg-[#005f8c]"
-                    >
-                        <FaArrowLeft className="mr-2 inline-block" /> Back to Jobs
-                    </button>
-
-                    <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto justify-center sm:justify-start">
+                <div className="mt-10 flex flex-col sm:flex-row justify-end items-center gap-4 border-t border-gray-150 pt-8">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                         {role === "Candidate" && (
                             <button
                                 onClick={handleApplyClick}
                                 disabled={hasApplied}
-                                className={`w-full sm:w-auto px-6 py-3 text-white font-semibold rounded-lg shadow-md transition-colors duration-300 ${
-                                    hasApplied ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
+                                className={`w-full sm:w-auto px-7 py-3 font-semibold rounded-xl transition-all duration-300 transform active:scale-[0.99] flex items-center justify-center gap-2 ${
+                                    hasApplied 
+                                        ? "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed" 
+                                        : "bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white shadow-md"
                                 }`}
                             >
-                                {hasApplied ? "Applied" : "Apply"} <FaCheckCircle className="ml-2 inline-block" />
+                                {hasApplied ? "Applied" : "Apply Now"} <FaCheckCircle className="w-4 h-4" />
                             </button>
                         )}
                         <button
                             onClick={() => handleReportClick(job.id)}
-                            disabled={report === "Yes"} // Disable the button if report status is "Yes"
-                            className={`w-full sm:w-auto px-6 py-3 text-white font-semibold rounded-lg shadow-md transition-colors duration-300 
-                ${report === "Yes"
-                                    ? "bg-gray-400 cursor-not-allowed" // Disabled state
-                                    : "bg-red-500 hover:bg-red-600"} // Enabled state
-            `}
+                            disabled={report === "Yes"}
+                            className={`w-full sm:w-auto px-7 py-3 font-semibold rounded-xl transition-all duration-300 transform active:scale-[0.99] flex items-center justify-center gap-2
+                                ${report === "Yes"
+                                    ? "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed"
+                                    : "bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white shadow-md"}
+                            `}
                             title={report === "Yes" ? "You have already reported this job" : "Report this job"}
                         >
-                            Report <FaFlag className="ml-2 inline-block" />
+                            Report Flag <FaFlag className="w-3.5 h-3.5" />
                         </button>
                     </div>
                 </div>
@@ -340,29 +332,29 @@ const Job = () => {
 
             {/* Report Modal */}
             {showModal && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-900 bg-opacity-50 px-4">
-                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
-                        <h2 className="text-xl font-bold mb-4">Report Job</h2>
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-950/40 backdrop-blur-sm px-4">
+                    <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+                        <h2 className="text-xl font-bold text-gray-950 mb-3">Report Job</h2>
                         <textarea
-                            className={`w-full border ${feedbackError ? "border-red-500" : "border-gray-300"} rounded-lg p-2 mb-4`}
-                            placeholder="Write one line feedback..."
+                            className={`w-full border ${feedbackError ? "border-red-500" : "border-gray-200"} focus:border-[#0073b1]/50 focus:ring-4 focus:ring-[#0073b1]/10 rounded-xl p-3 mb-4 outline-none transition duration-200 bg-gray-50/50 resize-none min-h-[80px]`}
+                            placeholder="Provide details about the issue..."
                             value={feedback}
                             onChange={(e) => {
                                 setFeedback(e.target.value);
                                 setFeedbackError(null);
                             }}
                         />
-                        {feedbackError && <p className="text-red-500 text-sm mb-2">{feedbackError}</p>}
-                        <div className="flex justify-between">
+                        {feedbackError && <p className="text-red-500 text-xs mb-3 font-semibold">{feedbackError}</p>}
+                        <div className="flex gap-3">
                             <button
                                 onClick={handleCancel}
-                                className="px-6 py-2 bg-gray-400 text-white font-semibold rounded-lg"
+                                className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition duration-200 active:scale-[0.98]"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={() => reportJob(jobToReport)}
-                                className="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg"
+                                className="flex-1 py-2.5 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition duration-200 active:scale-[0.98]"
                             >
                                 Submit
                             </button>
@@ -373,27 +365,28 @@ const Job = () => {
 
             {/* Apply Modal */}
             {showApplyModal && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-900 bg-opacity-50 px-4">
-                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
-                        <h2 className="text-xl font-bold mb-4">Apply for {job.job_name}</h2>
-
-                        <div className="mb-4 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
-                            <p className="font-medium">Resume from Profile</p>
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-950/40 backdrop-blur-sm px-4">
+                    <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-lg w-full border border-gray-100 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+                        <h2 className="text-2xl font-bold text-gray-950 mb-4">Apply for {job.job_name}</h2>
+ 
+                        <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50/80 p-4 text-sm text-gray-700">
+                            <p className="font-semibold text-gray-900 mb-1.5">Resume from Profile</p>
                             {profileResume ? (
                                 <button
                                     type="button"
                                     onClick={() => openResumePreview(profileResume)}
-                                    className="text-left text-blue-600 underline break-all"
+                                    className="text-left text-[#0073b1] font-semibold hover:underline break-all inline-flex items-center gap-1.5"
                                 >
+                                    <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                     {profileResumeName || "View resume"}
                                 </button>
                             ) : (
-                                <p className="text-red-500">No resume found in profile. Please upload one in your profile first.</p>
+                                <p className="text-red-500 font-medium">No resume found in profile. Please upload one in your profile first.</p>
                             )}
                         </div>
 
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Optional: upload a different CV for this job</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Optional: upload a different CV for this job</label>
                             <input
                                 type="file"
                                 accept=".pdf,.doc,.docx"
@@ -402,61 +395,65 @@ const Job = () => {
                                     setResumeFile(file);
                                     setResumeFileName(file?.name || "");
                                 }}
-                                className="w-full text-sm"
+                                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#0073b1]/10 file:text-[#0073b1] hover:file:bg-[#0073b1]/20 file:cursor-pointer cursor-pointer"
                             />
                             {resumeFileName && (
-                                <p className="mt-2 text-sm text-gray-600">
-                                    Selected file: <span className="font-medium text-gray-900">{resumeFileName}</span>
+                                <p className="mt-2 text-xs text-gray-600 bg-gray-50 p-2 rounded-lg">
+                                    Selected file: <span className="font-semibold text-gray-900">{resumeFileName}</span>
                                 </p>
                             )}
                         </div>
 
-                        <div className="mb-4 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
-                            <p className="font-medium">Resume that will be used for this application</p>
+                        <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50/80 p-4 text-sm text-gray-750">
+                            <p className="font-semibold text-gray-900 mb-1.5">Resume that will be used for this application</p>
                             {resumeFileName ? (
-                                <p className="text-gray-600 mt-1">Uploading your selected resume for this job.</p>
+                                <p className="text-gray-600 font-medium inline-flex items-center gap-1.5">
+                                    <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                    Uploading your selected resume: <span className="font-bold text-gray-900">{resumeFileName}</span>
+                                </p>
                             ) : profileResume ? (
-                                <button type="button" onClick={() => openResumePreview(profileResume)} className="mt-1 text-left text-blue-600 underline break-all">
+                                <button type="button" onClick={() => openResumePreview(profileResume)} className="text-left text-[#0073b1] font-semibold hover:underline break-all inline-flex items-center gap-1.5">
+                                    <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                     {profileResumeName || "View profile resume"}
                                 </button>
                             ) : (
-                                <p className="text-red-500 mt-1">No resume found in profile. Please upload one in your profile first.</p>
+                                <p className="text-red-500 font-medium">No resume found. Please upload a resume first.</p>
                             )}
                         </div>
 
                         <textarea
-                            className="w-full border border-gray-300 rounded-lg p-2 mb-4 min-h-[120px]"
-                            placeholder="Optional cover letter..."
+                            className="w-full border border-gray-200 focus:border-[#0073b1]/50 focus:ring-4 focus:ring-[#0073b1]/10 rounded-xl p-3 mb-4 outline-none transition duration-200 bg-gray-50/50 resize-none min-h-[120px]"
+                            placeholder="Introduce yourself with an optional cover letter..."
                             value={coverLetter}
                             onChange={(e) => setCoverLetter(e.target.value)}
                         />
 
                         {applyMessage && (
-                            <p className={`text-sm mb-3 ${applyError ? "text-red-500" : "text-green-600"}`}>
+                            <div className={`text-sm mb-4 p-3 rounded-lg font-semibold ${applyError ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
                                 {applyMessage}
-                            </p>
+                            </div>
                         )}
 
                         {applicationResumeUrl && (
-                            <div className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
-                                <p className="font-medium">Uploaded resume for this application</p>
-                                <button type="button" onClick={() => openResumePreview(applicationResumeUrl)} className="mt-1 text-left text-emerald-700 underline break-all">
+                            <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 text-sm text-emerald-900">
+                                <p className="font-semibold mb-1">Attached application resume</p>
+                                <button type="button" onClick={() => openResumePreview(applicationResumeUrl)} className="text-left text-emerald-700 font-bold underline break-all">
                                     {applicationResumeName || "View uploaded resume"}
                                 </button>
                             </div>
                         )}
 
-                        <div className="flex justify-between gap-3">
+                        <div className="flex gap-3 pt-2">
                             <button
                                 onClick={() => setShowApplyModal(false)}
-                                className="px-6 py-2 bg-gray-400 text-white font-semibold rounded-lg"
+                                className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition duration-200 active:scale-[0.98]"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleApplySubmit}
                                 disabled={applying}
-                                className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg disabled:opacity-60"
+                                className="flex-1 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-semibold rounded-xl hover:from-emerald-700 hover:to-teal-850 transition duration-200 active:scale-[0.98] disabled:opacity-60"
                             >
                                 {applying ? "Submitting..." : "Submit Application"}
                             </button>
@@ -467,26 +464,27 @@ const Job = () => {
 
             {/* Post-apply AI interview prompt */}
             {showInterviewPrompt && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-900 bg-opacity-50 px-4">
-                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
-                        <h2 className="text-xl font-bold mb-2 text-[#0073b1]">Application Submitted</h2>
-                        <p className="text-gray-700 mb-4">
-                            You can take the AI screening interview now, or do it later from Notifications.
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-950/40 backdrop-blur-sm px-4">
+                    <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-lg w-full border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+                        <h2 className="text-2xl font-bold mb-2 text-[#0073b1] tracking-tight">Application Submitted!</h2>
+                        <p className="text-gray-650 text-sm leading-relaxed mb-5">
+                            Your application was successfully sent. Would you like to take the AI screening interview now? You can also complete it later via notifications.
                         </p>
                         {applicationResumeUrl && (
-                            <div className="mb-4 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
-                                <p className="font-medium">Resume attached to this application</p>
-                                <button type="button" onClick={() => openResumePreview(applicationResumeUrl)} className="mt-1 text-left text-blue-600 underline break-all">
+                            <div className="mb-5 rounded-xl border border-gray-200 bg-gray-50/80 p-4 text-sm text-gray-750">
+                                <p className="font-semibold text-gray-900 mb-1.5">Attached resume</p>
+                                <button type="button" onClick={() => openResumePreview(applicationResumeUrl)} className="text-left text-[#0073b1] font-semibold hover:underline break-all inline-flex items-center gap-1.5">
+                                    <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                     {applicationResumeName || "View application resume"}
                                 </button>
                             </div>
                         )}
-                        <div className="flex justify-end gap-3">
+                        <div className="flex gap-3">
                             <button
                                 onClick={() => setShowInterviewPrompt(false)}
-                                className="px-6 py-2 bg-gray-400 text-white font-semibold rounded-lg"
+                                className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition duration-200 active:scale-[0.98]"
                             >
-                                Later
+                                Take Interview Later
                             </button>
                             <button
                                 onClick={() => {
@@ -496,7 +494,7 @@ const Job = () => {
                                         router.push(`/Users/Applications/${id}/interview`);
                                     }
                                 }}
-                                className="px-6 py-2 bg-[#0073b1] text-white font-semibold rounded-lg"
+                                className="flex-1 py-2.5 bg-gradient-to-r from-[#0073b1] to-[#005582] text-white font-semibold rounded-xl hover:from-[#005582] hover:to-[#00446a] transition duration-200 active:scale-[0.98]"
                             >
                                 Take AI Interview Now
                             </button>
