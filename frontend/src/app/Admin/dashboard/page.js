@@ -36,7 +36,6 @@ ChartJS.register(
 
 const Dashboard = () => {
     const [dashboardStats, setDashboardStats] = useState(null); // To store fetched data
-    const [darkMode, setDarkMode] = useState(false); // State for dark mode toggle
 
     useEffect(() => {
         const fetchData = async () => {
@@ -110,150 +109,132 @@ const Dashboard = () => {
     ];
 
     return (
-        <div
-            className={`container mx-auto p-6 min-h-screen flex flex-col space-y-8 ${darkMode ? "bg-gray-800 text-white" : "bg-gray-100 text-black"
-                } mt-[3.75rem]`}
-        >
-            {/* Dark Mode Toggle Button */}
-            <div className="flex justify-end">
-                <button
-                    className="p-2 rounded-full bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600"
-                    onClick={() => setDarkMode((prev) => !prev)}
-                >
-                    {darkMode ? "☀️" : "🌙"}
-                </button>
+        <div className="space-y-6 text-slate-800">
+            {/* Header Section */}
+            <div className="text-center space-y-2">
+                <h1 className="text-3xl font-extrabold text-[#0073b1] tracking-tight">Platform Analytics</h1>
+                <p className="text-sm text-gray-500">Real-time platform activity, job listings, and billing distribution.</p>
             </div>
 
-            {/* Subscription Cards Section */}
-            <section>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Combined Analytics Dashboard Container */}
+            <div className="bg-white border border-gray-150 rounded-2xl shadow-sm overflow-hidden divide-y divide-gray-100">
+                {/* Section 1: Stats Bar */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 lg:divide-x divide-gray-100">
                     {subscriptionData.map((sub, index) => (
-                        <div
-                            key={index}
-                            className={`${darkMode ? "bg-gray-900" : "bg-white"
-                                } p-6 rounded-lg shadow-md flex flex-col items-center border-l-4 border-[#0073b1] transition-transform transform hover:scale-105`}
-                        >
-                            <div className="mb-4">
-                                {sub.type === "Jobs" ? (
-                                    <FontAwesomeIcon
-                                        icon={faBriefcase}
-                                        className={`w-12 h-12 ${darkMode ? "text-white" : "text-black"}`}
-                                    />
-                                ) : (
-                                    <sub.Icon className={`w-12 h-12 ${darkMode ? "text-white" : "text-black"}`} />
-                                )}
-                            </div>
-                            <p
-                                className={`hover:text-[#0073b1] transition-colors duration-200 ease-in-out ${darkMode ? "text-white" : "text-black"
-                                    }`}
-                            >
-                                {sub.type}
-                            </p>
-
-                            <p className="text-3xl font-semibold">
+                        <div key={index} className="p-6 flex flex-col justify-center space-y-1">
+                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">
+                                {sub.type === "Profit" ? "Net Profit" : sub.type === "Subscription" ? "Premium Subs" : sub.type}
+                            </span>
+                            <h3 className="text-3xl font-black text-gray-900 tracking-tight">
+                                {sub.type === "Profit" && "$"}
                                 <CountUp
                                     start={0}
-                                    end={sub.count > 999 ? 999 : sub.count}
-                                    duration={2}
+                                    end={sub.count}
+                                    duration={1.5}
                                     separator=","
-                                    suffix={sub.count > 999 ? "+" : ""}
                                 />
-                            </p>
+                            </h3>
                         </div>
                     ))}
                 </div>
-            </section>
 
-            {/* Charts Section */}
-            <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div
-                    className={`${darkMode ? "bg-gray-900" : "bg-white"
-                        } p-6 rounded-lg shadow-md border-l-4 border-[#0073b1]`}
-                >
-                    <h3 className="text-lg font-semibold mb-4">Job Posts Per Day</h3>
-                    <Line data={lineChartData} />
-                </div>
+                {/* Section 2: Primary Timelines */}
+                <div className="p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                        <div>
+                            <h3 className="text-base font-bold text-gray-950">Job Posts Timeline</h3>
+                            <p className="text-xs text-gray-400">Total job listings created per day.</p>
+                        </div>
+                        <div className="pt-2">
+                            <Line data={lineChartData} />
+                        </div>
+                    </div>
 
-                <div
-                    className={`${darkMode ? "bg-gray-900" : "bg-white"
-                        } p-6 rounded-lg shadow-md border-l-4 border-[#0073b1]`}
-                >
-                    <h3 className="text-lg font-semibold mb-4">Job Posts by Category</h3>
-                    <Bar data={barChartData} />
-                </div>
-            </section>
-            <section className="grid sm:grid-cols-1 md:grid-cols-2 gap-8">
-                <div
-                    className={`${darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-800"
-                        } p-6 rounded-xl shadow-md border-l-4 border-[#0073b1] transform transition duration-300 hover:shadow-xl overflow-hidden`}
-                >
-                    <h3 className="text-lg font-semibold mb-4">Workplace Distribution</h3>
-                    <div className="w-full h-64 relative">
-                        <Pie
-                            data={pieChartData}
-                            options={{
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    tooltip: {
-                                        callbacks: {
-                                            label: (tooltipItem) =>
-                                                `${tooltipItem.label}: ${tooltipItem.raw}%`,
-                                        },
-                                    },
-                                    legend: {
-                                        position: "right",
-                                        labels: {
-                                            boxWidth: 20,
-                                            padding: 15,
-                                            font: {
-                                                size: 14,
-                                            },
-                                        },
-                                    },
-                                },
-                            }}
-                            style={{ width: "100%", height: "100%" }}
-                        />
+                    <div className="space-y-4">
+                        <div>
+                            <h3 className="text-base font-bold text-gray-950">Category Distribution</h3>
+                            <p className="text-xs text-gray-400">Job listings grouped by required primary skills.</p>
+                        </div>
+                        <div className="pt-2">
+                            <Bar data={barChartData} />
+                        </div>
                     </div>
                 </div>
 
-                <div
-                    className={`${darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-800"
-                        } p-6 rounded-xl shadow-md border-l-4 border-[#0073b1] transform transition duration-300 hover:shadow-xl overflow-hidden`}
-                >
-                    <h3 className="text-lg font-semibold mb-4">Job Post Preferences</h3>
-                    <div className="w-full h-64 relative">
-                        <Doughnut
-                            data={doughnutChartData}
-                            options={{
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    tooltip: {
-                                        callbacks: {
-                                            label: (tooltipItem) =>
-                                                `${tooltipItem.label}: ${tooltipItem.raw}%`,
+                {/* Section 3: Ratio Distributions */}
+                <div className="p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                        <div>
+                            <h3 className="text-base font-bold text-gray-950">Workplace Types</h3>
+                            <p className="text-xs text-gray-400">Ratio of remote, hybrid, and on-site listings.</p>
+                        </div>
+                        <div className="w-full h-64 relative pt-2">
+                            <Pie
+                                data={pieChartData}
+                                options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        tooltip: {
+                                            callbacks: {
+                                                label: (tooltipItem) =>
+                                                    ` ${tooltipItem.label}: ${tooltipItem.raw}%`,
+                                            },
                                         },
-                                    },
-                                    legend: {
-                                        position: "right",
-                                        labels: {
-                                            boxWidth: 20,
-                                            padding: 15,
-                                            font: {
-                                                size: 14,
+                                        legend: {
+                                            position: "right",
+                                            labels: {
+                                                boxWidth: 12,
+                                                padding: 15,
+                                                font: {
+                                                    size: 11,
+                                                    weight: 'bold'
+                                                },
                                             },
                                         },
                                     },
-                                },
-                            }}
-                            style={{ width: "100%", height: "100%" }}
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div>
+                            <h3 className="text-base font-bold text-gray-950">Employment Preferences</h3>
+                            <p className="text-xs text-gray-400">Ratio of full-time, contract, and internship posts.</p>
+                        </div>
+                        <div className="w-full h-64 relative pt-2">
+                            <Doughnut
+                                data={doughnutChartData}
+                                options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        tooltip: {
+                                            callbacks: {
+                                                label: (tooltipItem) =>
+                                                    ` ${tooltipItem.label}: ${tooltipItem.raw}%`,
+                                            },
+                                        },
+                                        legend: {
+                                            position: "right",
+                                            labels: {
+                                                boxWidth: 12,
+                                                padding: 15,
+                                                font: {
+                                                    size: 11,
+                                                    weight: 'bold'
+                                                },
+                                            },
+                                        },
+                                    },
+                                }}
                         />
                     </div>
                 </div>
-            </section>
+            </div>
         </div>
+    </div>
     );
 };
 
