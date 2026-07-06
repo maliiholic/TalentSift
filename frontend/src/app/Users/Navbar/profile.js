@@ -9,7 +9,7 @@ import { Role_Action } from "@/Redux/Action";
 import { performLogout } from "@/utils/logout";
 import toast from "react-hot-toast";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://talentsift-ghee.onrender.com";
+import { API_BASE_URL as API_BASE } from "@/utils/api";
 
 const DEFAULT_IMAGE = "https://media.istockphoto.com/id/1300845620/vector/user-icon-flat-isolated-on-white-background-user-symbol-vector-illustration.jpg?s=612x612&w=0&k=20&c=yBeyba0hUkh14_jgv1OKqIH0CCSWU_4ckRkAoy2p73o=";
 

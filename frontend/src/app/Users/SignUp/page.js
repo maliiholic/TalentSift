@@ -259,7 +259,9 @@ const Signup = () => {
                 {!isOtpSent ? (
                     <form onSubmit={handleSendOtp} className="space-y-4">
                         <div>
+                            <label htmlFor="signup-firstname" className="sr-only">First Name</label>
                             <input
+                                id="signup-firstname"
                                 type="text"
                                 value={firstName}
                                 onChange={(e) => setFirstName(e.target.value)}
@@ -269,7 +271,9 @@ const Signup = () => {
                             {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
                         </div>
                         <div>
+                            <label htmlFor="signup-lastname" className="sr-only">Last Name</label>
                             <input
+                                id="signup-lastname"
                                 type="text"
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
@@ -279,7 +283,9 @@ const Signup = () => {
                             {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
                         </div>
                         <div>
+                            <label htmlFor="signup-email" className="sr-only">Email Address</label>
                             <input
+                                id="signup-email"
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -289,7 +295,9 @@ const Signup = () => {
                             {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                         </div>
                         <div className="relative">
+                            <label htmlFor="signup-password" className="sr-only">Password</label>
                             <input
+                                id="signup-password"
                                 type={showPassword ? "text" : "password"}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}

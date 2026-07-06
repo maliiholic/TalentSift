@@ -31,6 +31,9 @@ const Notification = () => {
     useEffect(() => {
         dispatch(show_search(false));
         dispatch(search_bar_action(""));
+        if (typeof window !== "undefined") {
+            document.title = "Notifications | TalentSift";
+        }
     }, [dispatch]);
 
     const dispatchUnreadUpdate = (items) => {

@@ -2,7 +2,7 @@
 
 import { API_BASE_URL } from "@/utils/api";
 import CountUp from "react-countup";
-import { Line, Bar, Pie, Doughnut } from "react-chartjs-2";
+import dynamic from "next/dynamic";
 import { FaRobot, FaUsers, FaAdjust } from "react-icons/fa";
 import {
     Chart as ChartJS,
@@ -21,6 +21,12 @@ import { faBriefcase } from "@fortawesome/free-solid-svg-icons";
 import { BsRobot } from "react-icons/bs";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+
+// Dynamically import heavy chart components
+const LineChart = dynamic(() => import("react-chartjs-2").then((mod) => mod.Line), { ssr: false });
+const BarChart = dynamic(() => import("react-chartjs-2").then((mod) => mod.Bar), { ssr: false });
+const PieChart = dynamic(() => import("react-chartjs-2").then((mod) => mod.Pie), { ssr: false });
+const DoughnutChart = dynamic(() => import("react-chartjs-2").then((mod) => mod.Doughnut), { ssr: false });
 
 // Registering Chart.js components
 ChartJS.register(
@@ -146,7 +152,7 @@ const Dashboard = () => {
                             <p className="text-xs text-gray-400">Total job listings created per day.</p>
                         </div>
                         <div className="pt-2">
-                            <Line data={lineChartData} />
+                            <LineChart data={lineChartData} />
                         </div>
                     </div>
 
@@ -156,7 +162,7 @@ const Dashboard = () => {
                             <p className="text-xs text-gray-400">Job listings grouped by required primary skills.</p>
                         </div>
                         <div className="pt-2">
-                            <Bar data={barChartData} />
+                            <BarChart data={barChartData} />
                         </div>
                     </div>
                 </div>
@@ -169,7 +175,7 @@ const Dashboard = () => {
                             <p className="text-xs text-gray-400">Ratio of remote, hybrid, and on-site listings.</p>
                         </div>
                         <div className="w-full h-64 relative pt-2">
-                            <Pie
+                            <PieChart
                                 data={pieChartData}
                                 options={{
                                     responsive: true,
@@ -204,7 +210,7 @@ const Dashboard = () => {
                             <p className="text-xs text-gray-400">Ratio of full-time, contract, and internship posts.</p>
                         </div>
                         <div className="w-full h-64 relative pt-2">
-                            <Doughnut
+                            <DoughnutChart
                                 data={doughnutChartData}
                                 options={{
                                     responsive: true,

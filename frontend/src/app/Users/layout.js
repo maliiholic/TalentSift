@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic';
-
 import Navbar from "./Navbar/navbar";
 import Footer from "./Footer/footer";
 

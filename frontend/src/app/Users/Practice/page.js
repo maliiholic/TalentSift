@@ -68,6 +68,9 @@ const Practice = () => {
     useEffect(() => {
         dispatch(show_search(false));
         dispatch(search_bar_action(''));
+        if (typeof window !== "undefined") {
+            document.title = "AI Practice Labs | TalentSift";
+        }
     }, [dispatch]);
 
     useEffect(() => {

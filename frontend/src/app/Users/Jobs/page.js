@@ -23,6 +23,9 @@ const CandidateJobs = () => {
 
     useEffect(() => {
         dispatch(show_search(true));
+        if (typeof window !== "undefined") {
+            document.title = "Explore Jobs | TalentSift";
+        }
     }, [dispatch]);
 
     useEffect(() => {

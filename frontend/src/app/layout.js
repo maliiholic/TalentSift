@@ -1,52 +1,44 @@
-"use client"
 import './globals.css';
-import { Provider } from "react-redux";
-import { PersistGate } from "redux-persist/integration/react";
-import { Store,persistor } from "../Store";
-import { GoogleOAuthProvider } from '@react-oauth/google';
-import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
-import Protect from "./others/protected_routes";
-import ChatBot from "./others/ChatBot";
-import { useEffect } from 'react';
-import { setAuthToken } from "./others/auth";
+import Providers from "./Providers";
+
+export const metadata = {
+  title: {
+    default: "TalentSift - AI-Powered Recruitment Platform",
+    template: "%s | TalentSift"
+  },
+  description: "TalentSift matches candidate potentials with recruiter intents through dynamic job discovery, automated AI practice interviews, and streamlined applicant screening dashboards.",
+  keywords: ["AI hiring", "AI interview screening", "job search", "practice interview prep", "recruiter screening", "TalentSift"],
+  authors: [{ name: "TalentSift Team" }],
+  metadataBase: new URL("https://talentsift-ghee.onrender.com"),
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://talentsift-ghee.onrender.com",
+    title: "TalentSift - AI-Powered Recruitment Platform",
+    description: "Match candidate potentials with recruiter intents through dynamic job discovery and automated AI practice interviews.",
+    siteName: "TalentSift",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TalentSift - AI-Powered Recruitment Platform",
+    description: "Match candidate potentials with recruiter intents through dynamic job discovery and automated AI practice interviews.",
+  }
+};
 
 export default function RootLayout({ children }) {
-  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
-
-  useEffect(() => {
-    try {
-      const token = localStorage.getItem('access');
-      setAuthToken(token);
-    } catch (e) {
-      // localStorage not available or other error
-    }
-  }, []);
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        {googleClientId ? (
-          <GoogleOAuthProvider clientId={googleClientId}>
-            <GoogleReCaptchaProvider reCaptchaKey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ""} scriptProps={{ async: true, defer: true, appendTo: "body" }}>
-              <Provider store={Store}>
-                <PersistGate loading={null} persistor={persistor}>
-                  <Protect>
-                    {children}
-                    <ChatBot />
-                  </Protect>
-                </PersistGate>
-              </Provider>
-            </GoogleReCaptchaProvider>
-          </GoogleOAuthProvider>
-        ) : (
-          <Provider store={Store}>
-            <PersistGate loading={null} persistor={persistor}>
-              <Protect>
-                {children}
-                <ChatBot />
-              </Protect>
-            </PersistGate>
-          </Provider>
-        )}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

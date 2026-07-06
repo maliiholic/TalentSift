@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import { show_search,search_bar_action } from "@/Redux/Action";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { setAuthToken } from "../../others/auth";
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://talentsift-ghee.onrender.com';
+import { API_BASE_URL as API_BASE } from "@/utils/api";
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
 const SignIn = () => {
@@ -300,7 +300,9 @@ const SignIn = () => {
                 {!showForgotPassword ? (
                     <form onSubmit={handleLogin}>
                         <div className="mb-4">
+                            <label htmlFor="login-email" className="sr-only">Email Address</label>
                             <input
+                                id="login-email"
                                 type="email"
                                 placeholder="Email"
                                 value={email}
@@ -314,7 +316,9 @@ const SignIn = () => {
                             )}
                         </div>
                         <div className="mb-4 relative">
+                            <label htmlFor="login-password" className="sr-only">Password</label>
                             <input
+                                id="login-password"
                                 type={showPassword ? "text" : "password"}
                                 placeholder="Password"
                                 value={password}
