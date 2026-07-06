@@ -1,13 +1,13 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faRightLeft, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
+import { FaUser, FaExchangeAlt, FaSignOutAlt, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import Image from "next/image";
 import { Role_Action } from "@/Redux/Action";
 import { performLogout } from "@/utils/logout";
+import toast from "react-hot-toast";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://talentsift-ghee.onrender.com";
 
@@ -22,7 +22,55 @@ const ProfileLink = () => {
   const router = useRouter();
   const userRole = useSelector((state) => state.Role_Reducer);
 
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const toggleDropdown = () => setDropdownOpen((prev) => !prev);
+
+  const handlePasswordResetSubmit = async (e) => {
+    e.preventDefault();
+    setPasswordError("");
+
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.*[a-zA-Z]).{8,}$/;
+
+    if (!newPassword) {
+      setPasswordError("Please enter a new password.");
+      return;
+    }
+
+    if (!passwordRegex.test(newPassword)) {
+      setPasswordError(
+        "Password must contain at least one uppercase letter, one special character, and be at least 8 characters long."
+      );
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords do not match.");
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      await axios.post(`${API_BASE}/reset_password/`, {
+        email: userData?.user_data?.email,
+        newPassword,
+      });
+      toast.success("Password changed successfully!");
+      setShowPasswordModal(false);
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      setPasswordError(error.response?.data?.error || "Error resetting password.");
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -109,70 +157,179 @@ const ProfileLink = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={toggleDropdown}
-        className="flex items-center justify-center rounded-full p-1.5 text-gray-600 transition duration-300 hover:bg-gray-100 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0073b1]"
+        className="flex items-center justify-center rounded-full p-0.5 border border-transparent hover:border-gray-200 transition duration-300 focus:outline-none"
         aria-label="Profile Menu"
         aria-expanded={dropdownOpen}
       >
-        <div className="relative h-10 w-10 md:h-11 md:w-11 lg:h-11 lg:w-11">
+        <div className="relative h-9 w-9 md:h-10 md:w-10">
           <Image
             src={profileImageSrc}
             alt="Profile"
             fill
-            className="rounded-full border-2 border-gray-200 object-cover"
+            className="rounded-full border-2 border-white shadow-sm object-cover"
             unoptimized
           />
         </div>
       </button>
 
       {dropdownOpen && (
-        <div className="absolute right-0 mt-2 w-72 max-w-[calc(100vw-1rem)] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl ring-1 ring-black/5">
-          <div className="border-b border-gray-200 px-4 py-3 bg-white">
-            <span className="block truncate font-medium text-gray-800" title={userData?.user_data?.email || ""}>
-              Hello, {userData?.user_data?.first_name || "User"}
-            </span>
-            <p className="truncate text-sm text-gray-500" title={userData?.user_data?.email || ""}>
-              {userData?.user_data?.email}
-            </p>
+        <div className="absolute right-0 mt-2 w-72 max-w-[calc(100vw-1rem)] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl ring-1 ring-black/5 animate-fade-in z-50">
+          {/* User Profile Header details */}
+          <div className="border-b border-gray-50 px-4 py-4 bg-gray-50/40 flex items-center gap-3">
+            <div className="relative h-12 w-12 flex-shrink-0">
+              <Image
+                src={profileImageSrc}
+                alt="Profile"
+                fill
+                className="rounded-full border-2 border-white shadow-sm object-cover"
+                unoptimized
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="block truncate font-bold text-gray-800 text-sm">
+                {userData?.user_data?.first_name || "User"}
+              </span>
+              <p className="truncate text-xs text-gray-400 mb-1" title={userData?.user_data?.email || ""}>
+                {userData?.user_data?.email}
+              </p>
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-[#0073b1]/10 text-[#0073b1]">
+                {userRole}
+              </span>
+            </div>
           </div>
 
-          <button
-            className="flex w-full items-center space-x-2 px-4 py-2.5 text-left text-gray-700 transition duration-200 hover:bg-gray-100 hover:text-gray-900"
-            onClick={() => {
-              setDropdownOpen(false);
-              router.push("/Users/Profile");
-            }}
-          >
-            <FontAwesomeIcon icon={faUser} />
-            <span>View Profile</span>
-          </button>
-
-          {userRole === "Candidate" ? (
+          <div className="p-1.5 space-y-0.5">
             <button
-              className="flex w-full items-center space-x-2 px-4 py-2.5 text-left text-gray-700 transition duration-200 hover:bg-gray-100 hover:text-gray-900"
-              onClick={switchToRecruiter}
+              className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-left text-sm font-semibold text-gray-600 transition-all duration-150 hover:bg-gray-50 hover:text-gray-900 active:scale-[0.99]"
+              onClick={() => {
+                setDropdownOpen(false);
+                router.push("/Users/Profile");
+              }}
             >
-              <FontAwesomeIcon icon={faRightLeft} />
-              <span>Switch to Recruiter</span>
+              <FaUser className="w-3.5 h-3.5 text-gray-400" />
+              <span>View Profile</span>
             </button>
-          ) : (
+
+            {userRole === "Candidate" ? (
+              <button
+                className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-left text-sm font-semibold text-gray-600 transition-all duration-150 hover:bg-gray-50 hover:text-gray-900 active:scale-[0.99]"
+                onClick={switchToRecruiter}
+              >
+                <FaExchangeAlt className="w-3.5 h-3.5 text-gray-400" />
+                <span>Switch to Recruiter</span>
+              </button>
+            ) : (
+              <button
+                className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-left text-sm font-semibold text-gray-600 transition-all duration-150 hover:bg-gray-50 hover:text-gray-900 active:scale-[0.99]"
+                onClick={switchToCandidate}
+              >
+                <FaExchangeAlt className="w-3.5 h-3.5 text-gray-400" />
+                <span>Switch to Candidate</span>
+              </button>
+            )}
+
             <button
-              className="flex w-full items-center space-x-2 px-4 py-2.5 text-left text-gray-700 transition duration-200 hover:bg-gray-100 hover:text-gray-900"
-              onClick={switchToCandidate}
+              className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-left text-sm font-semibold text-gray-600 transition-all duration-150 hover:bg-gray-50 hover:text-gray-900 active:scale-[0.99]"
+              onClick={() => {
+                setDropdownOpen(false);
+                setShowPasswordModal(true);
+              }}
             >
-              <FontAwesomeIcon icon={faRightLeft} />
-              <span>Switch to Candidate</span>
+              <FaLock className="w-3.5 h-3.5 text-gray-400" />
+              <span>Change Password</span>
             </button>
-          )}
 
-          <hr className="my-1 border-gray-200" />
+            <div className="h-px bg-gray-100 my-1 mx-1" />
 
-          <button
-            className="flex w-full items-center space-x-2 px-4 py-2.5 text-left text-gray-700 transition duration-200 hover:bg-red-50 hover:text-red-700"
-            onClick={handleLogout}
-          >
-            <FontAwesomeIcon icon={faSignOutAlt} />
-            <span>Logout</span>
-          </button>
+            <button
+              className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-left text-sm font-semibold text-rose-600 transition-all duration-150 hover:bg-rose-50 hover:text-rose-700 active:scale-[0.99]"
+              onClick={handleLogout}
+            >
+              <FaSignOutAlt className="w-3.5 h-3.5 text-rose-400" />
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] animate-fade-in">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm border border-gray-100 shadow-2xl mx-4">
+            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <FaLock className="text-[#0073b1] w-4 h-4" /> Change Password
+            </h3>
+            <form onSubmit={handlePasswordResetSubmit} className="space-y-4">
+              {/* New Password */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">New Password</label>
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password"
+                    className="w-full pl-4 pr-10 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#0073b1]/30 focus:border-[#0073b1] transition duration-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showNewPassword ? <FaEyeSlash className="w-4 h-4" /> : <FaEye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5">Confirm Password</label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm new password"
+                    className="w-full pl-4 pr-10 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#0073b1]/30 focus:border-[#0073b1] transition duration-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showConfirmPassword ? <FaEyeSlash className="w-4 h-4" /> : <FaEye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {passwordError && (
+                <p className="text-xs text-rose-500 font-semibold bg-rose-50 border border-rose-100 rounded-lg p-2.5">
+                  {passwordError}
+                </p>
+              )}
+
+              <div className="flex items-center justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordModal(false);
+                    setPasswordError("");
+                    setNewPassword("");
+                    setConfirmPassword("");
+                  }}
+                  className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-xl transition duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={passwordLoading}
+                  className="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#0073b1] to-[#005582] rounded-xl shadow-sm hover:opacity-95 active:scale-[0.98] transition duration-200 flex items-center justify-center gap-1.5 min-w-[80px]"
+                >
+                  {passwordLoading ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

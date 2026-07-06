@@ -86,7 +86,9 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-14">
           <div className="flex items-center space-x-3">
-            <Image src={bgImage} alt="Logo" width={48} height={48} className="h-12 w-12 rounded-full object-cover" priority />
+            <div onClick={() => router.push('/Users/Home')} className="cursor-pointer transition hover:opacity-85 flex items-center">
+              <Image src={bgImage} alt="Logo" width={48} height={48} className="h-12 w-12 rounded-full object-cover" priority />
+            </div>
             <SearchBar />
           </div>
 
