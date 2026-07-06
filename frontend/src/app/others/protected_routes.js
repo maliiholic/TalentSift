@@ -27,60 +27,45 @@
             checkAuth();
         }, [dispatch, role]);
 
-        let allow = false;
+        const PUBLIC_ROUTES = [
+            '/',
+            '/Users/Home',
+            '/Users/SignIn',
+            '/Users/SignUp',
+            '/Users/About',
+            '/Users/Contact',
+            '/Users/Privacy',
+            '/Users/Terms'
+        ];
+
+        const isPublic = PUBLIC_ROUTES.includes(pathname);
+        let allow = isPublic;
         let redirectPath = '/Users/Home';
 
-        if (role === 'admin') {
-            allow =
-                pathname === '/' ||
-                pathname === '/Users/Home' ||
-                pathname === '/Users/SignIn' ||
-                pathname === '/Users/SignUp' ||
-                pathname === '/Admin/deleteusers' ||
-                pathname === '/Admin/deletesubscription' ||
-                pathname === '/Admin/dashboard' ||
-                pathname === '/Admin/deletejob' ||
-                pathname === '/Admin/report';
-            redirectPath = '/Users/Home';
-        } else if (role === 'Candidate') {
-            allow =
-                pathname === '/' ||
-                pathname === '/Users/Home' ||
-                pathname === '/Users/SignIn' ||
-                pathname === '/Users/SignUp' ||
-                pathname === '/Users/Jobs' ||
-                pathname === '/Users/Notifications' ||
-                pathname === '/Users/Profile' ||
-                pathname.startsWith('/Users/Applications/') ||
-                pathname.startsWith('/Users/Jobs/') ||
-                pathname === '/Users/Practice';
-            redirectPath = '/Users/Home';
-        } else if (role === 'Recruiter') {
-            allow =
-                pathname === '/' ||
-                pathname === '/Users/Home' ||
-                pathname === '/Users/SignIn' ||
-                pathname === '/Users/SignUp' ||
-                pathname === '/Users/Posts' ||
-                pathname === '/Users/Notifications' ||
-                pathname === '/Users/Profile' ||
-                pathname === '/Users/Posts/CreateJob' ||
-                pathname.startsWith('/Users/Posts/');
-            redirectPath = '/Users/Home';
-        } else if (role === 'Guest') {
-            allow =
-                pathname === '/' ||
-                pathname === '/Users/Home' ||
-                pathname === '/Users/SignIn' ||
-                pathname === '/Users/SignUp';
-            redirectPath = '/Users/Home';
-        } else {
-            // Fallback for transient/unknown auth state to avoid blank screens.
-            allow =
-                pathname === '/' ||
-                pathname === '/Users/Home' ||
-                pathname === '/Users/SignIn' ||
-                pathname === '/Users/SignUp';
+        if (!isPublic) {
+            if (role === 'admin') {
+                allow =
+                    pathname === '/Admin/deleteusers' ||
+                    pathname === '/Admin/deletesubscription' ||
+                    pathname === '/Admin/dashboard' ||
+                    pathname === '/Admin/deletejob' ||
+                    pathname === '/Admin/report';
+            } else if (role === 'Candidate') {
+                allow =
+                    pathname === '/Users/Jobs' ||
+                    pathname === '/Users/Notifications' ||
+                    pathname === '/Users/Profile' ||
+                    pathname.startsWith('/Users/Applications/') ||
+                    pathname.startsWith('/Users/Jobs/') ||
+                    pathname === '/Users/Practice';
+            } else if (role === 'Recruiter') {
+                allow =
+                    pathname === '/Users/Posts' ||
+                    pathname === '/Users/Notifications' ||
+                    pathname === '/Users/Profile' ||
+                    pathname === '/Users/Posts/CreateJob' ||
+                    pathname.startsWith('/Users/Posts/');
+            }
         }
 
         useEffect(() => {

@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import { API_BASE_URL } from '@/utils/api';
 import { useRouter } from "next/navigation";
 import Loader from "../../others/loader";
+import { FaCheck, FaTimes, FaPlay, FaClipboardList, FaAward, FaTrophy, FaChevronRight, FaRobot, FaInfoCircle, FaChevronDown } from 'react-icons/fa';
 
 const defaultConfig = {
   topic: "Frontend Development",
@@ -72,7 +73,7 @@ const Practice = () => {
     useEffect(() => {
         const checkSubscription = async () => {
             try {
-                const response = await axios.get(`${API_BASE_URL}/has-prac-subscription`, getAuthConfig());
+                const response = await axios.get(`${API_BASE_URL}/has-prac-subscription/`, getAuthConfig());
                 setHasSubscription(response.data.practice_subscription);
                 if (response.data.practice_subscription) {
                     setPaymentSuccess(true);
@@ -254,69 +255,77 @@ const Practice = () => {
 
     const showPracticeModule = paymentSuccess || hasSubscription;
 
-    const panel = {
-        background: "rgba(255,255,255,0.86)",
-        backdropFilter: "blur(16px)",
-        border: "1px solid rgba(15, 23, 42, 0.08)",
-        borderRadius: "28px",
-        boxShadow: "0 24px 70px rgba(15, 23, 42, 0.10)",
-    };
-
     return (
-        <main style={{ minHeight: "100vh", padding: "32px", background: "linear-gradient(180deg, #f4f2ee 0%, #eef2ff 100%)" }}>
+        <main className="min-h-screen pt-24 pb-16 px-4 md:px-8 bg-[#F4F2EE]">
             {!showPracticeModule ? (
                 // Payment Paywall
-                <div className="min-h-screen text-gray-900 font-sans py-12 mt-12">
-                    <h1 className="text-center text-4xl md:text-5xl font-extrabold text-gradient bg-[#F4F2EE] text-[#0073b1] bg-clip-text mb-12">
-                        Choose Your Plan
-                    </h1>
+                <div className="max-w-5xl mx-auto py-12 animate-fade-in">
+                    <header className="text-center mb-12">
+                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 leading-tight">
+                            <span className="bg-gradient-to-r from-[#0073b1] to-[#005582] text-transparent bg-clip-text pb-2">
+                                Choose Your Plan
+                            </span>
+                        </h1>
+                        <p className="mt-2 text-sm text-gray-500 max-w-xl mx-auto leading-relaxed">
+                            Upgrade your plan to unlock interactive AI mock interview modules and real-time dashboard analytics.
+                        </p>
+                    </header>
 
-                    <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 px-6">
-                        <div className={`relative bg-white bg-opacity-80 rounded-xl shadow-xl p-8 text-center border transition-transform transform hover:scale-105 hover:shadow-2xl ${hasSubscription ? 'opacity-50' : ''}`}>
-                            <div className="absolute top-0 right-0 bg-[#0073b1] text-white text-sm font-bold py-1 px-4 rounded-bl-lg">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                        {/* Basic Plan */}
+                        <div className={`relative bg-white rounded-2xl border border-gray-150 p-8 shadow-sm text-center transition-all duration-300 hover:shadow-md ${hasSubscription ? 'opacity-50' : ''}`}>
+                            <div className="absolute top-0 right-8 bg-gray-400 text-white text-xs font-bold py-1 px-4 rounded-b-xl shadow-sm">
                                 Selected Plan
                             </div>
-                            <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#0073b1] to-[#00548f] mb-6">
+                            <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-600 to-gray-800 text-transparent bg-clip-text mb-4 mt-2 pb-1">
                                 Basic
                             </h2>
-                            <p className="text-4xl font-extrabold text-gray-900 mb-2">$0.00</p>
-                            <p className="text-sm text-gray-500 mb-6">Billed monthly</p>
-                            <ul className="text-left text-gray-700 space-y-4 text-sm">
-                                <li className="flex items-center gap-4">
-                                    <span className="text-red-500 font-bold">✘</span> Practice Interview for AI Module
+                            <div className="mb-4">
+                                <span className="text-5xl font-black text-gray-950">$0.00</span>
+                                <span className="text-sm text-gray-400 font-semibold block mt-1">Free Forever</span>
+                            </div>
+                            <ul className="text-left text-gray-600 space-y-3.5 text-sm my-8 border-t border-b border-gray-100 py-6 max-w-xs mx-auto">
+                                <li className="flex items-center gap-3">
+                                    <span className="text-rose-500 font-bold">✕</span>
+                                    <span className="text-gray-650">Practice Interview for AI Module</span>
                                 </li>
-                                <li className="flex items-center gap-4">
-                                    <span className="text-red-500 font-bold">✘</span> Market Dashboard (Trending Jobs)
+                                <li className="flex items-center gap-3">
+                                    <span className="text-rose-500 font-bold">✕</span>
+                                    <span className="text-gray-655 font-normal">Market Dashboard (Trending Jobs)</span>
                                 </li>
                             </ul>
                             <button
-                                className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-gray-400 to-gray-500 text-white font-semibold text-sm rounded-md shadow-lg cursor-not-allowed"
+                                className="w-full py-3 bg-gray-100 text-gray-400 font-bold text-xs rounded-xl shadow-inner cursor-not-allowed transition duration-205"
                                 disabled
                             >
-                                Already Selected
+                                Default Plan Active
                             </button>
                         </div>
 
-                        <div className="relative bg-white bg-opacity-80 rounded-xl shadow-xl p-8 text-center border border-gray-300 transition-transform transform hover:scale-105 hover:shadow-2xl">
-                            <div className="absolute top-0 left-0 bg-[#0073b1] text-white text-sm font-bold py-1 px-4 rounded-br-lg">
+                        {/* Subscription Plan */}
+                        <div className="relative bg-white rounded-2xl border border-[#0073b1]/20 p-8 shadow-[0_8px_32px_rgba(0,115,177,0.04)] text-center transition-all duration-300 hover:shadow-[0_16px_48px_rgba(0,115,177,0.08)] hover:scale-[1.01]">
+                            <div className="absolute top-0 right-8 bg-[#0073b1] text-white text-xs font-bold py-1 px-4 rounded-b-xl shadow-sm">
                                 Most Popular
                             </div>
-                            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#0073b1] to-[#00548f]" />
-                            <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#0073b1] to-[#00548f] mb-6">
-                                Subscription
+                            <h2 className="text-2xl font-bold bg-gradient-to-r from-[#0073b1] to-[#005582] text-transparent bg-clip-text mb-4 mt-2 pb-1">
+                                Practice Lab Pro
                             </h2>
-                            <p className="text-4xl font-extrabold text-gray-900 mb-2">$50.00</p>
-                            <p className="text-sm text-gray-500 mb-6">Billed monthly</p>
-                            <ul className="text-left text-gray-700 space-y-4 text-sm">
+                            <div className="mb-4">
+                                <span className="text-5xl font-black text-gray-950">$50.00</span>
+                                <span className="text-sm text-gray-400 font-semibold block mt-1">Billed monthly</span>
+                            </div>
+                            <ul className="text-left text-gray-655 space-y-3.5 text-sm my-8 border-t border-b border-gray-100 py-6 max-w-xs mx-auto">
                                 <li className="flex items-center gap-3">
-                                    <span className="text-green-500 font-bold">✔</span> Practice Interview for AI Module
+                                    <FaCheck className="text-emerald-500 w-3.5 h-3.5 flex-shrink-0" />
+                                    <span className="text-gray-650 font-medium">Practice Interview for AI Module</span>
                                 </li>
                                 <li className="flex items-center gap-3">
-                                    <span className="text-green-500 font-bold">✔</span> Market Dashboard (Trending Jobs)
+                                    <FaCheck className="text-emerald-500 w-3.5 h-3.5 flex-shrink-0" />
+                                    <span className="text-gray-650 font-medium">Market Dashboard (Trending Jobs)</span>
                                 </li>
                             </ul>
                             <button
-                                className="mt-6 w-full px-6 py-3 bg-gradient-to-r from-[#0073b1] to-[#00548f] text-white font-semibold text-sm rounded-md shadow-lg transition-transform hover:scale-105 hover:shadow-xl disabled:opacity-50"
+                                className="w-full py-3.5 bg-gradient-to-r from-[#0073b1] to-[#005582] hover:from-[#005582] hover:to-[#00446a] text-white font-bold text-sm rounded-xl shadow-md transition-all duration-300 hover:shadow-lg active:scale-[0.99] disabled:opacity-50"
                                 onClick={handlePayment}
                                 disabled={isLoading}
                             >
@@ -326,159 +335,173 @@ const Practice = () => {
                     </div>
                 </div>
             ) : (
-                // Practice Module
-                <div style={{ maxWidth: "1200px", margin: "0 auto", display: "grid", gap: "20px" }}>
+                // Practice Module Content
+                <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
                     {phase === "setup" && (
                         <>
-                    <section style={{ ...panel, padding: "32px" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", flexWrap: "wrap", alignItems: "center" }}>
-                            <div style={{ maxWidth: "820px" }}>
-                                <p style={{ textTransform: "uppercase", letterSpacing: "0.18em", fontSize: "12px", color: "#0073b1", fontWeight: 700, marginBottom: "10px" }}>Practice Lab</p>
-                                <h1 style={{ margin: 0, fontSize: "clamp(30px, 4vw, 54px)", color: "#0073b1", lineHeight: 1.05, fontWeight: 800 }}>
-                                    Practice interviews that feel like the real thing.
+                            {/* Centered Page Header */}
+                            <header className="text-center mb-12">
+                                <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 leading-tight">
+                                    <span className="bg-gradient-to-r from-[#0073b1] to-[#005582] text-transparent bg-clip-text pb-2">
+                                        Practice Lab
+                                    </span>
                                 </h1>
-                                <p style={{ margin: "14px 0 0", color: "#4b5563", fontSize: "17px", lineHeight: 1.7 }}>
-                                    Pick what you want to practice, answer questions one by one, and get instant feedback with scoring and improvement tips.
+                                <p className="mt-2 text-sm text-gray-500 max-w-xl mx-auto leading-relaxed">
+                                    Launch an interactive interview prep lab powered by AI. Choose your domain, complete targeted questions, and review custom engineering feedback.
                                 </p>
-                            </div>
-                        </div>
-                    </section>
+                            </header>
 
-                    <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "20px" }}>
-                        <div style={{ ...panel, padding: "24px" }}>
-                            <h2 style={{ marginTop: 0, marginBottom: "12px" }}>Choose your practice</h2>
-                            <p style={{ marginTop: 0, color: "#6b7280" }}>Pick a topic, difficulty, and question style.</p>
+                            {/* Preferences Grid */}
+                            <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <div className="bg-white rounded-2xl border border-gray-150 p-6 sm:p-8 shadow-sm space-y-6">
+                                    <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3 flex items-center gap-2">
+                                        <FaClipboardList className="text-[#0073b1] w-4.5 h-4.5" /> Customize Your Session
+                                    </h2>
 
-                            <label style={{ display: "grid", gap: "8px", marginBottom: "14px" }}>
-                                <span style={{ fontWeight: 600, color: "#111827" }}>Topic</span>
-                                <select
-                                    value={config.topic}
-                                    onChange={(e) => setConfig({ ...config, topic: e.target.value })}
-                                    style={{ width: "100%", padding: "14px 16px", borderRadius: "14px", border: "1px solid #d1d5db", background: "white" }}
-                                >
-                                    {topicOptions.map((topic) => (
-                                        <option key={topic} value={topic}>{topic}</option>
-                                    ))}
-                                </select>
-                            </label>
-
-                            <label style={{ display: "grid", gap: "8px", marginBottom: "14px" }}>
-                                <span style={{ fontWeight: 600, color: "#111827" }}>Difficulty</span>
-                                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "8px" }}>
-                                    {difficultyOptions.map((option) => (
-                                        <button
-                                            key={option.value}
-                                            type="button"
-                                            onClick={() => setConfig({ ...config, difficulty: option.value })}
-                                            style={{
-                                                padding: "12px 10px",
-                                                borderRadius: "12px",
-                                                border: config.difficulty === option.value ? "1px solid #0073b1" : "1px solid #d1d5db",
-                                                background: config.difficulty === option.value ? "#0073b1" : "white",
-                                                color: config.difficulty === option.value ? "white" : "#111827",
-                                                fontWeight: 700,
-                                            }}
-                                        >
-                                            {option.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </label>
-
-                            <label style={{ display: "grid", gap: "8px", marginBottom: "14px" }}>
-                                <span style={{ fontWeight: 600, color: "#111827" }}>Question style</span>
-                                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "8px" }}>
-                                    {questionTypeOptions.map((option) => (
-                                        <button
-                                            key={option.value}
-                                            type="button"
-                                            onClick={() => setConfig({ ...config, question_type: option.value })}
-                                            style={{
-                                                padding: "12px 10px",
-                                                borderRadius: "12px",
-                                                border: config.question_type === option.value ? "1px solid #0073b1" : "1px solid #d1d5db",
-                                                background: config.question_type === option.value ? "#0073b1" : "white",
-                                                color: config.question_type === option.value ? "white" : "#111827",
-                                                fontWeight: 700,
-                                            }}
-                                        >
-                                            {option.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </label>
-
-                            <label style={{ display: "grid", gap: "8px" }}>
-                                <span style={{ fontWeight: 600, color: "#111827" }}>Number of questions</span>
-                                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "8px" }}>
-                                    {[5, 10, 15].map((num) => (
-                                        <button
-                                            key={num}
-                                            type="button"
-                                            onClick={() => setConfig({ ...config, total_questions: num })}
-                                            style={{
-                                                padding: "12px 10px",
-                                                borderRadius: "12px",
-                                                border: config.total_questions === num ? "1px solid #0073b1" : "1px solid #d1d5db",
-                                                background: config.total_questions === num ? "#0073b1" : "white",
-                                                color: config.total_questions === num ? "white" : "#111827",
-                                                fontWeight: 700,
-                                            }}
-                                        >
-                                            {num}
-                                        </button>
-                                    ))}
-                                </div>
-                            </label>
-
-                            <button
-                                onClick={startSession}
-                                disabled={loadingSession}
-                                style={{ marginTop: "18px", width: "100%", padding: "14px 18px", borderRadius: "999px", border: 0, background: loadingSession ? "#94a3b8" : "linear-gradient(135deg, #0073b1, #005582)", color: "white", fontWeight: 700, cursor: loadingSession ? "not-allowed" : "pointer" }}
-                            >
-                                {loadingSession ? "Starting..." : "Start practice"}
-                            </button>
-                        </div>
-
-                        <div style={{ ...panel, padding: "24px" }}>
-                            <h2 style={{ marginTop: 0, marginBottom: "12px" }}>How it works</h2>
-                            <div style={{ display: "grid", gap: "14px" }}>
-                                {[
-                                    { step: "1", title: "Choose a topic", text: "Pick the area you want to improve, like frontend or backend." },
-                                    { step: "2", title: "Answer questions", text: "Work through a mix of multiple-choice and written answers." },
-                                    { step: "3", title: "Review feedback", text: "Get scores, strengths, and improvement suggestions right away." },
-                                ].map((item) => (
-                                    <div key={item.step} style={{ display: "flex", gap: "14px", alignItems: "flex-start", padding: "14px", borderRadius: "18px", background: "#eef6fb", border: "1px solid #bfdbfe" }}>
-                                        <div style={{ width: "36px", height: "36px", borderRadius: "999px", background: "#0073b1", color: "white", display: "grid", placeItems: "center", fontWeight: 700, flexShrink: 0 }}>
-                                            {item.step}
+                                    {/* Topic Select */}
+                                    <label className="block space-y-2">
+                                        <span className="font-semibold text-gray-755 text-xs uppercase tracking-wider">Select Topic Domain</span>
+                                        <div className="relative">
+                                            <select
+                                                value={config.topic}
+                                                onChange={(e) => setConfig({ ...config, topic: e.target.value })}
+                                                className="w-full appearance-none p-3.5 bg-white border border-gray-200 focus:border-[#0073b1] focus:ring-2 focus:ring-[#0073b1]/20 rounded-xl outline-none transition duration-200 font-semibold text-sm text-gray-700 cursor-pointer pr-10"
+                                            >
+                                                {topicOptions.map((topic) => (
+                                                    <option key={topic} value={topic}>{topic}</option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-gray-450">
+                                                <FaChevronDown className="w-3.5 h-3.5" />
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 style={{ margin: "0 0 6px", fontSize: "18px", color: "#111827" }}>{item.title}</h3>
-                                            <p style={{ margin: 0, color: "#6b7280", lineHeight: 1.6 }}>{item.text}</p>
+                                    </label>
+
+                                    {/* Difficulty Option Row */}
+                                    <div className="space-y-2">
+                                        <span className="font-semibold text-gray-755 text-xs uppercase tracking-wider block">Difficulty Level</span>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {difficultyOptions.map((option) => {
+                                                const isActive = config.difficulty === option.value;
+                                                return (
+                                                    <button
+                                                        key={option.value}
+                                                        type="button"
+                                                        onClick={() => setConfig({ ...config, difficulty: option.value })}
+                                                        className={`py-2.5 rounded-xl font-bold text-xs sm:text-sm tracking-wide transition-all duration-150 active:scale-[0.98] ${
+                                                            isActive
+                                                                ? "bg-gradient-to-r from-[#0073b1] to-[#005582] text-white shadow-sm"
+                                                                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                                                        }`}
+                                                    >
+                                                        {option.label}
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
+
+                                    {/* Question Style Row */}
+                                    <div className="space-y-2">
+                                        <span className="font-semibold text-gray-755 text-xs uppercase tracking-wider block">Question Style</span>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {questionTypeOptions.map((option) => {
+                                                const isActive = config.question_type === option.value;
+                                                return (
+                                                    <button
+                                                        key={option.value}
+                                                        type="button"
+                                                        onClick={() => setConfig({ ...config, question_type: option.value })}
+                                                        className={`py-2.5 rounded-xl font-bold text-xs sm:text-sm tracking-wide transition-all duration-150 active:scale-[0.98] ${
+                                                            isActive
+                                                                ? "bg-gradient-to-r from-[#0073b1] to-[#005582] text-white shadow-sm"
+                                                                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                                                        }`}
+                                                    >
+                                                        {option.label}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* Question Count Selection */}
+                                    <div className="space-y-2">
+                                        <span className="font-semibold text-gray-755 text-xs uppercase tracking-wider block">Number of Questions</span>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {[5, 10, 15].map((num) => {
+                                                const isActive = config.total_questions === num;
+                                                return (
+                                                    <button
+                                                        key={num}
+                                                        type="button"
+                                                        onClick={() => setConfig({ ...config, total_questions: num })}
+                                                        className={`py-2.5 rounded-xl font-bold text-xs sm:text-sm tracking-wide transition-all duration-150 active:scale-[0.98] ${
+                                                            isActive
+                                                                ? "bg-gradient-to-r from-[#0073b1] to-[#005582] text-white shadow-sm"
+                                                                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                                                        }`}
+                                                    >
+                                                        {num} Questions
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={startSession}
+                                        disabled={loadingSession}
+                                        className="w-full py-3.5 bg-gradient-to-r from-[#0073b1] to-[#005582] text-white font-bold text-sm rounded-xl shadow-sm hover:opacity-95 active:scale-[0.98] transition-all duration-150 flex items-center justify-center gap-2 mt-4"
+                                    >
+                                        <FaPlay className="w-3 h-3 text-white/90" />
+                                        {loadingSession ? "Configuring Lab..." : "Launch Practice Lab"}
+                                    </button>
+                                </div>
+
+                                {/* Rules Guide */}
+                                <div className="bg-white rounded-2xl border border-gray-150 p-6 sm:p-8 shadow-sm space-y-6">
+                                    <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3 flex items-center gap-2">
+                                        <FaInfoCircle className="text-[#0073b1] w-4.5 h-4.5" /> How It Works
+                                    </h2>
+                                    <div className="space-y-4">
+                                        {[
+                                            { step: "1", title: "Select a Topic", text: "Select the specific field you want to practice, from Frontend layouts to Backend APIs." },
+                                            { step: "2", title: "Complete Questions", text: "Work through a personalized set of multiple-choice and open-ended technical questions." },
+                                            { step: "3", title: "Read AI Analysis", text: "Get an instant grade, list of key technical strengths, missing key items, and optimal answers." },
+                                        ].map((item) => (
+                                            <div key={item.step} className="flex gap-4 items-start p-4 rounded-xl bg-gradient-to-br from-[#0073b1]/5 to-[#005582]/5 border border-[#0073b1]/10">
+                                                <div className="w-8 h-8 rounded-full bg-[#0073b1] text-white text-xs font-bold flex items-center justify-center flex-shrink-0 shadow-sm">
+                                                    {item.step}
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-gray-900 text-sm mb-1">{item.title}</h3>
+                                                    <p className="text-xs text-gray-555 leading-relaxed">{item.text}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </section>
                         </>
                     )}
 
+                    {/* Active Session Screen */}
                     {phase === "active" && session && (
-                        <section style={{ ...panel, padding: "32px", maxWidth: "800px", margin: "0 auto", width: "100%" }}>
+                        <section className="bg-white rounded-2xl border border-gray-150 p-6 sm:p-8 shadow-sm max-w-3xl mx-auto animate-fade-in">
                             {(() => {
                                 const currentQuestion = sessionQuestions[currentQuestionIndex];
 
                                 if (!currentQuestion) {
                                     return (
-                                        <div style={{ textAlign: "center", padding: "20px" }}>
-                                            <h3 style={{ margin: 0, color: "#dc2626", fontSize: "20px" }}>Failed to load question</h3>
-                                            <p style={{ color: "#6b7280", marginTop: "8px" }}>The question data is missing or could not be generated.</p>
+                                        <div className="text-center py-8">
+                                            <h3 className="text-lg font-bold text-rose-600 mb-2">Error Loading Question</h3>
+                                            <p className="text-gray-500 text-sm mb-6">We encountered an issue preparing this question block.</p>
                                             <button 
                                                 onClick={() => setPhase("setup")} 
-                                                style={{ marginTop: "16px", padding: "10px 20px", borderRadius: "999px", border: 0, background: "#0073b1", color: "white", fontWeight: 700, cursor: "pointer" }}
+                                                className="px-6 py-2.5 bg-[#0073b1] hover:bg-[#005582] text-white font-bold rounded-xl transition duration-205"
                                             >
-                                                Go Back
+                                                Return to Setup
                                             </button>
                                         </div>
                                     );
@@ -488,79 +511,92 @@ const Practice = () => {
                                 const answer = answers[currentQuestion?.id] || "";
                                 const isSubmitting = submitting[currentQuestion?.id];
                                 return (
-                                    <div>
-                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                                            <h2 style={{ margin: 0, color: "#0073b1" }}>Question {currentQuestionIndex + 1} of {sessionQuestions.length}</h2>
-                                            <span style={{ padding: "8px 12px", borderRadius: "999px", background: currentQuestion.question_type === "mcq" ? "#ecfeff" : "#fef3c7", color: "#0f172a", fontWeight: 700, fontSize: "14px" }}>
-                                                {currentQuestion.question_type === "mcq" ? "Multiple choice" : "Written answer"}
+                                    <div className="space-y-6">
+                                        <div className="flex justify-between items-center gap-4 flex-wrap">
+                                            <h2 className="text-base sm:text-lg font-bold text-[#0073b1]">Question {currentQuestionIndex + 1} of {sessionQuestions.length}</h2>
+                                            <span className={`px-3 py-1 rounded-full font-bold text-xs capitalize ${
+                                                currentQuestion.question_type === "mcq" ? "bg-blue-50 text-blue-700" : "bg-amber-50 text-amber-700"
+                                            }`}>
+                                                {currentQuestion.question_type === "mcq" ? "Multiple Choice" : "Written Response"}
                                             </span>
                                         </div>
 
-                                        <div style={{ width: "100%", height: "8px", background: "#e5e7eb", borderRadius: "4px", marginBottom: "24px" }}>
-                                            <div style={{ width: `${((currentQuestionIndex + 1) / sessionQuestions.length) * 100}%`, height: "100%", background: "#0073b1", borderRadius: "4px", transition: "width 0.3s ease" }} />
+                                        {/* Progress Bar */}
+                                        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                            <div 
+                                                className="h-full bg-[#0073b1] rounded-full transition-all duration-300"
+                                                style={{ width: `${((currentQuestionIndex + 1) / sessionQuestions.length) * 100}%` }}
+                                            />
                                         </div>
 
-                                        <h3 style={{ fontSize: "24px", color: "#111827", marginBottom: "24px" }}>{currentQuestion.question_text}</h3>
+                                        <h3 className="text-lg sm:text-xl font-bold text-gray-900 leading-relaxed mb-4">{currentQuestion.question_text}</h3>
 
                                         {!attempt ? (
                                             currentQuestion.question_type === "mcq" ? (
-                                                <div style={{ display: "grid", gap: "12px" }}>
+                                                <div className="grid grid-cols-1 gap-3">
                                                     {currentQuestion.options.map((option) => (
                                                         <button
                                                             key={option}
                                                             onClick={() => submitAnswer(currentQuestion, option)}
                                                             disabled={isSubmitting}
-                                                            style={{
-                                                                padding: "16px", borderRadius: "12px", border: "1px solid #d1d5db", background: "white", textAlign: "left", fontSize: "16px", cursor: isSubmitting ? "not-allowed" : "pointer", transition: "all 0.2s"
-                                                            }}
+                                                            className="w-full text-left p-4 rounded-xl border border-gray-200 bg-white hover:border-[#0073b1] hover:bg-slate-50 font-semibold text-sm transition-all duration-150 active:scale-[0.99] cursor-pointer disabled:opacity-60"
                                                         >
                                                             {option}
                                                         </button>
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <div>
+                                                <div className="space-y-3">
                                                     <textarea
                                                         value={answer}
                                                         onChange={(e) => setAnswers({ ...answers, [currentQuestion.id]: e.target.value })}
                                                         rows={6}
-                                                        placeholder="Type your answer here..."
-                                                        style={{ width: "100%", padding: "16px", borderRadius: "12px", border: "1px solid #d1d5db", fontSize: "16px", resize: "vertical", marginBottom: "16px" }}
+                                                        placeholder="Draft your detailed answer here. Focus on key technical concepts and exact terms..."
+                                                        className="w-full border border-gray-200 focus:border-[#0073b1] focus:ring-2 focus:ring-[#0073b1]/20 rounded-xl p-4 outline-none transition duration-200 bg-gray-50/50 resize-y min-h-[120px] font-medium text-sm text-gray-800"
                                                     />
                                                     <button
                                                         onClick={() => submitAnswer(currentQuestion)}
                                                         disabled={isSubmitting}
-                                                        style={{ padding: "14px 24px", borderRadius: "999px", border: 0, background: isSubmitting ? "#94a3b8" : "#0073b1", color: "white", fontWeight: 700, cursor: isSubmitting ? "not-allowed" : "pointer" }}
+                                                        className="px-6 py-3 bg-gradient-to-r from-[#0073b1] to-[#005582] text-white font-bold rounded-xl shadow-sm transition duration-200 active:scale-[0.98] disabled:opacity-60 text-sm flex items-center justify-center gap-1.5"
                                                     >
-                                                        {isSubmitting ? "Evaluating..." : "Submit Answer"}
+                                                        {isSubmitting ? "Evaluating response..." : "Submit Response"}
                                                     </button>
                                                 </div>
                                             )
                                         ) : (
-                                            <div style={{ padding: "20px", borderRadius: "12px", background: attempt.is_correct === true || attempt.ai_score >= 7 ? "#ecfdf5" : attempt.is_correct === false || attempt.ai_score < 5 ? "#fef2f2" : "#fefce8", border: "1px solid", borderColor: attempt.is_correct === true || attempt.ai_score >= 7 ? "#a7f3d0" : attempt.is_correct === false || attempt.ai_score < 5 ? "#fecaca" : "#fef08a", marginBottom: "24px" }}>
+                                            /* Review AI Evaluation block */
+                                            <div className={`p-6 rounded-2xl border text-sm space-y-4 shadow-sm ${
+                                                attempt.is_correct === true || attempt.ai_score >= 7 
+                                                    ? "bg-emerald-50/60 border-emerald-200 text-emerald-955" 
+                                                    : attempt.is_correct === false || attempt.ai_score < 5 
+                                                        ? "bg-rose-50/60 border-rose-200 text-rose-955" 
+                                                        : "bg-amber-50/60 border-amber-200 text-amber-955"
+                                            }`}>
                                                 {currentQuestion.question_type === "mcq" ? (
-                                                    <>
-                                                        <h4 style={{ margin: "0 0 12px", color: attempt.is_correct ? "#059669" : "#dc2626", fontSize: "18px" }}>
+                                                    <div className="space-y-2">
+                                                        <h4 className={`text-base font-bold flex items-center gap-1.5 ${attempt.is_correct ? "text-emerald-700" : "text-rose-600"}`}>
                                                             {attempt.is_correct ? "Correct!" : "Incorrect"}
                                                         </h4>
-                                                        <p style={{ margin: 0, color: "#374151" }}>You selected: <strong>{attempt.user_answer || answer}</strong></p>
-                                                        {!attempt.is_correct && <p style={{ margin: "8px 0 0", color: "#374151" }}>Correct answer: <strong>{attempt.correct_option}</strong></p>}
-                                                    </>
+                                                        <p>You selected: <span className="font-bold">{attempt.user_answer || answer}</span></p>
+                                                        {!attempt.is_correct && <p>Correct answer: <span className="font-bold text-emerald-800">{attempt.correct_option}</span></p>}
+                                                    </div>
                                                 ) : (
-                                                    <>
-                                                        <h4 style={{ margin: "0 0 12px", color: attempt.ai_score >= 7 ? "#059669" : attempt.ai_score < 5 ? "#dc2626" : "#d97706", fontSize: "18px" }}>
-                                                            AI Score: {attempt.ai_score} / 10
-                                                        </h4>
-                                                        <div style={{ display: "grid", gap: "8px", color: "#374151" }}>
-                                                            {attempt.ai_feedback_good && <p style={{ margin: 0 }}><strong>Strengths:</strong> {attempt.ai_feedback_good}</p>}
-                                                            {attempt.ai_feedback_missing && <p style={{ margin: 0 }}><strong>Areas to Improve:</strong> {attempt.ai_feedback_missing}</p>}
+                                                    <div className="space-y-4">
+                                                        <div className="flex items-center justify-between border-b border-gray-200/40 pb-3">
+                                                            <h4 className={`text-base font-bold flex items-center gap-1.5 ${attempt.ai_score >= 7 ? "text-emerald-700" : attempt.ai_score < 5 ? "text-rose-600" : "text-amber-700"}`}>
+                                                                <FaRobot className="w-4 h-4" /> AI Grading Score: {attempt.ai_score} / 10
+                                                            </h4>
+                                                        </div>
+                                                        <div className="space-y-3 text-xs sm:text-sm">
+                                                            {attempt.ai_feedback_good && <p><strong>Key Strengths:</strong> {attempt.ai_feedback_good}</p>}
+                                                            {attempt.ai_feedback_missing && <p><strong>Suggested Improvements:</strong> {attempt.ai_feedback_missing}</p>}
                                                             {attempt.ai_model_answer && (
-                                                                <div style={{ marginTop: "12px", padding: "12px", background: "rgba(255,255,255,0.6)", borderRadius: "8px" }}>
-                                                                    <strong>Model Answer:</strong><br />{attempt.ai_model_answer}
+                                                                <div className="mt-4 p-4 bg-white/80 rounded-xl border border-gray-200 text-gray-800 leading-relaxed text-xs sm:text-sm shadow-sm">
+                                                                    <strong className="block mb-1 text-gray-900">Reference Model Answer:</strong>{attempt.ai_model_answer}
                                                                 </div>
                                                             )}
                                                         </div>
-                                                    </>
+                                                    </div>
                                                 )}
                                             </div>
                                         )}
@@ -568,9 +604,10 @@ const Practice = () => {
                                         {attempt && (
                                             <button
                                                 onClick={nextQuestion}
-                                                style={{ width: "100%", padding: "14px 24px", borderRadius: "999px", border: 0, background: "#0073b1", color: "white", fontWeight: 700, cursor: "pointer", marginTop: "16px" }}
+                                                className="w-full py-3.5 bg-gradient-to-r from-[#0073b1] to-[#005582] text-white font-bold rounded-xl shadow-sm transition duration-200 hover:shadow-md active:scale-[0.99] mt-6 flex items-center justify-center gap-1.5 text-sm"
                                             >
-                                                {currentQuestionIndex < sessionQuestions.length - 1 ? "Next Question" : "Finish & View Results"}
+                                                <span>{currentQuestionIndex < sessionQuestions.length - 1 ? "Next Question" : "Finish & View Results"}</span>
+                                                <FaChevronRight className="w-3.5 h-3.5" />
                                             </button>
                                         )}
                                     </div>
@@ -579,28 +616,35 @@ const Practice = () => {
                         </section>
                     )}
 
+                    {/* Results / Feedback Screen */}
                     {phase === "results" && session && (
-                        <section style={{ ...panel, padding: "32px", maxWidth: "800px", margin: "0 auto", width: "100%", textAlign: "center" }}>
-                            <h2 style={{ fontSize: "32px", color: "#0073b1", marginBottom: "16px" }}>Session Complete</h2>
+                        <section className="bg-white rounded-2xl border border-gray-150 p-8 shadow-sm max-w-2xl mx-auto text-center space-y-6 animate-fade-in">
+                            <div className="w-16 h-16 bg-[#0073b1]/10 rounded-full flex items-center justify-center mx-auto mb-2 text-[#0073b1]">
+                                <FaTrophy className="w-8 h-8" />
+                            </div>
+                            <h2 className="text-2xl sm:text-3xl font-black text-[#0073b1] tracking-tight">Session Completed</h2>
                             {(() => {
                                 const finalScore = session.score || session.final_score || 0;
                                 let performance = "Needs Improvement";
-                                if (finalScore >= 8) performance = "Excellent Job! 🚀";
-                                else if (finalScore >= 6) performance = "Good Effort! 👍";
+                                if (finalScore >= 8) performance = "Excellent Job!";
+                                else if (finalScore >= 6) performance = "Good Effort!";
                                 return (
-                                    <>
-                                        <div style={{ fontSize: "56px", fontWeight: "900", color: "#111827", marginBottom: "8px" }}>
-                                            {finalScore.toFixed(1)} <span style={{ fontSize: "28px", color: "#6b7280" }}>/ 10</span>
+                                    <div className="space-y-4">
+                                        <div className="text-6xl font-black text-gray-900 tracking-tight">
+                                            {finalScore.toFixed(1)} <span className="text-2xl text-gray-400 font-semibold">/ 10</span>
                                         </div>
-                                        <div style={{ fontSize: "22px", fontWeight: "600", color: finalScore >= 8 ? "#059669" : finalScore >= 6 ? "#d97706" : "#dc2626", marginBottom: "32px" }}>
-                                            {performance}
+                                        <div className={`text-xl font-bold flex items-center justify-center gap-1.5 ${
+                                            finalScore >= 8 ? "text-emerald-600" : finalScore >= 6 ? "text-amber-600" : "text-rose-600"
+                                        }`}>
+                                            <FaAward className="w-5 h-5" />
+                                            <span>{performance}</span>
                                         </div>
-                                    </>
+                                    </div>
                                 );
                             })()}
                             <button
                                 onClick={() => setPhase("setup")}
-                                style={{ padding: "14px 24px", borderRadius: "999px", border: 0, background: "#0073b1", color: "white", fontWeight: 700, cursor: "pointer" }}
+                                className="px-8 py-3.5 bg-gradient-to-r from-[#0073b1] to-[#005582] hover:from-[#005582] hover:to-[#00446a] text-white font-bold rounded-xl shadow-md transition duration-200 active:scale-[0.98] mt-6 text-sm"
                             >
                                 Start New Session
                             </button>
@@ -608,8 +652,8 @@ const Practice = () => {
                     )}
 
                     {status && phase === "setup" && (
-                        <section style={{ ...panel, padding: "18px 24px" }}>
-                            <p style={{ margin: 0, color: "#6b7280" }}>{status}</p>
+                        <section className="bg-white rounded-xl border border-gray-150 p-4 shadow-sm text-center text-sm text-gray-500 font-medium">
+                            <p>{status}</p>
                         </section>
                     )}
                 </div>

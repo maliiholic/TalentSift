@@ -4,8 +4,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { SiGooglegemini } from "react-icons/si";
+import { FaBuilding, FaMapMarkerAlt, FaCheckCircle, FaChevronRight, FaChevronLeft, FaTrashAlt, FaBriefcase, FaSuitcase, FaArrowRight } from "react-icons/fa";
 import Loader from "@/app/others/loader";
-// import { loadStripe } from '@stripe/stripe-js';
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux"
 import { show_search } from "@/Redux/Action";
@@ -18,10 +18,27 @@ const defaultFormData = {
     workplace_type: "",
     employment_type: "",
     description: "",
-    skills: [],
+    skills: "",
     interview_type: "manual",
     new_company_name: "",
 };
+
+const STEPS = ["Basic Info", "Details & Skills"];
+
+const PillButton = ({ label, selected, onClick }) => (
+    <button
+        type="button"
+        onClick={onClick}
+        className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 ${
+            selected
+                ? "bg-[#0073b1] text-white border-[#0073b1] shadow-sm scale-[0.98]"
+                : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50 active:scale-[0.97]"
+        }`}
+    >
+        {selected && <FaCheckCircle className="w-3 h-3" />}
+        {label}
+    </button>
+);
 
 const UpdateJob = () => {
     const dispatch = useDispatch();
@@ -46,6 +63,8 @@ const UpdateJob = () => {
     });
     const [loading, setLoading] = useState(Boolean(jobId));
     const [page, setPage] = useState(1);
+    const [submitting, setSubmitting] = useState(false);
+    const [aiLoading, setAiLoading] = useState(false);
     const router = useRouter();
     const [subscription, setsubscription] = useState(false);
     const [error, setError] = useState(null); // State for error message
@@ -63,8 +82,8 @@ const UpdateJob = () => {
             try {
                 // Fetch recruiter and subscription data
                 const [response2, response1] = await Promise.all([
-                    axios.get(`${API_BASE_URL}/get_recruiter_company`, { withCredentials: true }),
-                    axios.get(`${API_BASE_URL}/has-ai-subscription`, { withCredentials: true }),
+                    axios.get(`${API_BASE_URL}/get_recruiter_company/`, { withCredentials: true }),
+                    axios.get(`${API_BASE_URL}/has-ai-subscription/`, { withCredentials: true }),
                 ]);
                 setRecruiterData(response2.data);
                 setsubscription(response1.data.ai_subscription);
@@ -81,7 +100,7 @@ const UpdateJob = () => {
                         workplace_type: response.data.workplace_type || "",
                         employment_type: response.data.employment_type || "",
                         description: response.data.description || "",
-                        skills: response.data.skills || [],
+                        skills: typeof response.data.skills === "string" ? response.data.skills : (Array.isArray(response.data.skills) ? response.data.skills.join(", ") : ""),
                         interview_type: response.data.interview_type || "manual",
                         new_company_name: response.data.new_company_name || "",
                     });
@@ -225,26 +244,13 @@ const UpdateJob = () => {
             }
 
             // Skills selection
-            if (formData.skills.length === 0) {
+            if (!formData.skills) {
                 errors.skills = "Please select at least one skill.";
             }
 
             // Employment type
             if (!formData.employment_type.trim()) {
                 errors.employment_type = "Please select an employment type.";
-            }
-        }
-
-        // Page 3: Interview type
-        if (page === 3) {
-            // Interview type
-            if (!formData.interview_type.trim()) {
-                errors.interview_type = "Please select an interview type.";
-            }
-
-            // If AI interview is selected, make sure the purchase is done
-            if (formData.interview_type === "ai" && !formData.purchase_done) {
-                errors.purchase_done = "You must purchase the AI interview to proceed.";
             }
         }
 
@@ -264,18 +270,31 @@ const UpdateJob = () => {
             return;
         }
 
+        setAiLoading(true);
         try {
-            // Replace with your AI service for title generation
-            const response = await axios.post(`${API_BASE_URL}/generate-job-title/`, { prompt: formData.job_name }, { withCredentials: true });
+            const token = typeof window !== 'undefined' ? localStorage.getItem('access') : null;
+            const response = await axios.post(
+                `${API_BASE_URL}/generate-job-title/`,
+                { prompt: formData.job_name },
+                { withCredentials: true, headers: token ? { Authorization: `Bearer ${token}` } : {} }
+            );
             if (response.data?.professional_job_title) {
-                setFormData({ ...formData, job_name: response.data.professional_job_title });
-                setValidationErrors((prevErrors) => ({
-                    ...prevErrors,
-                    job_name: "", // Clear any previous errors
-                }));
+                const raw = response.data.professional_job_title;
+                const clean = raw
+                    .replace(/\*+/g, "")
+                    .split(/\n|\r/)[0]
+                    .replace(/^[\w\s]+(title|role|position|name)\s*:\s*/i, "")
+                    .replace(/\s*[–—-].*$/i, "")
+                    .trim();
+                setFormData((prev) => ({ ...prev, job_name: clean }));
+                setValidationErrors((prevErrors) => ({ ...prevErrors, job_name: "" }));
+                toast.success("AI title generated!");
             }
         } catch (error) {
             console.error("Error generating job title:", error);
+            toast.error("AI title generation failed.");
+        } finally {
+            setAiLoading(false);
         }
     };
 
@@ -312,9 +331,12 @@ const UpdateJob = () => {
 
     // Event to update the job post
     const handleUpdate = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
+        if (!validatePage()) return;
+        setSubmitting(true);
         try {
-            const response = await axios.put(
+            const token = typeof window !== 'undefined' ? localStorage.getItem('access') : null;
+            await axios.put(
                 `${API_BASE_URL}/updatejob/${formData.job_id}/`,
                 {
                     job_name: formData.job_name,
@@ -325,246 +347,290 @@ const UpdateJob = () => {
                     skills: formData.skills,
                     interview_type: formData.interview_type,
                 },
-                { withCredentials: true }
+                {
+                    withCredentials: true,
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                }
             );
+            toast.success("Job updated successfully!");
             router.push("/Users/Posts");
         } catch (error) {
             console.error("Error updating job post:", error);
+            toast.error(error.response?.data?.error || "Failed to update job post. Please try again.");
+            setSubmitting(false);
         }
     };
 
 
 
 
-    if (loading) return <>
-        <Loader></Loader>
-    </>;
+    if (loading) return <Loader />;
 
     const employmentTypes = ["Full-time", "Part-time", "Contract", "Temporary", "Internship"];
     const skillOptions = ["Front-end", "Back-end", "Full Stack", "App Development", "DB Administrator"];
     const workplaceTypes = ["Remote", "On site", "Hybrid"];
 
-
     if (error) {
         return (
-            <div className="flex items-center justify-center h-screen">
-                <div className="text-center bg-red-100 text-red-600 p-6 rounded-lg shadow-lg max-w-md w-full">
-                    <p className="text-xl font-semibold mb-4">No Post Available</p>
-                    <p className="text-sm">It looks like the job you&apos;re looking for does not exist or could not be fetched. Please try again later.</p>
+            <div className="flex items-center justify-center min-h-screen bg-[#F4F2EE]">
+                <div className="text-center bg-white border border-rose-100 p-8 rounded-2xl shadow-sm max-w-md w-full mx-4">
+                    <p className="text-xl font-bold text-rose-600 mb-2">No Post Available</p>
+                    <p className="text-sm text-gray-500 mb-6">It looks like the job you're looking for does not exist or could not be fetched.</p>
+                    <button
+                        onClick={() => router.push("/Users/Posts")}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-[#0073b1] text-white hover:opacity-95 transition-all shadow-sm"
+                    >
+                        Back to Posts
+                    </button>
                 </div>
             </div>
         );
     }
 
-
-
+    const FieldError = ({ field }) => {
+        if (!validationErrors[field]) return null;
+        return <p className="text-rose-500 text-xs font-semibold mt-1.5">{validationErrors[field]}</p>;
+    };
 
     return (
-        <div className="flex flex-col items-center min-h-screen bg-gray-50 py-8 px-4 lg:px-8" style={{ backgroundColor: "#F4F2EE", paddingTop: "4rem" }}>
-            <div className="w-full max-w-2xl bg-white shadow-sm rounded-xl p-6 sm:p-8 lg:p-10">
-                <div className="flex items-center justify-between mb-6">
-                    <h1 className="text-2xl font-semibold text-[#0073b1]">Update Post</h1>
+        <div className="min-h-screen pt-24 pb-16 px-4" style={{ backgroundColor: "#F4F2EE" }}>
+            <div className="w-full max-w-2xl mx-auto animate-fade-in">
+
+                {/* Page heading — very top */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div>
-                        <button onClick={() => router.push(`/Users/Posts/applications/${jobId}`)} className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm">View Applications</button>
+                        <h1 className="text-5xl font-extrabold tracking-tight bg-gradient-to-r from-[#0073b1] to-[#005582] text-transparent bg-clip-text pb-2">
+                            Update Post
+                        </h1>
+                        <p className="mt-2 text-sm text-gray-500">Edit the details of your job posting below</p>
+                    </div>
+                    {jobId && (
+                        <button
+                            type="button"
+                            onClick={() => router.push(`/Users/Posts/applications/${jobId}`)}
+                            className="sm:self-start inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-[#0073b1] bg-[#0073b1]/10 hover:bg-[#0073b1]/15 transition-all duration-200"
+                        >
+                            View Applications
+                        </button>
+                    )}
+                </div>
+
+                {/* Steps and Back button Row */}
+                <div className="relative flex items-center justify-center min-h-[40px] mb-8">
+                    {/* Back button — absolute positioned on the left */}
+                    <div className="absolute left-0">
+                        <button
+                            type="button"
+                            onClick={() => router.back()}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-gray-500 bg-white border border-gray-200 hover:border-[#0073b1]/50 hover:text-[#0073b1] shadow-sm transition-all duration-200"
+                        >
+                            <FaChevronLeft className="w-3 h-3" /> Back
+                        </button>
+                    </div>
+
+                    {/* Step indicator — centered */}
+                    <div className="flex items-center gap-3">
+                        {STEPS.map((step, i) => {
+                            const stepNum = i + 1;
+                            const isActive = page === stepNum;
+                            const isDone = page > stepNum;
+                            return (
+                                <React.Fragment key={step}>
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                                            isDone ? "bg-emerald-500 text-white" : isActive ? "bg-[#0073b1] text-white shadow-md" : "bg-gray-200 text-gray-500"
+                                        }`}>
+                                            {isDone ? <FaCheckCircle className="w-3.5 h-3.5" /> : stepNum}
+                                        </div>
+                                        <span className={`text-sm font-semibold transition-colors ${isActive ? "text-[#0073b1]" : isDone ? "text-emerald-600" : "text-gray-400"}`}>
+                                            {step}
+                                        </span>
+                                    </div>
+                                    {i < STEPS.length - 1 && (
+                                        <div className={`h-px w-12 transition-colors ${page > stepNum ? "bg-emerald-400" : "bg-gray-200"}`} />
+                                    )}
+                                </React.Fragment>
+                            );
+                        })}
                     </div>
                 </div>
-                <form className="space-y-6">
-                    {page === 1 && (
-                        <>
-                            <div>
-                                <label className="block text-md font-medium text-gray-700 mb-2">Company Name</label>
-                                <input
-                                    type="text"
-                                    className={`w-full px-4 py-3 border rounded-lg bg-white text-gray-700 focus:ring-2 focus:ring-blue-600 transition duration-300 
-        ${recruiterData?.company_name ? "cursor-not-allowed bg-gray-100 text-gray-400" : "border-gray-300"}`}
-                                    value={recruiterData?.company_name || formData?.new_company_name}
-                                    onChange={(e) => setFormData({ ...formData, new_company_name: e.target.value })}
-                                    disabled={!!recruiterData?.company_name}
-                                    placeholder={recruiterData?.company_name ? "Company name is set" : "Enter your company name"}
-                                />
-                                {validationErrors.new_company_name && (
-                                    <p className="text-red-500 text-sm mt-1">{validationErrors.new_company_name}</p>
-                                )}
-                            </div>
 
+                {/* Form card */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-7">
+                    <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
 
-                            {/* Job Title and Button in the same row */}
+                        {/* ── Page 1 ── */}
+                        {page === 1 && (
+                            <>
+                                {/* Company name */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">
+                                        <span className="flex items-center gap-1.5"><FaBuilding className="w-3.5 h-3.5 text-[#0073b1]" /> Company Name</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className={`w-full px-4 py-3 text-sm border rounded-xl outline-none transition duration-200 ${
+                                            recruiterData?.company_name 
+                                                ? "cursor-not-allowed bg-gray-50 border-gray-200 text-gray-400" 
+                                                : (validationErrors.new_company_name ? "border-rose-400 focus:ring-2 focus:ring-rose-500/20" : "border-gray-200 focus:ring-2 focus:ring-[#0073b1]/30 focus:border-[#0073b1]")
+                                        }`}
+                                        value={recruiterData?.company_name || formData?.new_company_name}
+                                        onChange={(e) => setFormData({ ...formData, new_company_name: e.target.value })}
+                                        disabled={!!recruiterData?.company_name}
+                                        placeholder={recruiterData?.company_name ? "Company name is set" : "Enter your company name"}
+                                    />
+                                    <FieldError field="new_company_name" />
+                                </div>
 
-
-                            <div className="flex items-center space-x-4 relative">
-                                <div className="flex-1">
-                                    <label className="block text-lg font-semibold text-gray-800">Job Title</label>
+                                {/* Job Title */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">Job Title</label>
                                     <div className="relative flex items-center">
                                         <input
                                             type="text"
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition pr-20"  // Increased pr-20 for button inside input field
                                             name="job_name"
                                             value={formData.job_name}
                                             onChange={handleInputChange}
-                                            required
+                                            placeholder="e.g. Principal Research Scientist"
+                                            className={`w-full pl-4 pr-14 py-3 text-sm border rounded-xl outline-none focus:ring-2 focus:ring-[#0073b1]/30 focus:border-[#0073b1] transition duration-200 ${validationErrors.job_name ? "border-rose-400" : "border-gray-200"}`}
                                         />
-
                                         <button
                                             type="button"
-                                            className="absolute right-0 top-1/2 transform -translate-y-1/2 py-3 px-4 bg-gradient-to-r from-[#0073b1] to-indigo-700 text-white rounded-md focus:outline-none focus:ring-4 focus:ring-[#0073b1] focus:ring-opacity-30 shadow-lg hover:shadow-xl active:scale-95"
                                             onClick={handleGenerateTitle}
+                                            disabled={aiLoading}
+                                            className={`absolute right-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#0073b1] to-[#005582] text-white hover:opacity-95 transition-all shadow-sm ${aiLoading ? "animate-pulse" : ""}`}
+                                            title="Improve Title with AI"
                                         >
-                                            <SiGooglegemini className="w-6 h-6 text-white" />
+                                            <SiGooglegemini className={`w-4 h-4 ${aiLoading ? "animate-spin" : ""}`} />
                                         </button>
-
                                     </div>
+                                    <FieldError field="job_name" />
                                 </div>
-                            </div>
-                            {validationErrors.job_name && <p className="text-red-500 text-sm mt-1">{validationErrors.job_name}</p>}
 
-
-                            <div>
-                                <label className="block text-lg font-semibold text-gray-800 mb-2">Location</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-600 transition"
-                                    name="job_location"
-                                    value={formData.job_location}
-                                    onChange={handleInputChange}
-                                    required
-                                />
-                                {validationErrors.job_location && <p className="text-red-500 text-sm mt-1">{validationErrors.job_location}</p>}
-                            </div>
-
-                            <div>
-                                <label className="block text-lg font-semibold text-gray-800 mb-2">Workplace Type</label>
-                                <div className="flex flex-wrap gap-3">
-                                    {workplaceTypes.map((type) => (
-                                        <button
-                                            key={type}
-                                            type="button"
-                                            onClick={() => selectSingleOption("workplace_type", type)}
-                                            className={`px-4 py-2 rounded-lg border ${formData.workplace_type === type
-                                                ? "bg-gray-700 text-white border-gray-700"
-                                                : "bg-gray-200 text-gray-700 border-gray-300"
-                                                } transition-all duration-200`}
-                                        >
-                                            {formData.workplace_type === type ? "✓" : "+"}{type}
-                                        </button>
-                                    ))}
+                                {/* Location */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">Location</label>
+                                    <input
+                                        type="text"
+                                        name="job_location"
+                                        value={formData.job_location}
+                                        onChange={handleInputChange}
+                                        placeholder="e.g. Karachi, Pakistan or Remote"
+                                        className={`w-full px-4 py-3 text-sm border rounded-xl outline-none focus:ring-2 focus:ring-[#0073b1]/30 focus:border-[#0073b1] transition duration-200 ${validationErrors.job_location ? "border-rose-400" : "border-gray-200"}`}
+                                    />
+                                    <FieldError field="job_location" />
                                 </div>
-                                {validationErrors.workplace_type && <p className="text-red-500 text-sm mt-1">{validationErrors.workplace_type}</p>}
-                            </div>
-                        </>
-                    )}
-                    {page === 2 && (
-                        <>
-                            <div>
-                                <label className="block text-lg font-semibold text-gray-800 mb-2">Description</label>
-                                <textarea
-                                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-600 transition"
-                                    name="description"
-                                    value={formData.description}
-                                    onChange={handleInputChange}
-                                    required
-                                ></textarea>
-                                {validationErrors.description && <p className="text-red-500 text-sm mt-1">{validationErrors.description}</p>}
 
-                            </div>
-                            <div>
-                                <label className="block text-lg font-semibold text-gray-800 mb-2">Skills</label>
-                                <div className="flex flex-wrap gap-3">
-                                    {skillOptions.map((skill) => (
-                                        <button
-                                            key={skill}
-                                            type="button"
-                                            onClick={() => selectSingleOption("skills", skill)}
-                                            className={`px-4 py-2 rounded-lg border ${formData.skills.includes(skill)
-                                                ? "bg-gray-700 text-white border-gray-700"
-                                                : "bg-gray-200 text-gray-700 border-gray-300"
-                                                } transition-all duration-200`}
-                                        >
-                                            {formData.skills.includes(skill) ? "✓" : "+"}{skill}
-                                        </button>
-                                    ))}
-                                    {validationErrors.skills && <p className="text-red-500 text-sm mt-1">{validationErrors.skills}</p>}
-
+                                {/* Workplace type */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-800 mb-2">Workplace Type</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {workplaceTypes.map((type) => (
+                                            <PillButton
+                                                key={type}
+                                                label={type}
+                                                selected={formData.workplace_type === type}
+                                                onClick={() => selectSingleOption("workplace_type", type)}
+                                            />
+                                        ))}
+                                    </div>
+                                    <FieldError field="workplace_type" />
                                 </div>
-                            </div>
-                            <div>
-                                <label className="block text-lg font-semibold text-gray-800 mb-2">Employment Type</label>
-                                <div className="flex flex-wrap gap-3">
-                                    {employmentTypes.map((type) => (
-                                        <button
-                                            key={type}
-                                            type="button"
-                                            onClick={() => selectSingleOption("employment_type", type)}
-                                            className={`px-4 py-2 rounded-lg border ${formData.employment_type === type
-                                                ? "bg-gray-700 text-white border-gray-700"
-                                                : "bg-gray-200 text-gray-700 border-gray-300"
-                                                } transition-all duration-200`}
-                                        >
-                                            {formData.employment_type === type ? "✓" : "+"} {type}
-                                        </button>
-                                    ))}
+                            </>
+                        )}
 
+                        {/* ── Page 2 ── */}
+                        {page === 2 && (
+                            <>
+                                {/* Description */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">Job Description</label>
+                                    <textarea
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={handleInputChange}
+                                        rows={5}
+                                        placeholder="Describe the role, responsibilities, and expectations..."
+                                        className={`w-full px-4 py-3 text-sm border rounded-xl outline-none focus:ring-2 focus:ring-[#0073b1]/30 focus:border-[#0073b1] transition duration-200 resize-none ${validationErrors.description ? "border-rose-400" : "border-gray-200"}`}
+                                    />
+                                    <FieldError field="description" />
                                 </div>
-                                {validationErrors.employment_type && <p className="text-red-500 text-sm mt-1">{validationErrors.employment_type}</p>}
-                            </div>
-                        </>
-                    )}
-                    {page === 3 && (
-                        <></>
-                    )}
-                    {page === 3 && (
-                        <div className="flex justify-between mt-6">
-                            <button
-                                type="button"
-                                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                                onClick={handlePrevPage}
-                            >
-                                Back
-                            </button>
-                            <button
-                                type="submit"
-                                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                                onClick={handleUpdate}
-                            >
-                                Update Post
-                            </button>
+
+                                {/* Skills */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-800 mb-2">Skills Required</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {skillOptions.map((skill) => (
+                                            <PillButton
+                                                key={skill}
+                                                label={skill}
+                                                selected={formData.skills === skill}
+                                                onClick={() => selectSingleOption("skills", skill)}
+                                            />
+                                        ))}
+                                    </div>
+                                    <FieldError field="skills" />
+                                </div>
+
+                                {/* Employment type */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-800 mb-2">Employment Type</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {employmentTypes.map((type) => (
+                                            <PillButton
+                                                key={type}
+                                                label={type}
+                                                selected={formData.employment_type === type}
+                                                onClick={() => selectSingleOption("employment_type", type)}
+                                            />
+                                        ))}
+                                    </div>
+                                    <FieldError field="employment_type" />
+                                </div>
+                            </>
+                        )}
+
+                        {/* Bottom Actions Row */}
+                        <div className="flex items-center justify-between pt-4 border-t border-gray-50">
+                            {page === 1 ? (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={handleDelete}
+                                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-rose-600 bg-white border border-rose-200 hover:bg-rose-50/50 hover:border-rose-300 transition-all duration-200"
+                                    >
+                                        <FaTrashAlt className="w-3.5 h-3.5" /> Delete Job
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleNextPage}
+                                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-[#0073b1] to-[#005582] text-white shadow-sm hover:shadow-md hover:opacity-95 active:scale-[0.98] transition-all duration-200"
+                                    >
+                                        Next <FaChevronRight className="w-3 h-3" />
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={handlePrevPage}
+                                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all duration-200"
+                                    >
+                                        <FaChevronLeft className="w-3 h-3" /> Back
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleUpdate}
+                                        disabled={submitting}
+                                        className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-[#0073b1] to-[#005582] text-white shadow-sm hover:shadow-md hover:opacity-95 active:scale-[0.98] disabled:opacity-60 transition-all duration-200"
+                                    >
+                                        {submitting ? "Saving..." : <><FaArrowRight className="w-3.5 h-3.5" /> Update Post</>}
+                                    </button>
+                                </>
+                            )}
                         </div>
-                    )}
-                    {page !== 3 && (
-                        <div className="flex justify-between mt-6">
-                            <button
-                                type="button"
-                                className={`px-6 py-2 rounded-lg transition ${page === 1 ? 'bg-gray-200 text-gray-700 cursor-not-allowed' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 cursor-pointer'}`}
-                                onClick={handlePrevPage}
-                                disabled={page === 1}
-                            >
-                                Back
-                            </button>
-                            <button
-                                type="button"
-                                className={`px-6 py-2 rounded-lg transition ${page === 3 ? 'bg-gray-200 text-white-700 cursor-not-allowed' : 'bg-[#0073b1] text-white  cursor-pointer'}`}
-                                onClick={handleNextPage}
-                                disabled={page === 3}
-                            >
-                                Next
-                            </button>
-                        </div>
-                    )}
-
-                    {page === 1 && (
-                        <div className="mt-8 flex justify-between">
-                            <button
-                                type="button"
-                                className="w-full px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-                                onClick={handleDelete}
-                            >
-                                Delete Post
-                            </button>
-                        </div>
-                    )}
-
-
-
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     );

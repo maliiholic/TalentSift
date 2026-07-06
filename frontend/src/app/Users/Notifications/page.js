@@ -6,6 +6,7 @@ import { show_search,search_bar_action } from "@/Redux/Action";
 import { useDispatch, useSelector } from 'react-redux';
 import { API_BASE_URL } from '@/utils/api';
 import toast from 'react-hot-toast';
+import { FaBell, FaBriefcase, FaFileAlt, FaCheckCircle, FaTrashAlt, FaRobot } from "react-icons/fa";
 
 const openResumePreview = async (resumeUrl) => {
     if (!resumeUrl) return;
@@ -151,101 +152,182 @@ const Notification = () => {
     };
 
     if (loading) {
-        return <div className="min-h-screen flex items-center justify-center text-gray-600">Loading notifications...</div>;
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50" style={{ backgroundColor: "#F4F2EE" }}>
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0073b1]"></div>
+            </div>
+        );
     }
 
     if (error) {
-        return <div className="min-h-screen flex items-center justify-center text-red-600">{error}</div>;
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50" style={{ backgroundColor: "#F4F2EE" }}>
+                <div className="bg-red-50 text-red-700 p-4 rounded-xl shadow-sm max-w-md text-center font-semibold">
+                    {error}
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div className="min-h-screen bg-[#F4F2EE] py-16 px-4">
-            <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold text-[#0073b1] mb-6">Notifications</h1>
-                    <div className="flex items-center gap-2">
-                        {notifications.some(n => !n.is_read) && (
-                            <button onClick={markAllRead} className="px-3 py-1.5 bg-[#0073b1] text-white rounded text-sm">Mark all read</button>
-                        )}
+        <div className="min-h-screen bg-[#F4F2EE] pt-24 pb-16 px-4" style={{ backgroundColor: "#F4F2EE" }}>
+            {/* Header Layout Outside Container */}
+            <div className="max-w-4xl mx-auto mb-10 text-center">
+                <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 leading-tight">
+                    <span className="bg-gradient-to-r from-[#0073b1] to-[#005582] text-transparent bg-clip-text">
+                        Your Notifications
+                    </span>
+                </h1>
+                {notifications.some(n => !n.is_read) && (
+                    <div className="mt-4 flex justify-center">
+                        <button 
+                            onClick={markAllRead} 
+                            className="px-4 py-2 border border-gray-200 text-gray-600 hover:text-gray-900 rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all text-sm font-semibold flex items-center gap-1.5 shadow-sm bg-white"
+                        >
+                            <FaCheckCircle className="w-4 h-4 text-emerald-500" />
+                            Mark all as read
+                        </button>
                     </div>
-                </div>
-                        {notifications.length === 0 ? (
-                    <p className="text-gray-600">No notifications yet.</p>
+                )}
+            </div>
+
+            <div className="max-w-4xl mx-auto bg-white shadow-[0_4px_25px_rgba(0,0,0,0.03)] rounded-2xl p-4 sm:p-6 border border-gray-200/60">
+                {/* Notifications List */}
+                {notifications.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center min-h-[40vh] text-center max-w-sm mx-auto py-8">
+                        <div className="bg-gray-100 text-gray-400 w-16 h-16 flex items-center justify-center rounded-full mb-5 shadow-inner">
+                            <FaBell className="w-6 h-6 text-gray-300" />
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-900 mb-2">All Clear!</h2>
+                        <p className="text-sm text-gray-500 leading-relaxed">
+                            You don&apos;t have any notifications right now. Check back later for updates on your applications.
+                        </p>
+                    </div>
                 ) : (
                     <div className="space-y-3">
                         {notifications.map((notification) => (
                             <div
                                 key={notification.id}
-                                className={`rounded-lg border p-3 transition ${notification.is_read ? 'bg-white border-gray-200' : 'bg-blue-50 border-blue-200'}`}
+                                className={`group relative rounded-xl border p-4 transition-all duration-300 ${
+                                    notification.is_read 
+                                        ? 'bg-white border-gray-150 shadow-[0_2px_15px_rgba(0,0,0,0.01)]' 
+                                        : 'bg-[#0073b1]/[0.02] border-blue-200/80 shadow-[0_4px_20px_rgba(0,115,177,0.02)]'
+                                }`}
                             >
-                                <div className="flex items-start justify-between gap-4">
-                                    <div>
-                                        <h2 className="font-semibold text-base text-gray-800">{notification.title}</h2>
-                                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">{notification.message}</p>
-                                        {notification.job_name && (
-                                            <p className="text-xs text-gray-500 mt-2">Job: {notification.job_name}</p>
-                                        )}
-                                        {notification.candidate_name && (
-                                            <p className="text-xs text-gray-500">Candidate: {notification.candidate_name} ({notification.candidate_email})</p>
-                                        )}
-                                        {notification.cover_letter && (
-                                            <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap">Cover Letter: {notification.cover_letter}</p>
-                                        )}
-                                        {notification.resume_url && (
-                                            <button type="button" onClick={() => openResumePreview(notification.resume_url)} className="inline-flex items-center gap-2 mt-2 text-sm text-[#0073b1] hover:underline">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                                                <span className="hidden sm:inline">View Resume</span>
-                                            </button>
-                                        )}
+                                {/* Top-right corner actions: Mark read + Delete */}
+                                <div className="absolute top-2.5 right-2.5 flex items-center gap-1">
+                                    {!notification.is_read && (
+                                        <button
+                                            onClick={() => handleMarkRead(notification.id)}
+                                            className="text-xs font-bold text-[#0073b1] hover:underline px-1.5 py-1 rounded-lg hover:bg-blue-50 transition-all duration-200"
+                                        >
+                                            Mark read
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => handleDelete(notification.id)}
+                                        className="text-gray-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-all duration-200"
+                                        title="Delete notification"
+                                    >
+                                        <FaTrashAlt className="w-3 h-3" />
+                                    </button>
+                                </div>
 
-                                        {role === 'Recruiter' && notification.job_id && (
-                                            <div className="mt-3">
-                                                <button
-                                                    onClick={() => handleOpenApplications(notification.job_id)}
-                                                    className="px-3 py-2 border border-[#0073b1] text-[#0073b1] rounded text-sm hover:bg-[#0073b1] hover:text-white transition"
-                                                >
-                                                    Open applications
-                                                </button>
+                                <div className="flex items-start gap-3.5 pr-20">
+                                    {/* Icon Left */}
+                                    <div className={`p-2.5 rounded-xl flex-shrink-0 ${
+                                        notification.is_read ? 'bg-gray-100 text-gray-500' : 'bg-[#0073b1]/10 text-[#0073b1]'
+                                    }`}>
+                                        {notification.title.includes("Interview") || notification.title.includes("screening") ? (
+                                            <FaRobot className="w-4 h-4" />
+                                        ) : notification.title.includes("Apply") || notification.title.includes("Application") ? (
+                                            <FaFileAlt className="w-4 h-4" />
+                                        ) : (
+                                            <FaBriefcase className="w-4 h-4" />
+                                        )}
+                                    </div>
+
+                                    {/* Text Body Content */}
+                                    <div className="flex-1 min-w-0">
+                                        <div>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <h2 className={`font-bold text-sm leading-tight ${notification.is_read ? 'text-gray-700' : 'text-gray-950'}`}>
+                                                    {notification.title}
+                                                </h2>
+                                                {!notification.is_read && (
+                                                    <span className="relative flex h-2 w-2 flex-shrink-0">
+                                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0073b1] opacity-75"></span>
+                                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0073b1]"></span>
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-gray-500 mt-1 leading-relaxed">{notification.message}</p>
+                                        </div>
+
+                                        {/* Extra metadata blocks */}
+                                        {(notification.job_name || notification.candidate_name || notification.cover_letter) && (
+                                            <div className="mt-3 p-3 bg-gray-50 border border-gray-100 rounded-xl text-xs space-y-1 text-gray-600">
+                                                {notification.job_name && (
+                                                    <p><span className="font-semibold text-gray-900">Job:</span> {notification.job_name}</p>
+                                                )}
+                                                {notification.candidate_name && (
+                                                    <p><span className="font-semibold text-gray-900">Candidate:</span> {notification.candidate_name} ({notification.candidate_email})</p>
+                                                )}
+                                                {notification.cover_letter && (
+                                                    <p className="whitespace-pre-wrap mt-1 leading-relaxed"><span className="font-semibold text-gray-900">Cover Letter:</span> {notification.cover_letter}</p>
+                                                )}
                                             </div>
                                         )}
 
-                                        {/* Candidate CTA: take interview now/later */}
+                                        {/* Compact inline row: Resume link + screening status + Open Applications */}
+                                        {(notification.resume_url || notification.application_screening_status === 'passed' || blockedInterviewId === notification.application_id || (notification.application_screening_status === 'failed' && blockedInterviewId !== notification.application_id) || (role === 'Recruiter' && notification.job_id)) && (
+                                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                                                {notification.resume_url && (
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => openResumePreview(notification.resume_url)} 
+                                                        className="inline-flex items-center gap-1 text-xs font-bold text-[#0073b1] hover:underline"
+                                                    >
+                                                        <FaFileAlt className="w-3 h-3 text-[#0073b1]/70" />
+                                                        View Resume
+                                                    </button>
+                                                )}
+                                                {(notification.application_screening_status === 'passed' || blockedInterviewId === notification.application_id) && (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-md border border-emerald-100">
+                                                        <FaCheckCircle className="w-3 h-3" />
+                                                        Passed ({notification.application_screening_score ? `${(notification.application_screening_score * 10).toFixed(1)}%` : 'N/A'})
+                                                    </span>
+                                                )}
+                                                {notification.application_screening_status === 'failed' && blockedInterviewId !== notification.application_id && (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-50 text-rose-600 text-xs font-semibold rounded-md border border-rose-100">
+                                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                        Not Passed ({notification.application_screening_score ? `${(notification.application_screening_score * 10).toFixed(1)}%` : 'N/A'})
+                                                    </span>
+                                                )}
+                                                {role === 'Recruiter' && notification.job_id && (
+                                                    <button
+                                                        onClick={() => handleOpenApplications(notification.job_id)}
+                                                        className="inline-flex items-center gap-1 px-2 py-0.5 border border-[#0073b1] text-[#0073b1] rounded-md text-xs font-bold hover:bg-[#0073b1] hover:text-white transition duration-200"
+                                                    >
+                                                        Open Applications
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Candidate Interview CTA */}
                                         {role === 'Candidate' && notification.application_id &&
                                             /Application submitted|AI screening|interview/i.test(notification.title + ' ' + notification.message) &&
                                             notification.application_screening_status !== 'passed' &&
                                             notification.application_screening_status !== 'failed' && blockedInterviewId !== notification.application_id && (
-                                            <div className="mt-3">
+                                            <div className="mt-2">
                                                 <button
                                                     onClick={() => handleTakeInterview(notification.application_id)}
-                                                    className="px-3 py-2 bg-[#0073b1] text-white rounded text-sm"
+                                                    className="px-4 py-2 bg-gradient-to-r from-[#0073b1] to-[#005582] text-white rounded-lg text-xs font-bold shadow-sm hover:shadow-md transition duration-200 active:scale-[0.98]"
                                                 >
-                                                    Take AI Interview
+                                                    Take AI Interview Now
                                                 </button>
                                             </div>
-                                        )}
-
-                                        {(notification.application_screening_status === 'passed' || blockedInterviewId === notification.application_id) && (
-                                            <p className="mt-3 text-sm text-green-600 font-medium">
-                                                Interview completed: passed. Score: {notification.application_screening_score ? `${(notification.application_screening_score * 10).toFixed(1)}%` : 'N/A'}
-                                            </p>
-                                        )}
-                                        {notification.application_screening_status === 'failed' && blockedInterviewId !== notification.application_id && (
-                                            <p className="mt-3 text-sm text-red-600 font-medium">
-                                                Interview completed: not passed. Better luck next time. Score: {notification.application_screening_score ? `${(notification.application_screening_score * 10).toFixed(1)}%` : 'N/A'}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className="flex flex-col items-end gap-2">
-                                        <span className={`text-xs px-2 py-0.5 rounded-full ${notification.is_read ? 'bg-gray-200 text-gray-600' : 'bg-blue-600 text-white'}`}>
-                                            {notification.is_read ? 'Read' : 'Unread'}
-                                        </span>
-                                        {!notification.is_read && (
-                                            <button
-                                                onClick={() => handleMarkRead(notification.id)}
-                                                className="text-xs text-blue-600 hover:underline"
-                                            >
-                                                Mark
-                                            </button>
                                         )}
                                     </div>
                                 </div>
