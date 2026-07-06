@@ -380,10 +380,5 @@ INTERVIEW_PASS_SCORE = float(os.getenv('INTERVIEW_PASS_SCORE', '8.0'))
 INTERVIEW_MINUTES_PER_QUESTION = float(os.getenv('INTERVIEW_MINUTES_PER_QUESTION', '2.0'))
 INTERVIEW_BUFFER_MINUTES = int(os.getenv('INTERVIEW_BUFFER_MINUTES', '5'))
 
-# Django REST Framework Settings
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'getUserData.JWT.CustomJWTAuthentication',
-    ),
-}
+
 
