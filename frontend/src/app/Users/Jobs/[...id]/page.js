@@ -64,12 +64,13 @@ const Job = () => {
 
         const fetchJobDetails = async () => {
             try {
+                const response = await axios.get(`${API_BASE_URL}/get_jobs/${jobId}/`, { withCredentials: true });
                 setJob(response.data);
                 if (typeof window !== "undefined" && response.data?.job_name) {
                     document.title = `${response.data.job_name} | TalentSift`;
                 }
                 try {
-                    const response1 = await axios.get(`${API_BASE_URL}/check_report_status/${jobId}`, { withCredentials: true });
+                    const response1 = await axios.get(`${API_BASE_URL}/check_report_status/${jobId}/`, { withCredentials: true });
                     setreport(response1.data.message);
                 } catch (reportErr) {
                     setreport("No");
