@@ -145,12 +145,7 @@ def apply_job(request, job_id):
     if uploaded_resume:
         application.resume = uploaded_resume
     elif candidate.resume:
-        candidate.resume.open('rb')
-        try:
-            resume_name = candidate.resume.name.split('/')[-1]
-            application.resume.save(resume_name, ContentFile(candidate.resume.read()), save=False)
-        finally:
-            candidate.resume.close()
+        application.resume = candidate.resume
     else:
         return Response({'error': 'Resume not found. Please upload it in your profile first.'}, status=status.HTTP_400_BAD_REQUEST)
 
