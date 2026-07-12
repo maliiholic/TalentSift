@@ -4,10 +4,12 @@ import requests
 from django.conf import settings
 from django.core.mail import send_mail
 
+import threading
+
 logger = logging.getLogger(__name__)
 
 
-def send_otp_email(subject, message, recipient_email):
+def _send_otp_email_sync(subject, message, recipient_email):
     brevo_api_key = getattr(settings, 'BREVO_API_KEY', '').strip()
     brevo_from_email = getattr(settings, 'BREVO_FROM_EMAIL', '').strip() or getattr(settings, 'DEFAULT_FROM_EMAIL', '').strip()
     brevo_from_name = getattr(settings, 'BREVO_FROM_NAME', 'TalentSift').strip() or 'TalentSift'
@@ -80,3 +82,12 @@ def send_otp_email(subject, message, recipient_email):
         [recipient_email],
         fail_silently=False,
     )
+
+
+def send_otp_email(subject, message, recipient_email):
+    """Asynchronously dispatches emails in a background daemon thread."""
+    threading.Thread(
+        target=_send_otp_email_sync,
+        args=(subject, message, recipient_email),
+        daemon=True
+    ).start()

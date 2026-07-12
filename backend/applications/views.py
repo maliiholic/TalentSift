@@ -161,6 +161,13 @@ def apply_job(request, job_id):
         message=f'{candidate_name} applied for {job.job_name}.',
     )
 
+    UserNotification.objects.create(
+        recipient=request.user,
+        application=application,
+        title=f'Application submitted for {job.job_name}',
+        message=f'You successfully applied for {job.job_name}. Click below to take your AI screening interview.',
+    )
+
     resume_url = _application_resume_url(request, application.id) if application.resume else None
     return Response(
         {
