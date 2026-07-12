@@ -373,8 +373,8 @@ FRONTEND_BASE_URL = os.getenv('FRONTEND_BASE_URL', 'http://localhost:3000').rstr
 # reCAPTCHA secret for server-side verification (leave empty in local dev)
 RECAPTCHA_SECRET_KEY = os.getenv('RECAPTCHA_SECRET_KEY', '')
 
-# AI screening threshold: 5.5/10 = 55%
-INTERVIEW_PASS_SCORE = float(os.getenv('INTERVIEW_PASS_SCORE', '5.5'))
+# AI screening threshold: 8.0/10 = 80%
+INTERVIEW_PASS_SCORE = float(os.getenv('INTERVIEW_PASS_SCORE', '8.0'))
 
 # AI screening timing: 2 minutes per question + 5 minute buffer
 INTERVIEW_MINUTES_PER_QUESTION = float(os.getenv('INTERVIEW_MINUTES_PER_QUESTION', '2.0'))
