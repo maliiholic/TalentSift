@@ -408,7 +408,7 @@ def submit_interview_answer(request):
 
         session.final_score = avg
         session.completed_at = timezone.now()
-        passed = avg >= getattr(settings, 'INTERVIEW_PASS_SCORE', 8.0)
+        passed = avg >= getattr(settings, 'INTERVIEW_PASS_SCORE', 5.5)
         session.status = 'passed' if passed else 'failed'
         session.save(update_fields=['final_score', 'completed_at', 'status'])
 
@@ -490,7 +490,7 @@ def complete_interview(request, session_id):
 
     session.final_score = avg
     session.completed_at = timezone.now()
-    passed = avg >= getattr(settings, 'INTERVIEW_PASS_SCORE', 8.0)
+    passed = avg >= getattr(settings, 'INTERVIEW_PASS_SCORE', 5.5)
     session.status = 'passed' if passed else 'failed'
     session.save(update_fields=['final_score', 'completed_at', 'status'])
 
