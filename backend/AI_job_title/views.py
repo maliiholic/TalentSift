@@ -59,3 +59,69 @@ def enhance_job_title(request):
             {'error': 'An unexpected error occurred', 'details': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+job_description_prompt_template = """
+You are a professional hiring manager. Write a concise, to-the-point, and professional job description for the following position:
+Job Title: {job_name}
+Workplace Type: {workplace_type}
+Skills Required: {skills}
+
+Format the description as PLAIN TEXT. 
+Do NOT use markdown headers (like #, ##, or ###) and do NOT use bold or italic markup (like * or **). 
+Use simple uppercase headings and standard list dashes (-) for bullet points.
+
+Use the following exact layout with simple line breaks:
+
+ROLE OVERVIEW:
+(A brief 2-3 sentence overview of the role, tailored to the experience level implied by the title)
+
+KEY RESPONSIBILITIES:
+- (responsibility 1)
+- (responsibility 2)
+- (responsibility 3)
+- (responsibility 4)
+
+REQUIRED SKILLS & QUALIFICATIONS:
+- (requirement 1)
+- (requirement 2)
+- (requirement 3)
+- (requirement 4)
+
+Do NOT include generic benefit sections, wellness details, or compensation. Keep it brief, realistic, and directly to the point. Return ONLY the plain text content.
+"""
+
+description_prompt = PromptTemplate(input_variables=["job_name", "workplace_type", "skills"], template=job_description_prompt_template)
+
+
+@api_view(['POST'])
+@authentication_classes([CustomJWTAuthentication])
+@permission_classes([IsAuthenticated])
+def generate_job_description(request):
+    job_name = request.data.get('job_name')
+    workplace_type = request.data.get('workplace_type', 'Remote')
+    skills = request.data.get('skills', '')
+
+    if not job_name:
+        return Response(
+            {'error': 'Job title is required.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    prompt = description_prompt.format(job_name=job_name, workplace_type=workplace_type, skills=skills)
+
+    try:
+        response = llm.invoke(prompt)
+        description = getattr(response, 'content', None)
+        if not description:
+            description = 'No job description generated'
+
+        return Response(
+            {'description': description},
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        return Response(
+            {'error': 'An unexpected error occurred', 'details': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

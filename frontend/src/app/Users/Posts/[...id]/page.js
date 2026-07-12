@@ -18,7 +18,7 @@ const defaultFormData = {
     workplace_type: "",
     employment_type: "",
     description: "",
-    skills: "",
+    skills: [],
     interview_type: "manual",
     new_company_name: "",
 };
@@ -65,6 +65,8 @@ const UpdateJob = () => {
     const [page, setPage] = useState(1);
     const [submitting, setSubmitting] = useState(false);
     const [aiLoading, setAiLoading] = useState(false);
+    const [aiDescLoading, setAiDescLoading] = useState(false);
+    const [customSkill, setCustomSkill] = useState("");
     const router = useRouter();
     const [subscription, setsubscription] = useState(false);
     const [error, setError] = useState(null); // State for error message
@@ -100,7 +102,9 @@ const UpdateJob = () => {
                         workplace_type: response.data.workplace_type || "",
                         employment_type: response.data.employment_type || "",
                         description: response.data.description || "",
-                        skills: typeof response.data.skills === "string" ? response.data.skills : (Array.isArray(response.data.skills) ? response.data.skills.join(", ") : ""),
+                        skills: typeof response.data.skills === "string"
+                            ? response.data.skills.split(",").map(s => s.trim()).filter(Boolean)
+                            : (Array.isArray(response.data.skills) ? response.data.skills : []),
                         interview_type: response.data.interview_type || "manual",
                         new_company_name: response.data.new_company_name || "",
                     });
@@ -191,6 +195,62 @@ const UpdateJob = () => {
         }));
     };
 
+    const toggleMultiOption = (field, option) => {
+        setFormData((prev) => ({
+            ...prev,
+            [field]: prev[field].includes(option)
+                ? prev[field].filter((x) => x !== option)
+                : [...prev[field], option],
+        }));
+        if (validationErrors[field]) setValidationErrors((prev) => ({ ...prev, [field]: "" }));
+    };
+
+    const handleAddCustomSkill = (e) => {
+        if (e) e.preventDefault();
+        const skill = customSkill.trim();
+        if (!skill) return;
+        if (!formData.skills.includes(skill)) {
+            setFormData((prev) => ({
+                ...prev,
+                skills: [...prev.skills, skill],
+            }));
+            if (validationErrors.skills) {
+                setValidationErrors((prev) => ({ ...prev, skills: "" }));
+            }
+        }
+        setCustomSkill("");
+    };
+
+    const handleGenerateDescription = async () => {
+        if (!formData.job_name.trim()) {
+            setValidationErrors((prev) => ({ ...prev, description: "Enter a job title on the first page before generating a description." }));
+            toast.error("Please provide a job title first.");
+            return;
+        }
+        setAiDescLoading(true);
+        try {
+            const token = typeof window !== 'undefined' ? localStorage.getItem('access') : null;
+            const response = await axios.post(
+                `${API_BASE_URL}/generate-job-description/`,
+                {
+                    job_name: formData.job_name,
+                    workplace_type: formData.workplace_type || "Remote",
+                    skills: Array.isArray(formData.skills) ? formData.skills.join(", ") : formData.skills,
+                },
+                { withCredentials: true, headers: token ? { Authorization: `Bearer ${token}` } : {} }
+            );
+            if (response.data?.description) {
+                setFormData((prev) => ({ ...prev, description: response.data.description }));
+                setValidationErrors((prev) => ({ ...prev, description: "" }));
+                toast.success("AI job description generated!");
+            }
+        } catch {
+            toast.error("AI description generation failed.");
+        } finally {
+            setAiDescLoading(false);
+        }
+    };
+
     const [validationErrors, setValidationErrors] = useState({});
 
     // Validation function for current page fields
@@ -244,7 +304,7 @@ const UpdateJob = () => {
             }
 
             // Skills selection
-            if (!formData.skills) {
+            if (!formData.skills || formData.skills.length === 0) {
                 errors.skills = "Please select at least one skill.";
             }
 
@@ -344,7 +404,7 @@ const UpdateJob = () => {
                     job_location: formData.job_location,
                     employment_type: formData.employment_type,
                     description: formData.description,
-                    skills: formData.skills,
+                    skills: Array.isArray(formData.skills) ? formData.skills.join(",") : formData.skills,
                     interview_type: formData.interview_type,
                 },
                 {
@@ -368,6 +428,11 @@ const UpdateJob = () => {
 
     const employmentTypes = ["Full-time", "Part-time", "Contract", "Temporary", "Internship"];
     const skillOptions = ["Front-end", "Back-end", "Full Stack", "App Development", "DB Administrator"];
+    const activeSkills = Array.isArray(formData.skills)
+        ? formData.skills
+        : (typeof formData.skills === "string" && formData.skills.trim()
+            ? formData.skills.split(",").map(s => s.trim()).filter(Boolean)
+            : []);
     const workplaceTypes = ["Remote", "On site", "Hybrid"];
 
     if (error) {
@@ -544,30 +609,98 @@ const UpdateJob = () => {
                             <>
                                 {/* Description */}
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-800 mb-1.5">Job Description</label>
+                                    <label className="block text-sm font-semibold text-gray-800 mb-1.5 flex items-center justify-between">
+                                        <span>Job Description</span>
+                                        <button
+                                            type="button"
+                                            onClick={handleGenerateDescription}
+                                            disabled={aiDescLoading}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-br from-[#0073b1] to-indigo-700 rounded-lg hover:opacity-90 active:scale-95 disabled:opacity-60 transition duration-200 shadow-sm"
+                                        >
+                                            <SiGooglegemini className={`w-3.5 h-3.5 ${aiDescLoading ? "animate-spin" : ""}`} />
+                                            {aiDescLoading ? "Generating..." : "Generate Description"}
+                                        </button>
+                                    </label>
                                     <textarea
                                         name="description"
                                         value={formData.description}
                                         onChange={handleInputChange}
-                                        rows={5}
+                                        rows={10}
                                         placeholder="Describe the role, responsibilities, and expectations..."
-                                        className={`w-full px-4 py-3 text-sm border rounded-xl outline-none focus:ring-2 focus:ring-[#0073b1]/30 focus:border-[#0073b1] transition duration-200 resize-none ${validationErrors.description ? "border-rose-400" : "border-gray-200"}`}
+                                        className={`w-full px-4 py-3 text-sm border rounded-xl outline-none focus:ring-2 focus:ring-[#0073b1]/30 focus:border-[#0073b1] transition duration-200 resize-y min-h-[160px] ${validationErrors.description ? "border-rose-400" : "border-gray-200"}`}
                                     />
                                     <FieldError field="description" />
                                 </div>
 
-                                {/* Skills */}
+                                {/* Skills — Custom tags + pills */}
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-800 mb-2">Skills Required</label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {skillOptions.map((skill) => (
-                                            <PillButton
-                                                key={skill}
-                                                label={skill}
-                                                selected={formData.skills === skill}
-                                                onClick={() => selectSingleOption("skills", skill)}
-                                            />
-                                        ))}
+
+                                    {/* Selected skills tags */}
+                                    {activeSkills.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mb-3 p-3 bg-gray-50 border border-gray-200 rounded-xl">
+                                            {activeSkills.map((skill) => (
+                                                <span
+                                                    key={skill}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#0073b1]/10 text-[#0073b1] border border-[#0073b1]/20 rounded-lg text-xs font-bold"
+                                                >
+                                                    {skill}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleMultiOption("skills", skill)}
+                                                        className="text-[#0073b1] hover:text-rose-600 transition-colors font-bold text-xs"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Predefined skill presets */}
+                                    <p className="text-xs text-gray-400 mb-2 font-medium">Quick suggestions:</p>
+                                    <div className="flex flex-wrap gap-2 mb-4">
+                                        {skillOptions.map((skill) => {
+                                            const isSelected = activeSkills.includes(skill);
+                                            return (
+                                                <button
+                                                    key={skill}
+                                                    type="button"
+                                                    onClick={() => toggleMultiOption("skills", skill)}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 ${
+                                                        isSelected
+                                                            ? "bg-emerald-50 text-emerald-700 border-emerald-250 shadow-sm font-bold"
+                                                            : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                                                    }`}
+                                                >
+                                                    {isSelected ? "✓ " : ""}{skill}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Add custom skill input */}
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={customSkill}
+                                            onChange={(e) => setCustomSkill(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                    e.preventDefault();
+                                                    handleAddCustomSkill(e);
+                                                }
+                                            }}
+                                            placeholder="Type custom skill (e.g. Python, Docker) & press Enter"
+                                            className="flex-1 px-4 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#0073b1]/30 focus:border-[#0073b1] transition duration-200"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleAddCustomSkill}
+                                            className="px-4 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl border border-gray-200 hover:bg-gray-200 active:scale-95 transition-all text-sm shadow-sm"
+                                        >
+                                            Add
+                                        </button>
                                     </div>
                                     <FieldError field="skills" />
                                 </div>

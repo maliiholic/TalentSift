@@ -269,24 +269,40 @@ const Job = () => {
                             Posted On: <span className="text-gray-900 font-semibold block">{new Date(job.created_at).toLocaleDateString()}</span>
                         </p>
                     </div>
-                    <div className="flex items-center space-x-3.5 text-gray-700">
-                        <div className="p-2.5 bg-purple-50 text-purple-600 rounded-xl">
-                            {job.interview_type.toLowerCase() === "ai" ? (
+                    {job.interview_type && job.interview_type.toLowerCase() === "ai" && (
+                        <div className="flex items-center space-x-3.5 text-gray-700">
+                            <div className="p-2.5 bg-purple-50 text-purple-600 rounded-xl">
                                 <FaRobot className="h-5 w-5" />
-                            ) : (
-                                <FaUserTie className="h-5 w-5" />
-                            )}
+                            </div>
+                            <p className="font-medium text-sm text-gray-500">
+                                Interview Style: <span className="text-gray-900 font-semibold block capitalize">AI Interview</span>
+                            </p>
                         </div>
-                        <p className="font-medium text-sm text-gray-500">
-                            Interview Style: <span className="text-gray-900 font-semibold block capitalize">{job.interview_type} Interview</span>
-                        </p>
-                    </div>
+                    )}
                 </div>
 
                 {/* Job Description */}
                 <div className="border-t border-gray-100 pt-8 mb-8">
                     <h2 className="text-xl font-bold text-gray-900 mb-4">Job Description</h2>
-                    <p className="text-gray-650 leading-relaxed text-base break-words whitespace-pre-line">{job.description}</p>
+                    <div className="text-gray-650 leading-relaxed text-base break-words space-y-1">
+                        {job.description && job.description.split("\n").map((line, index) => {
+                            const trimmed = line.trim();
+                            const isHeader = trimmed && (
+                                trimmed === "ROLE OVERVIEW:" ||
+                                trimmed === "KEY RESPONSIBILITIES:" ||
+                                trimmed === "REQUIRED SKILLS & QUALIFICATIONS:" ||
+                                (trimmed.toUpperCase() === trimmed && trimmed.endsWith(":") && trimmed.length < 50)
+                            );
+                            if (isHeader) {
+                                return (
+                                    <span key={index} className="block text-gray-950 font-bold text-base mt-6 mb-2 first:mt-0">
+                                        {trimmed}
+                                    </span>
+                                );
+                            }
+                            return <span key={index} className="block min-h-[1.2rem]">{line}</span>;
+                        })}
+                    </div>
                 </div>
 
                 {/* Required Skills */}

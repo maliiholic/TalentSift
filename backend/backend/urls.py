@@ -27,7 +27,7 @@ from signout.views import logout_view
 from JobList.views import get_jobs_for_recruiter,get_all_jobs
 from createjob.views import get_recruiter_company,create_job
 from Up_del_ret_job.views import get_job_by_id,update_job,delete_job,get_job_id
-from AI_job_title.views import enhance_job_title
+from AI_job_title.views import enhance_job_title, generate_job_description
 from Check_Ai_subs.views import has_ai_subscription,has_prac_subscription
 from report.views import create_report, check_report_status, load_reported_jobs, delete_job_and_reports, delete_report
 from checkout.views import create_checkout_session,verify_payment,create_checkout_session_prac,verify_payment_prac
@@ -106,6 +106,7 @@ urlpatterns = [
     path('subscribers/', subscribers, name='subscribers'),
     path('delete_subscription/<int:sub_id>/', delete_subscription, name='delete_subscription'),
     path('generate-job-title/',enhance_job_title, name='generate-job-title'),
+    path('generate-job-description/', generate_job_description, name='generate-job-description'),
     path('has-ai-subscription/', has_ai_subscription, name='has_ai_subscription'),
     path('has-prac-subscription/', has_prac_subscription, name='has_prac_subscription'),
     path('create_checkout_session/', create_checkout_session, name='create_checkout_session'),

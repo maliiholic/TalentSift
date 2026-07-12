@@ -249,7 +249,7 @@ class Job(models.Model):
     job_location = models.CharField(max_length=255)
     employment_type = models.CharField(max_length=10, choices=EMPLOYMENT_TYPE_CHOICES)
     description = models.TextField()
-    skills = models.CharField(max_length=20, choices=SKILLS_CHOICES)  # Corrected choices field
+    skills = models.TextField(default='')
     interview_type = models.CharField(max_length=10, choices=INTERVIEW_TYPE_CHOICES)
 
     recruiter = models.ForeignKey('Recruiter', on_delete=models.CASCADE, related_name='jobs')
