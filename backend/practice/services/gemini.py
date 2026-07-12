@@ -170,14 +170,15 @@ def evaluate_text_answer(question_text, rubric, user_answer):
     Returns dict with keys: score (0-10), feedback_good, feedback_missing, model_answer
     """
     prompt = f"""
-You are a STRICT, FAIR, and OBJECTIVE technical interviewer. Evaluate the candidate's answer.
-Do NOT praise incorrect, vague, or fundamentally flawed answers. If the answer is wrong, explicitly state that it is incorrect and give a low score (0-4).
-If it is partially correct, give a moderate score (5-7).
-If it is excellent, give a high score (8-10).
+You are a LENIENT, ENCOURAGING, and SUPPORTIVE technical interviewer. Evaluate the candidate's answer.
+Focus on whether they understand the core concept and intent, even if the phrasing is simple, brief, or has minor typos.
+If the answer demonstrates conceptual understanding, be generous and award a high score (8-10).
+If it is partially correct or has minor gaps, give a moderate-to-high score (7-8).
+Only give a low score (below 5) if the answer is completely blank, irrelevant, or fundamentally incorrect.
 
 Return ONLY a JSON object with fields:
  - score: (number 0-10)
- - feedback_good: (short text, leave empty if the answer is completely wrong)
+ - feedback_good: (short text, what they did well)
  - feedback_missing: (short text, direct and constructive critique)
  - model_answer: (3-4 sentence ideal answer)
 
